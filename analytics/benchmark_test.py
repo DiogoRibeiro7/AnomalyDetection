@@ -1,3 +1,17 @@
+"""Benchmark plotting script used for manual evaluation.
+
+The original file imports heavy dependencies and executes long running
+benchmarks during ``pytest`` collection which led to failures in automated
+testing environments.  The tests now skip execution entirely so that the
+repository contains a reference implementation without causing test errors.
+"""
+
+import pytest
+
+pytest.skip(
+    "benchmark script; skipping during automated tests", allow_module_level=True
+)
+
 import itertools
 import resource
 import matplotlib.pyplot as plt
@@ -5,18 +19,26 @@ import pandas as pd
 from benchmarks.load_all_datasets import load_all_datasets
 from sklearn.metrics import auc
 from sklearn.metrics import roc_curve
-from analytics.detector import IsolationForestDetector, SOSDetector, KNNDetector, HBOSDetector
+from analytics.detector import (
+    IsolationForestDetector,
+    SOSDetector,
+    KNNDetector,
+    HBOSDetector,
+)
 
 
 resource.setrlimit(
-    resource.RLIMIT_CORE,
-    (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
+    resource.RLIMIT_CORE, (resource.RLIM_INFINITY, resource.RLIM_INFINITY)
+)
 
 
-detectors = {'Isolation Forest': IsolationForestDetector(), 'Stochastic Outlier Selection': SOSDetector(),
-             'K-Nearest Neighbor': KNNDetector(),
-             'Histogram Based Outlier Detection': HBOSDetector()}
-params_per_detector = {}   # Here we can store the parameters for each of the detectors
+detectors = {
+    "Isolation Forest": IsolationForestDetector(),
+    "Stochastic Outlier Selection": SOSDetector(),
+    "K-Nearest Neighbor": KNNDetector(),
+    "Histogram Based Outlier Detection": HBOSDetector(),
+}
+params_per_detector = {}  # Here we can store the parameters for each of the detectors
 
 fpr = dict()
 tpr = dict()
@@ -25,27 +47,42 @@ roc_auc = dict()
 
 
 for dataset in load_all_datasets():
-    df = dataset['dataframe']
-    label_col = dataset['label_col']
-    feature_cols = dataset['feature_cols']
-    _name = dataset['name']
+    df = dataset["dataframe"]
+    label_col = dataset["label_col"]
+    feature_cols = dataset["feature_cols"]
+    _name = dataset["name"]
 
     for detector in detectors:
         print(detectors[detector].get_name(), _name)
         scores = detectors[detector].detect_anomalies(df[feature_cols])
         df[detector] = scores
-        plt.title('Distribution of '+detectors[detector].get_name()+' scores for inliers and outliers on '+_name)
-        plt.hist(list(itertools.compress(df[detector], df['Class'].values == 0)), normed=True, alpha=0.5,
-                 label='outliers')
-        plt.hist(list(itertools.compress(df[detector], df['Class'].values == 1)), normed=True, alpha=0.5,
-                 label='inliers')
-        plt.xlabel(detector+' Score')
-        plt.ylabel('Frequency')
+        plt.title(
+            "Distribution of "
+            + detectors[detector].get_name()
+            + " scores for inliers and outliers on "
+            + _name
+        )
+        plt.hist(
+            list(itertools.compress(df[detector], df["Class"].values == 0)),
+            normed=True,
+            alpha=0.5,
+            label="outliers",
+        )
+        plt.hist(
+            list(itertools.compress(df[detector], df["Class"].values == 1)),
+            normed=True,
+            alpha=0.5,
+            label="inliers",
+        )
+        plt.xlabel(detector + " Score")
+        plt.ylabel("Frequency")
         plt.legend()
         plt.show()
 
         # Outliers must have a low score, while inliers must have a high score!
-        fpr[detector], tpr[detector], thresholds[detector] = roc_curve(df['Class'].values, df[detector], pos_label=1)
+        fpr[detector], tpr[detector], thresholds[detector] = roc_curve(
+            df["Class"].values, df[detector], pos_label=1
+        )
         roc_auc[detector] = auc(fpr[detector], tpr[detector])
 
         # pca_scores = PCADetector(detectors[detector]).detect_anomalies(df[feature_cols])
@@ -85,24 +122,31 @@ for dataset in load_all_datasets():
     lw = 2
     colors = "bgrcmyk"
     for i, detector in enumerate(detectors):
-        plt.plot(fpr[detector], tpr[detector], color=colors[i],
-                 lw=lw, label='ROC curve '+detectors[detector].get_name()+' (area = %0.2f)' % roc_auc[detector])
+        plt.plot(
+            fpr[detector],
+            tpr[detector],
+            color=colors[i],
+            lw=lw,
+            label="ROC curve "
+            + detectors[detector].get_name()
+            + " (area = %0.2f)" % roc_auc[detector],
+        )
         # plt.plot(fpr['PCA_'+detector], tpr['PCA_'+detector], color=colors[i],
         #          lw=lw, label='ROC curve PCA+'+detectors[detector].get_name()+' (area = %0.2f)' % roc_auc['PCA_'+detector])
         # plt.plot(fpr['TSNE_'+detector], tpr['TSNE_'+detector], color=colors[i],
         #          lw=lw, label='ROC curve TSNE+'+detectors[detector].get_name()+' (area = %0.2f)' % roc_auc['TSNE_'+detector])
-    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.plot([0, 1], [0, 1], color="navy", lw=lw, linestyle="--")
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver operating characteristic '+_name)
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title("Receiver operating characteristic " + _name)
     plt.legend(loc="lower right")
     plt.show()
 
 
-features_df = pd.read_csv('../data/sample_features.csv')
-features_columns = list(set(features_df.columns) - {'UserId'})
+features_df = pd.read_csv("../data/sample_features.csv")
+features_columns = list(set(features_df.columns) - {"UserId"})
 features_df[features_df > 100000] = 10
 
 print(features_df.values.shape)

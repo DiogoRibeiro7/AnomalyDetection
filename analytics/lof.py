@@ -13,15 +13,31 @@ This module implements the Local Outlier Factor algorithm.
 from __future__ import division
 import warnings
 
+# Cache for pairwise distance computations used by LOF
+_DISTANCE_CACHE = {}
+
+
+def clear_distance_cache():
+    """Clear the global LOF distance cache."""
+    _DISTANCE_CACHE.clear()
+
+
 def distance_euclidean(instance1, instance2):
     """Computes the distance between two instances. Instances should be tuples of equal length.
     Returns: Euclidean distance
     Signature: ((attr_1_1, attr_1_2, ...), (attr_2_1, attr_2_2, ...)) -> float"""
+    key = (instance1, instance2)
+    if key in _DISTANCE_CACHE:
+        return _DISTANCE_CACHE[key]
+    if (instance2, instance1) in _DISTANCE_CACHE:
+        return _DISTANCE_CACHE[(instance2, instance1)]
+
     def detect_value_type(attribute):
         """Detects the value type (number or non-number).
         Returns: (value type, value casted as detected type)
         Signature: value -> (str or float type, str or float value)"""
         from numbers import Number
+
         attribute_type = None
         if isinstance(attribute, Number):
             attribute_type = float
@@ -30,6 +46,7 @@ def distance_euclidean(instance1, instance2):
             attribute_type = str
             attribute = str(attribute)
         return attribute_type, attribute
+
     # check if instances are of same length
     if len(instance1) != len(instance2):
         raise AttributeError("Instances have different number of arguments.")
@@ -52,11 +69,15 @@ def distance_euclidean(instance1, instance2):
             else:
                 differences[i] = 1
     # compute RMSE (root mean squared error)
-    rmse = (sum(map(lambda x: x**2, differences)) / len(differences))**0.5
+    rmse = (sum(map(lambda x: x**2, differences)) / len(differences)) ** 0.5
+    _DISTANCE_CACHE[key] = rmse
+    _DISTANCE_CACHE[(instance2, instance1)] = rmse
     return rmse
+
 
 class LOF:
     """Helper class for performing LOF computations and instances normalization."""
+
     def __init__(self, instances, normalize=True, distance_function=distance_euclidean):
         self.instances = instances
         self.normalize = normalize
@@ -65,16 +86,29 @@ class LOF:
             self.normalize_instances()
 
     def compute_instance_attribute_bounds(self):
-        min_values = [float("inf")] * len(self.instances[0]) #n.ones(len(self.instances[0])) * n.inf
-        max_values = [float("-inf")] * len(self.instances[0]) #n.ones(len(self.instances[0])) * -1 * n.inf
+        min_values = [float("inf")] * len(
+            self.instances[0]
+        )  # n.ones(len(self.instances[0])) * n.inf
+        max_values = [float("-inf")] * len(
+            self.instances[0]
+        )  # n.ones(len(self.instances[0])) * -1 * n.inf
         for instance in self.instances:
-            min_values = tuple(map(lambda x,y: min(x,y), min_values,instance)) #n.minimum(min_values, instance)
-            max_values = tuple(map(lambda x,y: max(x,y), max_values,instance)) #n.maximum(max_values, instance)
+            min_values = tuple(
+                map(lambda x, y: min(x, y), min_values, instance)
+            )  # n.minimum(min_values, instance)
+            max_values = tuple(
+                map(lambda x, y: max(x, y), max_values, instance)
+            )  # n.maximum(max_values, instance)
 
         diff = [dim_max - dim_min for dim_max, dim_min in zip(max_values, min_values)]
         if not all(diff):
-            problematic_dimensions = ", ".join(str(i+1) for i, v in enumerate(diff) if v == 0)
-            warnings.warn("No data variation in dimensions: %s. You should check your data or disable normalization." % problematic_dimensions)
+            problematic_dimensions = ", ".join(
+                str(i + 1) for i, v in enumerate(diff) if v == 0
+            )
+            warnings.warn(
+                "No data variation in dimensions: %s. You should check your data or disable normalization."
+                % problematic_dimensions
+            )
 
         self.max_attribute_values = max_values
         self.min_attribute_values = min_values
@@ -85,27 +119,43 @@ class LOF:
             self.compute_instance_attribute_bounds()
         new_instances = []
         for instance in self.instances:
-            new_instances.append(self.normalize_instance(instance)) # (instance - min_values) / (max_values - min_values)
+            new_instances.append(
+                self.normalize_instance(instance)
+            )  # (instance - min_values) / (max_values - min_values)
         self.instances = new_instances
 
     def normalize_instance(self, instance):
-        return tuple(map(lambda value,max,min: (value-min)/(max-min) if max-min > 0 else 0,
-                         instance, self.max_attribute_values, self.min_attribute_values))
+        return tuple(
+            map(
+                lambda value, max, min: (
+                    (value - min) / (max - min) if max - min > 0 else 0
+                ),
+                instance,
+                self.max_attribute_values,
+                self.min_attribute_values,
+            )
+        )
 
     def local_outlier_factor(self, min_pts, instance):
         """The (local) outlier factor of instance captures the degree to which we call instance an outlier.
         min_pts is a parameter that is specifying a minimum number of instances to consider for computing LOF value.
         Returns: local outlier factor
-        Signature: (int, (attr1, attr2, ...), ((attr_1_1, ...),(attr_2_1, ...), ...)) -> float"""
+        Signature: (int, (attr1, attr2, ...), ((attr_1_1, ...),(attr_2_1, ...), ...)) -> float
+        """
         if self.normalize:
             instance = self.normalize_instance(instance)
-        return local_outlier_factor(min_pts, instance, self.instances, distance_function=self.distance_function)
+        return local_outlier_factor(
+            min_pts, instance, self.instances, distance_function=self.distance_function
+        )
+
 
 def k_distance(k, instance, instances, distance_function=distance_euclidean):
-    #TODO: implement caching
-    """Computes the k-distance of instance as defined in paper. It also gatheres the set of k-distance neighbours.
+    """Computes the k-distance of ``instance`` and collects its neighbours.
+
+    Pairwise distances are cached to avoid redundant computations.
     Returns: (k-distance, k-distance neighbours)
-    Signature: (int, (attr1, attr2, ...), ((attr_1_1, ...),(attr_2_1, ...), ...)) -> (float, ((attr_j_1, ...),(attr_k_1, ...), ...))"""
+    Signature: (int, (attr1, attr2, ...), ((attr_1_1, ...),(attr_2_1, ...), ...)) ->
+        (float, ((attr_j_1, ...),(attr_k_1, ...), ...))"""
     distances = {}
     for instance2 in instances:
         distance_value = distance_function(instance, instance2)
@@ -119,42 +169,59 @@ def k_distance(k, instance, instances, distance_function=distance_euclidean):
     k_distance_value = distances[k - 1][0] if len(distances) >= k else distances[-1][0]
     return k_distance_value, neighbours
 
-def reachability_distance(k, instance1, instance2, instances, distance_function=distance_euclidean):
+
+def reachability_distance(
+    k, instance1, instance2, instances, distance_function=distance_euclidean
+):
     """The reachability distance of instance1 with respect to instance2.
     Returns: reachability distance
     Signature: (int, (attr_1_1, ...),(attr_2_1, ...)) -> float"""
-    (k_distance_value, neighbours) = k_distance(k, instance2, instances, distance_function=distance_function)
+    (k_distance_value, neighbours) = k_distance(
+        k, instance2, instances, distance_function=distance_function
+    )
     return max([k_distance_value, distance_function(instance1, instance2)])
+
 
 def local_reachability_density(min_pts, instance, instances, **kwargs):
     """Local reachability density of instance is the inverse of the average reachability
     distance based on the min_pts-nearest neighbors of instance.
     Returns: local reachability density
-    Signature: (int, (attr1, attr2, ...), ((attr_1_1, ...),(attr_2_1, ...), ...)) -> float"""
+    Signature: (int, (attr1, attr2, ...), ((attr_1_1, ...),(attr_2_1, ...), ...)) -> float
+    """
     (k_distance_value, neighbours) = k_distance(min_pts, instance, instances, **kwargs)
-    reachability_distances_array = [0]*len(neighbours) #n.zeros(len(neighbours))
+    reachability_distances_array = [0] * len(neighbours)  # n.zeros(len(neighbours))
     for i, neighbour in enumerate(neighbours):
-        reachability_distances_array[i] = reachability_distance(min_pts, instance, neighbour, instances, **kwargs)
+        reachability_distances_array[i] = reachability_distance(
+            min_pts, instance, neighbour, instances, **kwargs
+        )
     if not any(reachability_distances_array):
-        warnings.warn("Instance %s (could be normalized) is identical to all the neighbors. Setting local reachability density to inf." % repr(instance))
+        warnings.warn(
+            "Instance %s (could be normalized) is identical to all the neighbors. Setting local reachability density to inf."
+            % repr(instance)
+        )
         return float("inf")
     else:
         return len(neighbours) / sum(reachability_distances_array)
+
 
 def local_outlier_factor(min_pts, instance, instances, **kwargs):
     """The (local) outlier factor of instance captures the degree to which we call instance an outlier.
     min_pts is a parameter that is specifying a minimum number of instances to consider for computing LOF value.
     Returns: local outlier factor
-    Signature: (int, (attr1, attr2, ...), ((attr_1_1, ...),(attr_2_1, ...), ...)) -> float"""
+    Signature: (int, (attr1, attr2, ...), ((attr_1_1, ...),(attr_2_1, ...), ...)) -> float
+    """
     (k_distance_value, neighbours) = k_distance(min_pts, instance, instances, **kwargs)
     instance_lrd = local_reachability_density(min_pts, instance, instances, **kwargs)
-    lrd_ratios_array = [0]* len(neighbours)
+    lrd_ratios_array = [0] * len(neighbours)
     for i, neighbour in enumerate(neighbours):
         instances_without_instance = set(instances)
         instances_without_instance.discard(neighbour)
-        neighbour_lrd = local_reachability_density(min_pts, neighbour, instances_without_instance, **kwargs)
+        neighbour_lrd = local_reachability_density(
+            min_pts, neighbour, instances_without_instance, **kwargs
+        )
         lrd_ratios_array[i] = neighbour_lrd / instance_lrd
     return sum(lrd_ratios_array) / len(neighbours)
+
 
 def outliers(k, instances, **kwargs):
     """Simple procedure to identify outliers in the dataset."""
