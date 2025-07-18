@@ -5,8 +5,9 @@ from sklearn.manifold import TSNE
 from sksos import SOS
 from sklearn.neighbors import LocalOutlierFactor, NearestNeighbors
 from sklearn.svm import OneClassSVM
-from sklearn.cluster import DBSCAN
+from sklearn.cluster import DBSCAN, KMeans
 from sklearn.mixture import GaussianMixture
+from sklearn.covariance import EmpiricalCovariance
 
 from analytics.lof import LOF
 
@@ -241,3 +242,40 @@ class SklearnLOFDetector(Detector):
         lof = LocalOutlierFactor(novelty=True, **params)
         lof.fit(data)
         return lof.decision_function(data)
+
+
+class KMeansDetector(Detector):
+    def get_name(self):
+        return "KMeans"
+
+    def detect_anomalies(self, data, **params):
+        n_clusters = params.pop("n_clusters", 8)
+        kmeans = KMeans(n_clusters=n_clusters)
+        kmeans.fit(data)
+        distances = kmeans.transform(data)
+        min_dist = np.min(distances, axis=1)
+        return -min_dist
+
+
+class PCAReconstructionDetector(Detector):
+    def get_name(self):
+        return "PCA Reconstruction"
+
+    def detect_anomalies(self, data, **params):
+        n_components = params.pop("n_components", 0.95)
+        pca = PCA(n_components=n_components)
+        transformed = pca.fit_transform(data)
+        reconstructed = pca.inverse_transform(transformed)
+        errors = np.linalg.norm(data - reconstructed, axis=1)
+        return -errors
+
+
+class MahalanobisDetector(Detector):
+    def get_name(self):
+        return "Mahalanobis"
+
+    def detect_anomalies(self, data, **params):
+        cov = EmpiricalCovariance(**params)
+        cov.fit(data)
+        distances = cov.mahalanobis(data)
+        return -distances

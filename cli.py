@@ -14,6 +14,9 @@ from analytics.detector import (
     EllipticEnvelopeDetector,
     GaussianMixtureDetector,
     SklearnLOFDetector,
+    KMeansDetector,
+    PCAReconstructionDetector,
+    MahalanobisDetector,
     OneClassSVMDetector,
     DBSCANDetector,
 )
@@ -47,6 +50,9 @@ DETECTORS = {
     "elliptic_envelope": EllipticEnvelopeDetector(),
     "gaussian_mixture": GaussianMixtureDetector(),
     "sklearn_lof": SklearnLOFDetector(),
+    "kmeans": KMeansDetector(),
+    "pca_reconstruction": PCAReconstructionDetector(),
+    "mahalanobis": MahalanobisDetector(),
 }
 
 
