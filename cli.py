@@ -19,6 +19,8 @@ from analytics.detector import (
     MahalanobisDetector,
     OneClassSVMDetector,
     DBSCANDetector,
+    KDEDetector,
+    AutoencoderDetector,
 )
 from sklearn.metrics import roc_auc_score
 
@@ -53,6 +55,8 @@ DETECTORS = {
     "kmeans": KMeansDetector(),
     "pca_reconstruction": PCAReconstructionDetector(),
     "mahalanobis": MahalanobisDetector(),
+    "kde": KDEDetector(),
+    "autoencoder": AutoencoderDetector(),
 }
 
 

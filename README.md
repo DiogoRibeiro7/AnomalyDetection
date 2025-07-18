@@ -42,4 +42,4 @@ python cli.py --summary
 Available detectors include Isolation Forest, Stochastic Outlier Selection,
 K‑Nearest Neighbors, Histogram‑Based Outlier Score, One‑Class SVM, DBSCAN,
 Elliptic Envelope, Gaussian Mixture, Sklearn LOF, KMeans,
-PCA Reconstruction and Mahalanobis distance.
+PCA Reconstruction, Mahalanobis distance, Kernel Density, and Autoencoder-based detection.

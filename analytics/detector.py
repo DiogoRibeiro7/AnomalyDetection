@@ -3,11 +3,12 @@ from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
 from sklearn.manifold import TSNE
 from sksos import SOS
-from sklearn.neighbors import LocalOutlierFactor, NearestNeighbors
+from sklearn.neighbors import LocalOutlierFactor, NearestNeighbors, KernelDensity
 from sklearn.svm import OneClassSVM
 from sklearn.cluster import DBSCAN, KMeans
 from sklearn.mixture import GaussianMixture
 from sklearn.covariance import EmpiricalCovariance
+from sklearn.neural_network import MLPRegressor
 
 from analytics.lof import LOF
 
@@ -279,3 +280,27 @@ class MahalanobisDetector(Detector):
         cov.fit(data)
         distances = cov.mahalanobis(data)
         return -distances
+
+
+class KDEDetector(Detector):
+    def get_name(self):
+        return "Kernel Density"
+
+    def detect_anomalies(self, data, **params):
+        kde = KernelDensity(**params)
+        kde.fit(data)
+        log_probs = kde.score_samples(data)
+        return log_probs
+
+
+class AutoencoderDetector(Detector):
+    def get_name(self):
+        return "Autoencoder"
+
+    def detect_anomalies(self, data, **params):
+        hidden_layer_sizes = params.pop("hidden_layer_sizes", (32, 32, 32))
+        ae = MLPRegressor(hidden_layer_sizes=hidden_layer_sizes, max_iter=2000)
+        ae.fit(data, data)
+        reconstructed = ae.predict(data)
+        errors = np.linalg.norm(data - reconstructed, axis=1)
+        return -errors
