@@ -60,7 +60,13 @@ DETECTORS = {
 }
 
 
-def run_benchmarks(datasets=None):
+def run_benchmarks(datasets=None, detectors=None):
+    """Run benchmarks for the specified datasets and detectors."""
+    if detectors:
+        selected = [(n, DETECTORS[n]) for n in detectors if n in DETECTORS]
+    else:
+        selected = DETECTORS.items()
+
     for ds in load_all_datasets():
         name = ds["name"]
         if datasets and name not in datasets:
@@ -69,7 +75,7 @@ def run_benchmarks(datasets=None):
         features = ds["feature_cols"]
         labels = ds["label_col"]
         print(f"Dataset: {name}")
-        for det_name, detector in DETECTORS.items():
+        for det_name, detector in selected:
             scores = detector.detect_anomalies(df[features])
             auc = roc_auc_score(df[labels], scores)
             print(f"  {det_name}: AUC={auc:.3f}")
@@ -88,11 +94,16 @@ def main():
         action="store_true",
         help="Show dataset summaries instead of running benchmarks",
     )
+    parser.add_argument(
+        "--detectors",
+        nargs="*",
+        help="Detector names to run. Defaults to all",
+    )
     args = parser.parse_args()
     if args.summary:
         summarize_datasets(args.datasets)
     else:
-        run_benchmarks(args.datasets)
+        run_benchmarks(args.datasets, args.detectors)
 
 
 if __name__ == "__main__":

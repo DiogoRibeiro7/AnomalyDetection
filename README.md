@@ -33,6 +33,12 @@ Select specific datasets by name:
 python cli.py wisconsinBreast cardio
 ```
 
+Run only particular detectors:
+
+```bash
+python cli.py --detectors knn hbos
+```
+
 Show dataset summaries instead of running benchmarks:
 
 ```bash
