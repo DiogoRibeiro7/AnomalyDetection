@@ -21,6 +21,10 @@ from analytics.detector import (
     DBSCANDetector,
     KDEDetector,
     AutoencoderDetector,
+    COPODDetector,
+    FeatureBaggingDetector,
+    LODADetector,
+    ABODDetector,
 )
 from sklearn.metrics import roc_auc_score
 
@@ -57,6 +61,10 @@ DETECTORS = {
     "mahalanobis": MahalanobisDetector(),
     "kde": KDEDetector(),
     "autoencoder": AutoencoderDetector(),
+    "copod": COPODDetector(),
+    "feature_bagging": FeatureBaggingDetector(),
+    "loda": LODADetector(),
+    "abod": ABODDetector(),
 }
 
 

@@ -11,6 +11,7 @@ matplotlib = "*"
 pandas = "*"
 scikit-learn = "*"
 scikit-sos = "*"
+pyod = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"

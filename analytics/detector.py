@@ -9,6 +9,10 @@ from sklearn.cluster import DBSCAN, KMeans
 from sklearn.mixture import GaussianMixture
 from sklearn.covariance import EmpiricalCovariance
 from sklearn.neural_network import MLPRegressor
+from pyod.models.copod import COPOD
+from pyod.models.feature_bagging import FeatureBagging
+from pyod.models.loda import LODA
+from pyod.models.abod import ABOD
 
 from analytics.lof import LOF
 
@@ -304,3 +308,47 @@ class AutoencoderDetector(Detector):
         reconstructed = ae.predict(data)
         errors = np.linalg.norm(data - reconstructed, axis=1)
         return -errors
+
+
+class COPODDetector(Detector):
+    def get_name(self):
+        return "COPOD"
+
+    def detect_anomalies(self, data, **params):
+        model = COPOD(**params)
+        X = data.values if isinstance(data, pd.DataFrame) else data
+        model.fit(X)
+        return -model.decision_function(X)
+
+
+class FeatureBaggingDetector(Detector):
+    def get_name(self):
+        return "Feature Bagging"
+
+    def detect_anomalies(self, data, **params):
+        model = FeatureBagging(**params)
+        X = data.values if isinstance(data, pd.DataFrame) else data
+        model.fit(X)
+        return -model.decision_function(X)
+
+
+class LODADetector(Detector):
+    def get_name(self):
+        return "LODA"
+
+    def detect_anomalies(self, data, **params):
+        model = LODA(**params)
+        X = data.values if isinstance(data, pd.DataFrame) else data
+        model.fit(X)
+        return -model.decision_function(X)
+
+
+class ABODDetector(Detector):
+    def get_name(self):
+        return "ABOD"
+
+    def detect_anomalies(self, data, **params):
+        model = ABOD(**params)
+        X = data.values if isinstance(data, pd.DataFrame) else data
+        model.fit(X)
+        return -model.decision_function(X)
