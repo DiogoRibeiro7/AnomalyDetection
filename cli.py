@@ -119,8 +119,16 @@ def main():
         nargs="*",
         help="Detector names to run. Defaults to all",
     )
+    parser.add_argument(
+        "--config",
+        help="Path to YAML configuration specifying datasets and detectors",
+    )
     args = parser.parse_args()
-    if args.summary:
+    if args.config:
+        from benchmarks.config_benchmark import run_from_config
+
+        run_from_config(args.config)
+    elif args.summary:
         summarize_datasets(args.datasets)
     else:
         run_benchmarks(args.datasets, args.detectors)

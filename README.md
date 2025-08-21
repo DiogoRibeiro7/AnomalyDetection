@@ -49,6 +49,25 @@ Run only particular detectors:
 python cli.py --detectors knn hbos
 ```
 
+Benchmarks can also be driven by a YAML configuration file that lists the
+datasets and detectors to evaluate. An example configuration is provided in
+`benchmarks/benchmark_config.yml`:
+
+```yaml
+datasets:
+  - iris
+  - digits
+detectors:
+  - isolation_forest
+  - copod
+```
+
+Run benchmarks based on such a configuration with:
+
+```bash
+python cli.py --config benchmarks/benchmark_config.yml
+```
+
 Show dataset summaries instead of running benchmarks:
 
 ```bash

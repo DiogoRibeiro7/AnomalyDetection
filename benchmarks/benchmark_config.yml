@@ -1,0 +1,6 @@
+datasets:
+  - iris
+  - digits
+detectors:
+  - isolation_forest
+  - copod
