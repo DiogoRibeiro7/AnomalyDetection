@@ -528,3 +528,94 @@ class TransformerDetector(BaseDetector):
     def score(self, data):
         errors = np.linalg.norm(self.X - self.reconstructed, axis=(1, 2))
         return -errors
+
+
+class AnoGANDetector(BaseDetector):
+    def get_name(self):
+        return "AnoGAN"
+
+    def fit(self, data, **params):
+        try:
+            from pyod.models.anogan import AnoGAN
+        except Exception as e:  # pragma: no cover - dependency optional
+            raise ImportError("AnoGANDetector requires pyod and TensorFlow") from e
+        self.X = data.values if isinstance(data, pd.DataFrame) else data
+        self.model = AnoGAN(**params)
+        self.model.fit(self.X)
+        return self
+
+    def score(self, data):
+        X = data.values if isinstance(data, pd.DataFrame) else data
+        return -self.model.decision_function(X)
+
+
+class MADGANDetector(BaseDetector):
+    def get_name(self):
+        return "MAD-GAN"
+
+    def fit(
+        self,
+        data,
+        epochs=10,
+        latent_dim=16,
+        batch_size=32,
+        lr=1e-3,
+        **params,
+    ):
+        try:
+            import torch
+            from torch import nn, optim
+        except Exception as e:  # pragma: no cover - dependency optional
+            raise ImportError("MADGANDetector requires PyTorch") from e
+
+        X = data.values if isinstance(data, pd.DataFrame) else data
+        tensor = torch.tensor(X, dtype=torch.float32)
+        input_dim = tensor.size(1)
+
+        self.generator = nn.Sequential(
+            nn.Linear(latent_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, input_dim),
+        )
+        self.discriminator = nn.Sequential(
+            nn.Linear(input_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1),
+            nn.Sigmoid(),
+        )
+
+        g_opt = optim.Adam(self.generator.parameters(), lr=lr)
+        d_opt = optim.Adam(self.discriminator.parameters(), lr=lr)
+        bce = nn.BCELoss()
+        n = tensor.size(0)
+        for _ in range(epochs):
+            idx = torch.randperm(n)
+            for i in range(0, n, batch_size):
+                real = tensor[idx[i : i + batch_size]]
+                z = torch.randn(real.size(0), latent_dim)
+                fake = self.generator(z)
+
+                d_opt.zero_grad()
+                loss_real = bce(self.discriminator(real), torch.ones(real.size(0), 1))
+                loss_fake = bce(
+                    self.discriminator(fake.detach()), torch.zeros(real.size(0), 1)
+                )
+                (loss_real + loss_fake).backward()
+                d_opt.step()
+
+                g_opt.zero_grad()
+                fake = self.generator(z)
+                g_loss = bce(self.discriminator(fake), torch.ones(real.size(0), 1))
+                g_loss.backward()
+                g_opt.step()
+
+        return self
+
+    def score(self, data):
+        import torch
+
+        X = data.values if isinstance(data, pd.DataFrame) else data
+        tensor = torch.tensor(X, dtype=torch.float32)
+        with torch.no_grad():
+            scores = 1 - self.discriminator(tensor).squeeze().numpy()
+        return scores

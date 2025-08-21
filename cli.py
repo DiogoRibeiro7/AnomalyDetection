@@ -29,6 +29,8 @@ from analytics.detector import (
     VariationalAutoencoderDetector,
     LSTMAutoencoderDetector,
     TransformerDetector,
+    AnoGANDetector,
+    MADGANDetector,
 )
 from sklearn.metrics import roc_auc_score
 
@@ -73,6 +75,8 @@ DETECTORS = {
     "feature_bagging": FeatureBaggingDetector(),
     "loda": LODADetector(),
     "abod": ABODDetector(),
+    "anogan": AnoGANDetector(),
+    "madgan": MADGANDetector(),
 }
 
 
