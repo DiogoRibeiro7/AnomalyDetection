@@ -186,6 +186,64 @@ def load_arrhythmia():
     return pd.concat([X, y], axis=1), list(X.columns), y.name, "Arrhythmia"
 
 
+def load_iris():
+    """The classic Iris dataset from UCI.
+
+    For anomaly detection, the Setosa class is treated as the outlier class
+    while Versicolor and Virginica are considered inliers.
+    """
+
+    data = datasets.load_iris(as_frame=True)
+    df = data.frame
+    df["Class"] = (df["target"] != 0).astype(int)
+    df = df.drop(columns=["target"])
+    features = list(df.columns[:-1])
+    return df, features, "Class", "iris"
+
+
+def load_digits():
+    """The Digits dataset of handwritten images from scikit-learn.
+
+    Each image is flattened to a vector of pixel intensities. Digit "0" is
+    considered the outlier class while all other digits form the inliers.
+    """
+
+    data = datasets.load_digits(as_frame=True)
+    df = data.frame
+    df["Class"] = (df["target"] != 0).astype(int)
+    df = df.drop(columns=["target"])
+    features = list(df.columns[:-1])
+    return df, features, "Class", "digits"
+
+
+def load_synthetic_timeseries():
+    """Generate a simple synthetic time-series dataset.
+
+    The dataset contains sine-wave sequences as inliers and noisy sequences
+    as outliers. Each sample is represented as a fixed-length vector.
+    """
+
+    rng = np.random.default_rng(42)
+    n_inliers = 100
+    n_outliers = 20
+    length = 100
+
+    x = np.linspace(0, 4 * np.pi, length)
+    normal = np.array(
+        [np.sin(x) + 0.1 * rng.normal(size=length) for _ in range(n_inliers)]
+    )
+    anomalies = rng.normal(size=(n_outliers, length))
+
+    X = np.vstack([normal, anomalies])
+    y = np.hstack([np.ones(n_inliers), np.zeros(n_outliers)]).astype(int)
+
+    df = pd.DataFrame(X)
+    df["Class"] = y
+    features = list(df.columns[:-1])
+
+    return df, features, "Class", "syntheticTS"
+
+
 # def load_shuttle():
 #     """
 #     The original Statlog (Shuttle) dataset from UCI machine learning repository is a multi-class classification dataset

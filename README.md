@@ -35,6 +35,14 @@ Select specific datasets by name:
 python cli.py wisconsinBreast cardio
 ```
 
+The suite now includes additional tabular, image, and time-series datasets.
+For example, run benchmarks on the Iris (tabular), Digits (image), and
+syntheticTS (time-series) sets:
+
+```bash
+python cli.py iris digits syntheticTS
+```
+
 Run only particular detectors:
 
 ```bash
