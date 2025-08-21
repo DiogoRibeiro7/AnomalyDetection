@@ -1,4 +1,4 @@
-from sklearn.covariance import EllipticEnvelope
+from sklearn.covariance import EllipticEnvelope, EmpiricalCovariance
 from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
 from sklearn.manifold import TSNE
@@ -7,7 +7,6 @@ from sklearn.neighbors import LocalOutlierFactor, NearestNeighbors, KernelDensit
 from sklearn.svm import OneClassSVM
 from sklearn.cluster import DBSCAN, KMeans
 from sklearn.mixture import GaussianMixture
-from sklearn.covariance import EmpiricalCovariance
 from sklearn.neural_network import MLPRegressor
 from pyod.models.copod import COPOD
 from pyod.models.feature_bagging import FeatureBagging
@@ -15,6 +14,7 @@ from pyod.models.loda import LODA
 from pyod.models.abod import ABOD
 
 from analytics.lof import LOF
+from analytics.base import BaseDetector
 
 import numpy as np
 import pandas as pd
@@ -35,320 +35,365 @@ def _compute_variable_width_edges(feature, k):
     return edges
 
 
-class Detector(object):
-    def __init__(self):
-        pass
-
-    def get_name(self):
-        raise NotImplementedError("This function needs to be implemented")
-
-    def detect_anomalies(self, data, **params):
-        raise NotImplementedError("This function needs to be implemented")
-
-
-class PCADetector(object):
+class PCADetector(BaseDetector):
     def __init__(self, detector):
         self.detector = detector
+        self.pca = None
 
     def get_name(self):
-        raise NotImplementedError("This function needs to be implemented")
+        return f"PCA({self.detector.get_name()})"
 
-    def detect_anomalies(self, data, n_components=3, **params):
-        pca = PCA(n_components=n_components)
-        return self.detector.detect_anomalies(pca.fit_transform(data), **params)
+    def fit(self, data, n_components=3, **params):
+        self.pca = PCA(n_components=n_components)
+        transformed = self.pca.fit_transform(data)
+        self.detector.fit(transformed, **params)
+        return self
+
+    def score(self, data):
+        transformed = self.pca.transform(data)
+        return self.detector.score(transformed)
 
 
-class TSNEDetector(object):
+class TSNEDetector(BaseDetector):
     def __init__(self, detector):
         self.detector = detector
+        self.tsne = None
 
     def get_name(self):
-        raise NotImplementedError("This function needs to be implemented")
+        return f"TSNE({self.detector.get_name()})"
 
-    def detect_anomalies(self, data, n_components=3, **params):
-        tsne = TSNE(n_components=n_components)
-        return self.detector.detect_anomalies(tsne.fit_transform(data), **params)
+    def fit(self, data, n_components=3, **params):
+        self.tsne = TSNE(n_components=n_components)
+        transformed = self.tsne.fit_transform(data)
+        self.detector.fit(transformed, **params)
+        return self
+
+    def score(self, data):
+        transformed = self.tsne.transform(data)
+        return self.detector.score(transformed)
 
 
-class IsolationForestDetector(Detector):
+class IsolationForestDetector(BaseDetector):
     def get_name(self):
         return "Isolation Forest"
 
-    def detect_anomalies(self, data, **params):
-        iso_forest = IsolationForest(verbose=1)
-        iso_forest.set_params(**params)
-        iso_forest.fit(data)
-        return iso_forest.decision_function(
-            data
-        )  # The anomaly score. The lower, the more abnormal.
+    def fit(self, data, **params):
+        self.model = IsolationForest(verbose=1, **params)
+        self.model.fit(data)
+        return self
+
+    def score(self, data):
+        return self.model.decision_function(data)
 
 
-class LOFDetector(Detector):
+class LOFDetector(BaseDetector):
     def get_name(self):
         return "Local Outlier Factor"
 
-    def detect_anomalies(self, data, **params):
-        data = [tuple(x) for x in data.to_records(index=False)]
-        lof = LOF(data, normalize=False)
-        min_pts = 3
-        if "min_pts" in params:
-            min_pts = params["min_pts"]
+    def fit(self, data, normalize=False, **params):
+        X = [tuple(x) for x in data.to_records(index=False)]
+        self.lof = LOF(X, normalize=normalize)
+        self.data = X
+        self.min_pts = params.get("min_pts", 3)
+        return self
+
+    def score(self, data):
         return [
-            -lof.local_outlier_factor(min_pts, tuple(data[i])) for i in range(len(data))
+            -self.lof.local_outlier_factor(self.min_pts, tuple(self.data[i]))
+            for i in range(len(self.data))
         ]
 
 
-class SOSDetector(Detector):
+class SOSDetector(BaseDetector):
     def get_name(self):
         return "Stochastic Outlier Selection"
 
-    def detect_anomalies(self, data, **params):
-        perplexity = 30
-        metric = "euclidean"
-        eps = 1e-5
-        if "perplexity" in params:
-            perplexity = params["perplexity"]
-        if "metric" in params:
-            metric = params["metric"]
-        if "eps" in params:
-            eps = params["eps"]
-        sos = SOS(
-            perplexity=perplexity, metric=metric, eps=eps
-        )  # https://github.com/jeroenjanssens/scikit-sos
-        if isinstance(data, pd.DataFrame):
-            return -sos.predict(data.values)
-        else:
-            return -sos.predict(data)
+    def fit(self, data, **params):
+        perplexity = params.get("perplexity", 30)
+        metric = params.get("metric", "euclidean")
+        eps = params.get("eps", 1e-5)
+        self.model = SOS(perplexity=perplexity, metric=metric, eps=eps)
+        self.X = data.values if isinstance(data, pd.DataFrame) else data
+        return self
+
+    def score(self, data=None):
+        X = (
+            self.X
+            if data is None
+            else (data.values if isinstance(data, pd.DataFrame) else data)
+        )
+        return -self.model.predict(X)
 
 
-class EnsembleDetector(Detector):
+class EnsembleDetector(BaseDetector):
     def get_name(self):
         return "Ensembled detector"
 
-    def detect_anomalies(self, data, **params):
-        knn_scores = KNNDetector().detect_anomalies(data)
-        sos_scores = SOSDetector().detect_anomalies(data)
-        hbos_scores = HBOSDetector().detect_anomalies(data)
+    def fit(self, data, **params):
+        self.knn = KNNDetector().fit(data, **params)
+        self.sos = SOSDetector().fit(data, **params)
+        self.hbos = HBOSDetector().fit(data, **params)
+        return self
+
+    def score(self, data):
+        knn_scores = self.knn.score(data)
+        sos_scores = self.sos.score(data)
+        hbos_scores = self.hbos.score(data)
         scores = [knn_scores, sos_scores, hbos_scores]
 
         norm_scores = []
         for score in scores:
-            norm_score = np.array(score)
-            _max = max(norm_score)
-            norm_score /= _max
-            norm_scores.append(norm_score)
+            arr = np.array(score)
+            arr /= arr.max()
+            norm_scores.append(arr)
 
         return -np.sum(np.array(norm_scores), axis=0)
 
 
-class HBOSDetector(Detector):
+class HBOSDetector(BaseDetector):
     def get_name(self):
         return "Histogram-Based Outlier Score"
 
-    def detect_anomalies(self, data, **params):
-        # http://www.dfki.de/KI2012/PosterDemoTrack/ki2012pd13.pdf
-
-        k = 3  # How many bins do we use in each histogram?
-        if "k" in params:
-            k = params["k"]
-
+    def fit(self, data, **params):
+        k = params.get("k", 3)
         if isinstance(data, pd.DataFrame):
             data = data.to_numpy()
-
-        # Use variable-width binning as proposed in the HBOS paper. Each bin
-        # contains approximately the same number of samples. This is
-        # implemented by computing the quantiles for every feature and using
-        # them as bin edges.
-        histograms = {}
+        self.histograms = {}
         for i in range(data.shape[1]):
             feature = data[:, i]
             edges = _compute_variable_width_edges(feature, k)
-            histograms[i] = np.histogram(feature, bins=edges, density=True)
+            self.histograms[i] = np.histogram(feature, bins=edges, density=True)
+        return self
 
+    def score(self, data):
+        if isinstance(data, pd.DataFrame):
+            data = data.to_numpy()
         scores = []
         for i in range(data.shape[0]):
             record = data[i, :]
-            score = 0
+            s = 0
             for j in range(len(record)):
-                histogram = histograms[j]
+                histogram = self.histograms[j]
                 for k in range(len(histogram[1]) - 1):
                     if histogram[1][k] <= record[j] < histogram[1][k + 1]:
-                        score += np.log(histogram[0][k])
+                        s += np.log(histogram[0][k])
                         break
-            scores.append(score)
-
+            scores.append(s)
         return scores
 
 
-class KNNDetector(Detector):
+class KNNDetector(BaseDetector):
     def get_name(self):
         return "K-Nearest Neighbors"
 
-    def detect_anomalies(self, data, **params):
-        k = 3
-        if "k" in params:
-            k = params["k"]
-        distances, indices = (
-            NearestNeighbors(n_neighbors=k + 1).fit(data).kneighbors(data)
-        )
+    def fit(self, data, **params):
+        self.k = params.get("k", 3)
+        self.neigh = NearestNeighbors(n_neighbors=self.k + 1).fit(data)
+        return self
 
+    def score(self, data):
+        distances, _ = self.neigh.kneighbors(data)
         return -np.sum(distances, axis=1)
 
 
-class OneClassSVMDetector(Detector):
+class OneClassSVMDetector(BaseDetector):
     def get_name(self):
         return "One-Class SVM"
 
-    def detect_anomalies(self, data, **params):
-        svm = OneClassSVM(**params)
-        svm.fit(data)
-        return svm.decision_function(data)
+    def fit(self, data, **params):
+        self.model = OneClassSVM(**params)
+        self.model.fit(data)
+        return self
+
+    def score(self, data):
+        return self.model.decision_function(data)
 
 
-class DBSCANDetector(Detector):
+class DBSCANDetector(BaseDetector):
     def get_name(self):
         return "DBSCAN"
 
-    def detect_anomalies(self, data, **params):
-        db = DBSCAN(**params)
-        labels = db.fit_predict(data)
+    def fit(self, data, **params):
+        self.model = DBSCAN(**params)
+        self.model.fit(data)
+        return self
+
+    def score(self, data):
+        labels = self.model.fit_predict(data)
         return np.where(labels == -1, 1.0, 0.0)
 
 
-class EllipticEnvelopeDetector(Detector):
-    # Important! assumes gaussian distributions of data
-    # Important! assumes that the number of outliers in known in advance (contamination param)
-    # Important! n_samples > n_features ** 2  (apply PCA if this is not the case)
+class EllipticEnvelopeDetector(BaseDetector):
     def get_name(self):
         return "Elliptic Envelope"
 
-    def detect_anomalies(self, data, **params):
-        envelope = EllipticEnvelope(**params)
-        envelope.fit(data)
-        return envelope.decision_function(data)
+    def fit(self, data, **params):
+        self.model = EllipticEnvelope(**params)
+        self.model.fit(data)
+        return self
+
+    def score(self, data):
+        return self.model.decision_function(data)
 
 
-class GaussianMixtureDetector(Detector):
+class GaussianMixtureDetector(BaseDetector):
     def get_name(self):
         return "Gaussian Mixture"
 
-    def detect_anomalies(self, data, **params):
-        gmm = GaussianMixture(**params)
-        gmm.fit(data)
-        # Higher negative log likelihood indicates more anomalous points
-        return -gmm.score_samples(data)
+    def fit(self, data, **params):
+        self.model = GaussianMixture(**params)
+        self.model.fit(data)
+        return self
+
+    def score(self, data):
+        return -self.model.score_samples(data)
 
 
-class SklearnLOFDetector(Detector):
+class SklearnLOFDetector(BaseDetector):
     def get_name(self):
         return "Sklearn LOF"
 
-    def detect_anomalies(self, data, **params):
-        lof = LocalOutlierFactor(novelty=True, **params)
-        lof.fit(data)
-        return lof.decision_function(data)
+    def fit(self, data, **params):
+        self.model = LocalOutlierFactor(novelty=True, **params)
+        self.model.fit(data)
+        return self
+
+    def score(self, data):
+        return self.model.decision_function(data)
 
 
-class KMeansDetector(Detector):
+class KMeansDetector(BaseDetector):
     def get_name(self):
         return "KMeans"
 
-    def detect_anomalies(self, data, **params):
-        n_clusters = params.pop("n_clusters", 8)
-        kmeans = KMeans(n_clusters=n_clusters)
-        kmeans.fit(data)
-        distances = kmeans.transform(data)
+    def fit(self, data, **params):
+        self.n_clusters = params.pop("n_clusters", 8)
+        self.kmeans = KMeans(n_clusters=self.n_clusters)
+        self.kmeans.fit(data)
+        return self
+
+    def score(self, data):
+        distances = self.kmeans.transform(data)
         min_dist = np.min(distances, axis=1)
         return -min_dist
 
 
-class PCAReconstructionDetector(Detector):
+class PCAReconstructionDetector(BaseDetector):
     def get_name(self):
         return "PCA Reconstruction"
 
-    def detect_anomalies(self, data, **params):
-        n_components = params.pop("n_components", 0.95)
-        pca = PCA(n_components=n_components)
-        transformed = pca.fit_transform(data)
-        reconstructed = pca.inverse_transform(transformed)
-        errors = np.linalg.norm(data - reconstructed, axis=1)
+    def fit(self, data, **params):
+        self.n_components = params.pop("n_components", 0.95)
+        self.pca = PCA(n_components=self.n_components)
+        transformed = self.pca.fit_transform(data)
+        self.reconstructed = self.pca.inverse_transform(transformed)
+        self.data = data
+        return self
+
+    def score(self, data):
+        errors = np.linalg.norm(self.data - self.reconstructed, axis=1)
         return -errors
 
 
-class MahalanobisDetector(Detector):
+class MahalanobisDetector(BaseDetector):
     def get_name(self):
         return "Mahalanobis"
 
-    def detect_anomalies(self, data, **params):
-        cov = EmpiricalCovariance(**params)
-        cov.fit(data)
-        distances = cov.mahalanobis(data)
+    def fit(self, data, **params):
+        self.cov = EmpiricalCovariance(**params)
+        self.cov.fit(data)
+        return self
+
+    def score(self, data):
+        distances = self.cov.mahalanobis(data)
         return -distances
 
 
-class KDEDetector(Detector):
+class KDEDetector(BaseDetector):
     def get_name(self):
         return "Kernel Density"
 
-    def detect_anomalies(self, data, **params):
-        kde = KernelDensity(**params)
-        kde.fit(data)
-        log_probs = kde.score_samples(data)
-        return log_probs
+    def fit(self, data, **params):
+        self.kde = KernelDensity(**params)
+        self.kde.fit(data)
+        return self
+
+    def score(self, data):
+        return self.kde.score_samples(data)
 
 
-class AutoencoderDetector(Detector):
+class AutoencoderDetector(BaseDetector):
     def get_name(self):
         return "Autoencoder"
 
-    def detect_anomalies(self, data, **params):
+    def fit(self, data, **params):
         hidden_layer_sizes = params.pop("hidden_layer_sizes", (32, 32, 32))
-        ae = MLPRegressor(hidden_layer_sizes=hidden_layer_sizes, max_iter=2000)
-        ae.fit(data, data)
-        reconstructed = ae.predict(data)
-        errors = np.linalg.norm(data - reconstructed, axis=1)
+        self.model = MLPRegressor(hidden_layer_sizes=hidden_layer_sizes, max_iter=2000)
+        self.model.fit(data, data)
+        self.data = data
+        return self
+
+    def score(self, data):
+        reconstructed = self.model.predict(self.data)
+        errors = np.linalg.norm(self.data - reconstructed, axis=1)
         return -errors
 
 
-class COPODDetector(Detector):
+class COPODDetector(BaseDetector):
     def get_name(self):
         return "COPOD"
 
-    def detect_anomalies(self, data, **params):
-        model = COPOD(**params)
+    def fit(self, data, **params):
+        self.model = COPOD(**params)
+        self.X = data.values if isinstance(data, pd.DataFrame) else data
+        self.model.fit(self.X)
+        return self
+
+    def score(self, data):
         X = data.values if isinstance(data, pd.DataFrame) else data
-        model.fit(X)
-        return -model.decision_function(X)
+        return -self.model.decision_function(X)
 
 
-class FeatureBaggingDetector(Detector):
+class FeatureBaggingDetector(BaseDetector):
     def get_name(self):
         return "Feature Bagging"
 
-    def detect_anomalies(self, data, **params):
-        model = FeatureBagging(**params)
+    def fit(self, data, **params):
+        self.model = FeatureBagging(**params)
+        self.X = data.values if isinstance(data, pd.DataFrame) else data
+        self.model.fit(self.X)
+        return self
+
+    def score(self, data):
         X = data.values if isinstance(data, pd.DataFrame) else data
-        model.fit(X)
-        return -model.decision_function(X)
+        return -self.model.decision_function(X)
 
 
-class LODADetector(Detector):
+class LODADetector(BaseDetector):
     def get_name(self):
         return "LODA"
 
-    def detect_anomalies(self, data, **params):
-        model = LODA(**params)
+    def fit(self, data, **params):
+        self.model = LODA(**params)
+        self.X = data.values if isinstance(data, pd.DataFrame) else data
+        self.model.fit(self.X)
+        return self
+
+    def score(self, data):
         X = data.values if isinstance(data, pd.DataFrame) else data
-        model.fit(X)
-        return -model.decision_function(X)
+        return -self.model.decision_function(X)
 
 
-class ABODDetector(Detector):
+class ABODDetector(BaseDetector):
     def get_name(self):
         return "ABOD"
 
-    def detect_anomalies(self, data, **params):
-        model = ABOD(**params)
+    def fit(self, data, **params):
+        self.model = ABOD(**params)
+        self.X = data.values if isinstance(data, pd.DataFrame) else data
+        self.model.fit(self.X)
+        return self
+
+    def score(self, data):
         X = data.values if isinstance(data, pd.DataFrame) else data
-        model.fit(X)
-        return -model.decision_function(X)
+        return -self.model.decision_function(X)
