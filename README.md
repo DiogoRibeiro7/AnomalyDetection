@@ -80,3 +80,6 @@ Elliptic Envelope, Gaussian Mixture, Sklearn LOF, KMeans,
 PCA Reconstruction, Mahalanobis distance, Kernel Density, Autoencoder,
  Denoising Autoencoder, Variational Autoencoder, LSTM Autoencoder, Transformer,
  COPOD, Feature Bagging, LODA, ABOD, AnoGAN, and MAD-GAN.
+
+## Contributing
+Contributions to expand the detector library are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on adding new algorithms.
