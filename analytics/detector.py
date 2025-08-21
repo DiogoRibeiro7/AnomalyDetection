@@ -397,3 +397,134 @@ class ABODDetector(BaseDetector):
     def score(self, data):
         X = data.values if isinstance(data, pd.DataFrame) else data
         return -self.model.decision_function(X)
+
+
+class DenoisingAutoencoderDetector(BaseDetector):
+    def get_name(self):
+        return "Denoising Autoencoder"
+
+    def fit(self, data, noise_level=0.1, **params):
+        hidden = params.pop("hidden_layer_sizes", (32, 32, 32))
+        noisy = data + noise_level * np.random.normal(size=data.shape)
+        self.model = MLPRegressor(hidden_layer_sizes=hidden, max_iter=2000)
+        self.model.fit(noisy, data)
+        self.data = data
+        return self
+
+    def score(self, data):
+        reconstructed = self.model.predict(self.data)
+        errors = np.linalg.norm(self.data - reconstructed, axis=1)
+        return -errors
+
+
+class VariationalAutoencoderDetector(BaseDetector):
+    def get_name(self):
+        return "Variational Autoencoder"
+
+    def fit(self, data, **params):
+        try:
+            from pyod.models.vae import VAE
+        except Exception as e:  # pragma: no cover - dependency optional
+            raise ImportError(
+                "VariationalAutoencoderDetector requires pyod and TensorFlow"
+            ) from e
+        self.X = data.values if isinstance(data, pd.DataFrame) else data
+        self.model = VAE(**params)
+        self.model.fit(self.X)
+        return self
+
+    def score(self, data):
+        X = data.values if isinstance(data, pd.DataFrame) else data
+        return -self.model.decision_function(X)
+
+
+class LSTMAutoencoderDetector(BaseDetector):
+    def get_name(self):
+        return "LSTM Autoencoder"
+
+    def fit(self, data, epochs=10, hidden_size=8, lr=1e-3, **params):
+        try:
+            import torch
+            from torch import nn, optim
+        except Exception as e:  # pragma: no cover - dependency optional
+            raise ImportError("LSTMAutoencoderDetector requires PyTorch") from e
+        X = data.values if isinstance(data, pd.DataFrame) else data
+        tensor = torch.tensor(X, dtype=torch.float32).unsqueeze(1)
+
+        class LSTMAE(nn.Module):
+            def __init__(self, input_dim, hidden_dim):
+                super().__init__()
+                self.encoder = nn.LSTM(input_dim, hidden_dim, batch_first=True)
+                self.decoder = nn.LSTM(hidden_dim, input_dim, batch_first=True)
+
+            def forward(self, x):
+                _, (h, _) = self.encoder(x)
+                dec_input = h.repeat(x.size(1), 1, 1).transpose(0, 1)
+                out, _ = self.decoder(dec_input)
+                return out
+
+        model = LSTMAE(tensor.size(-1), hidden_size)
+        optimiz = optim.Adam(model.parameters(), lr=lr)
+        loss_fn = nn.MSELoss()
+        for _ in range(epochs):
+            optimiz.zero_grad()
+            output = model(tensor)
+            loss = loss_fn(output, tensor)
+            loss.backward()
+            optimiz.step()
+
+        self.reconstructed = model(tensor).detach().numpy()
+        self.X = tensor.detach().numpy()
+        return self
+
+    def score(self, data):
+        errors = np.linalg.norm(self.X - self.reconstructed, axis=(1, 2))
+        return -errors
+
+
+class TransformerDetector(BaseDetector):
+    def get_name(self):
+        return "Transformer"
+
+    def fit(self, data, epochs=10, d_model=16, nhead=2, lr=1e-3, **params):
+        try:
+            import torch
+            from torch import nn, optim
+        except Exception as e:  # pragma: no cover - dependency optional
+            raise ImportError("TransformerDetector requires PyTorch") from e
+        X = data.values if isinstance(data, pd.DataFrame) else data
+        tensor = torch.tensor(X, dtype=torch.float32).unsqueeze(1)
+
+        class TransAE(nn.Module):
+            def __init__(self, input_dim, d_model, nhead):
+                super().__init__()
+                self.input = nn.Linear(input_dim, d_model)
+                enc_layer = nn.TransformerEncoderLayer(d_model, nhead, batch_first=True)
+                self.encoder = nn.TransformerEncoder(enc_layer, num_layers=1)
+                dec_layer = nn.TransformerDecoderLayer(d_model, nhead, batch_first=True)
+                self.decoder = nn.TransformerDecoder(dec_layer, num_layers=1)
+                self.output = nn.Linear(d_model, input_dim)
+
+            def forward(self, x):
+                z = self.input(x)
+                h = self.encoder(z)
+                dec = self.decoder(h, h)
+                return self.output(dec)
+
+        model = TransAE(tensor.size(-1), d_model, nhead)
+        optimiz = optim.Adam(model.parameters(), lr=lr)
+        loss_fn = nn.MSELoss()
+        for _ in range(epochs):
+            optimiz.zero_grad()
+            output = model(tensor)
+            loss = loss_fn(output, tensor)
+            loss.backward()
+            optimiz.step()
+
+        self.reconstructed = model(tensor).detach().numpy()
+        self.X = tensor.detach().numpy()
+        return self
+
+    def score(self, data):
+        errors = np.linalg.norm(self.X - self.reconstructed, axis=(1, 2))
+        return -errors

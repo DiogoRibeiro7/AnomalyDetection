@@ -51,4 +51,5 @@ Available detectors include Isolation Forest, Stochastic Outlier Selection,
 K‑Nearest Neighbors, Histogram‑Based Outlier Score, One‑Class SVM, DBSCAN,
 Elliptic Envelope, Gaussian Mixture, Sklearn LOF, KMeans,
 PCA Reconstruction, Mahalanobis distance, Kernel Density, Autoencoder,
+Denoising Autoencoder, Variational Autoencoder, LSTM Autoencoder, Transformer,
 COPOD, Feature Bagging, LODA, and ABOD.

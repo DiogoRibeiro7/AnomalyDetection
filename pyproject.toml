@@ -12,6 +12,8 @@ pandas = "*"
 scikit-learn = "*"
 scikit-sos = "*"
 pyod = "*"
+torch = "*"
+tensorflow = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
