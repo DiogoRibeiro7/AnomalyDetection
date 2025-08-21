@@ -19,6 +19,8 @@ configuration.
 - Add caching to LOF calculations (completed).
 - Provide a small CLI for running benchmarks on the included datasets (completed).
 - Add a dataset summary option to the CLI (completed).
+- Expand the detector library with additional algorithms and deep
+  learning approaches (see `ROADMAP.md`).
 
 ## Usage
 Run all benchmarks:
