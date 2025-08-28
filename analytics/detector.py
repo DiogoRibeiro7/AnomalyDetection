@@ -14,6 +14,7 @@ from pyod.models.loda import LODA
 from pyod.models.abod import ABOD
 from sklearn.preprocessing import StandardScaler
 import networkx as nx
+from river import anomaly
 
 from analytics.lof import LOF
 from analytics.base import BaseDetector
@@ -399,6 +400,50 @@ class ABODDetector(BaseDetector):
     def score(self, data):
         X = data.values if isinstance(data, pd.DataFrame) else data
         return -self.model.decision_function(X)
+
+
+class OnlineIsolationForestDetector(BaseDetector):
+    """Streaming Isolation Forest using River's incremental implementation."""
+
+    def get_name(self):
+        return "Online Isolation Forest"
+
+    def fit(self, data, **params):
+        self.model = anomaly.IsolationForest(**params)
+        for row in self._to_dicts(data):
+            self.model.learn_one(row)
+        return self
+
+    def score(self, data):
+        return [self.model.score_one(row) for row in self._to_dicts(data)]
+
+    def _to_dicts(self, data):
+        if isinstance(data, pd.DataFrame):
+            return data.to_dict(orient="records")
+        arr = data if isinstance(data, np.ndarray) else np.asarray(data)
+        return [dict(enumerate(row)) for row in arr]
+
+
+class RandomCutForestDetector(BaseDetector):
+    """Random Cut Forest for streaming anomaly detection."""
+
+    def get_name(self):
+        return "Random Cut Forest"
+
+    def fit(self, data, **params):
+        self.model = anomaly.RandomCutForest(**params)
+        for row in self._to_dicts(data):
+            self.model.learn_one(row)
+        return self
+
+    def score(self, data):
+        return [self.model.score_one(row) for row in self._to_dicts(data)]
+
+    def _to_dicts(self, data):
+        if isinstance(data, pd.DataFrame):
+            return data.to_dict(orient="records")
+        arr = data if isinstance(data, np.ndarray) else np.asarray(data)
+        return [dict(enumerate(row)) for row in arr]
 
 
 class DenoisingAutoencoderDetector(BaseDetector):
