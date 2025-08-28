@@ -5,74 +5,102 @@ Use ``--summary`` to display information about the available datasets instead
 of running the detectors.
 """
 import argparse
-from benchmarks.load_all_datasets import load_all_datasets
-from analytics.detector import (
-    IsolationForestDetector,
-    SOSDetector,
-    KNNDetector,
-    HBOSDetector,
-    EllipticEnvelopeDetector,
-    GaussianMixtureDetector,
-    SklearnLOFDetector,
-    KMeansDetector,
-    PCAReconstructionDetector,
-    MahalanobisDetector,
-    OneClassSVMDetector,
-    DBSCANDetector,
-    KDEDetector,
-    AutoencoderDetector,
-)
+from collections import Counter
+from importlib import import_module
+
+import pandas as pd
+import networkx as nx
 from sklearn.metrics import roc_auc_score
+
+from benchmarks.load_all_datasets import load_all_datasets
+from analytics.detectors import (
+    DETECTOR_REGISTRY,
+    get_detector_class,
+)
 
 
 def summarize_datasets(datasets=None):
     """Print basic information about the available datasets."""
-    for ds in load_all_datasets():
+    for ds in load_all_datasets(datasets):
         name = ds["name"]
         if datasets and name not in datasets:
             continue
         df = ds["dataframe"]
         features = ds["feature_cols"]
         labels = ds["label_col"]
-        counts = df[labels].value_counts().to_dict()
         print(f"Dataset: {name}")
-        print(f"  samples: {len(df)}")
-        print(f"  features: {len(features)}")
-        print(f"  label distribution: {counts}")
+        if isinstance(df, pd.DataFrame):
+            counts = df[labels].value_counts().to_dict()
+            print(f"  samples: {len(df)}")
+            print(f"  features: {len(features)}")
+            print(f"  label distribution: {counts}")
+        else:
+            counts = Counter(nx.get_node_attributes(df, labels).values())
+            print(f"  nodes: {df.number_of_nodes()}")
+            print(f"  edges: {df.number_of_edges()}")
+            print(f"  label distribution: {dict(counts)}")
         print()
 
 
-DETECTORS = {
-    "isolation_forest": IsolationForestDetector(),
-    "sos": SOSDetector(),
-    "knn": KNNDetector(),
-    "hbos": HBOSDetector(),
-    "ocsvm": OneClassSVMDetector(),
-    "dbscan": DBSCANDetector(),
-    "elliptic_envelope": EllipticEnvelopeDetector(),
-    "gaussian_mixture": GaussianMixtureDetector(),
-    "sklearn_lof": SklearnLOFDetector(),
-    "kmeans": KMeansDetector(),
-    "pca_reconstruction": PCAReconstructionDetector(),
-    "mahalanobis": MahalanobisDetector(),
-    "kde": KDEDetector(),
-    "autoencoder": AutoencoderDetector(),
-}
+# Detector instances are created on demand to avoid importing optional
+# dependencies unless required.
 
 
-def run_benchmarks(datasets=None):
-    for ds in load_all_datasets():
+ALLOWED_PLUGIN_PREFIX = "plugins."
+
+
+def load_plugins(modules):
+    """Import plugin modules while restricting the allowed namespace."""
+    for mod in modules:
+        if not mod.startswith(ALLOWED_PLUGIN_PREFIX):
+            raise ValueError(
+                f"Plugin '{mod}' is not allowed; must start with '{ALLOWED_PLUGIN_PREFIX}'"
+            )
+        import_module(mod)
+
+
+def run_benchmarks(datasets=None, detectors=None, leaderboard=None):
+    """Run benchmarks for the specified datasets and detectors.
+
+    Parameters
+    ----------
+    datasets: list[str] | None
+        Dataset names to evaluate. ``None`` evaluates all available datasets.
+    detectors: list[str] | None
+        Detector names to evaluate. ``None`` evaluates all registered detectors.
+    leaderboard: str | None
+        Optional path to a CSV file where results are appended.
+    """
+    if detectors:
+        selected = [n for n in detectors if n in DETECTOR_REGISTRY]
+    else:
+        selected = list(DETECTOR_REGISTRY)
+
+    for ds in load_all_datasets(datasets):
         name = ds["name"]
-        if datasets and name not in datasets:
-            continue
         df = ds["dataframe"]
         features = ds["feature_cols"]
         labels = ds["label_col"]
         print(f"Dataset: {name}")
-        for det_name, detector in DETECTORS.items():
-            scores = detector.detect_anomalies(df[features])
-            auc = roc_auc_score(df[labels], scores)
-            print(f"  {det_name}: AUC={auc:.3f}")
+        for det_name in selected:
+            detector = get_detector_class(det_name)()
+            try:
+                if isinstance(df, pd.DataFrame):
+                    scores = detector.detect_anomalies(df[features])
+                    y_true = df[labels]
+                else:
+                    scores = detector.detect_anomalies(df)
+                    y_true = [data[labels] for _, data in df.nodes(data=True)]
+                auc = roc_auc_score(y_true, scores)
+                print(f"  {det_name}: AUC={auc:.3f}")
+                if leaderboard:
+                    import csv
+
+                    with open(leaderboard, "a", newline="", encoding="utf-8") as fh:
+                        writer = csv.writer(fh)
+                        writer.writerow([name, det_name, auc])
+            except Exception as e:  # pragma: no cover - benchmarking utility
+                print(f"  {det_name}: skipped ({e})")
         print()
 
 
@@ -88,11 +116,35 @@ def main():
         action="store_true",
         help="Show dataset summaries instead of running benchmarks",
     )
+    parser.add_argument(
+        "--detectors",
+        nargs="*",
+        help="Detector names to run. Defaults to all",
+    )
+    parser.add_argument(
+        "--config",
+        help="Path to YAML configuration specifying datasets and detectors",
+    )
+    parser.add_argument(
+        "--plugins",
+        nargs="*",
+        help="Plugin modules providing additional detectors",
+    )
+    parser.add_argument(
+        "--leaderboard",
+        help="CSV file path to append benchmark results",
+    )
     args = parser.parse_args()
-    if args.summary:
+    if args.plugins:
+        load_plugins(args.plugins)
+    if args.config:
+        from benchmarks.config_benchmark import run_from_config
+
+        run_from_config(args.config, leaderboard=args.leaderboard)
+    elif args.summary:
         summarize_datasets(args.datasets)
     else:
-        run_benchmarks(args.datasets)
+        run_benchmarks(args.datasets, args.detectors, leaderboard=args.leaderboard)
 
 
 if __name__ == "__main__":
