@@ -24,4 +24,18 @@ coordinate their efforts.
 - Publish contribution guidelines to make it easy for the community to add new
   algorithms.
 
+## Phase 4 – Specialized domains and streaming data
+- Add graph and network anomaly detectors to handle structured data.
+- Integrate streaming/online algorithms such as Online Isolation Forest and
+  Random Cut Forest.
+- Explore forecasting-based approaches (e.g., ARIMA, Prophet) for time-series
+  anomaly detection.
+
+## Phase 5 – Automation and scalability
+- Implement hyperparameter search utilities to standardize detector tuning.
+- Develop a plugin interface so external libraries can register detectors
+  dynamically.
+- Publish benchmark leaderboards with reproducible configurations to guide
+  community contributions.
+
 Contributions are welcome at every stage of this roadmap.
