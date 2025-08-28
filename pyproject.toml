@@ -17,6 +17,8 @@ tensorflow = "*"
 pyyaml = "*"
 networkx = "*"
 river = "*"
+statsmodels = "*"
+prophet = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"

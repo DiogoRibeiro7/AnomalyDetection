@@ -38,6 +38,8 @@ from analytics.detector import (
     MADGANDetector,
     DegreeCentralityDetector,
     GraphIsolationForestDetector,
+    ARIMADetector,
+    ProphetDetector,
 )
 from sklearn.metrics import roc_auc_score
 
@@ -94,6 +96,8 @@ DETECTORS = {
     "madgan": MADGANDetector(),
     "degree_centrality": DegreeCentralityDetector(),
     "graph_isolation_forest": GraphIsolationForestDetector(),
+    "arima": ARIMADetector(),
+    "prophet": ProphetDetector(),
 }
 
 

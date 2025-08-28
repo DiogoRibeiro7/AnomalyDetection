@@ -709,3 +709,57 @@ class GraphIsolationForestDetector(BaseDetector):
     def score(self, graph):
         X = self._graph_features(graph)
         return self.model.decision_function(X)
+
+
+class ARIMADetector(BaseDetector):
+    """Detect anomalies using ARIMA forecast residuals."""
+
+    def get_name(self):
+        return "ARIMA"
+
+    def fit(self, data, order=(5, 1, 0), **params):
+        from statsmodels.tsa.arima.model import ARIMA
+
+        X = data.values if isinstance(data, pd.DataFrame) else np.asarray(data)
+        if X.ndim == 1:
+            X = X.reshape(1, -1)
+        self.scores = []
+        for series in X:
+            model = ARIMA(series, order=order).fit()
+            pred = model.predict(start=0, end=len(series) - 1)
+            resid = np.abs(series - pred)
+            self.scores.append(resid.mean())
+        return self
+
+    def score(self, data):
+        return np.array(self.scores)
+
+
+class ProphetDetector(BaseDetector):
+    """Use Prophet forecasting to score time-series anomalies."""
+
+    def get_name(self):
+        return "Prophet"
+
+    def fit(self, data, **params):
+        from prophet import Prophet
+
+        X = data.values if isinstance(data, pd.DataFrame) else np.asarray(data)
+        if X.ndim == 1:
+            X = X.reshape(1, -1)
+        self.scores = []
+        for series in X:
+            df = pd.DataFrame(
+                {
+                    "ds": pd.date_range(start="2000", periods=len(series), freq="D"),
+                    "y": series,
+                }
+            )
+            model = Prophet(**params).fit(df)
+            forecast = model.predict(df)
+            resid = np.abs(df["y"].values - forecast["yhat"].values)
+            self.scores.append(resid.mean())
+        return self
+
+    def score(self, data):
+        return np.array(self.scores)
