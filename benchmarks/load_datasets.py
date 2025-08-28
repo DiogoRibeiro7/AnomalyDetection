@@ -12,6 +12,7 @@ from sklearn import datasets
 import pandas as pd
 import numpy as np
 import os
+import networkx as nx
 
 from sklearn.preprocessing import LabelEncoder
 
@@ -242,6 +243,18 @@ def load_synthetic_timeseries():
     features = list(df.columns[:-1])
 
     return df, features, "Class", "syntheticTS"
+
+
+def load_karate_club_graph():
+    """Zachary's Karate Club social network.
+
+    Nodes in the 'Mr. Hi' community are treated as anomalies.
+    """
+
+    G = nx.karate_club_graph()
+    for n, data in G.nodes(data=True):
+        data["label"] = 1 if data["club"] == "Mr. Hi" else 0
+    return G, None, "label", "karateClubGraph"
 
 
 # def load_shuttle():

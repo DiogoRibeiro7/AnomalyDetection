@@ -15,6 +15,7 @@ pyod = "*"
 torch = "*"
 tensorflow = "*"
 pyyaml = "*"
+networkx = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"

@@ -35,12 +35,12 @@ Select specific datasets by name:
 python cli.py wisconsinBreast cardio
 ```
 
-The suite now includes additional tabular, image, and time-series datasets.
-For example, run benchmarks on the Iris (tabular), Digits (image), and
-syntheticTS (time-series) sets:
+The suite now includes tabular, image, time-series, and graph datasets.
+For example, run benchmarks on the Iris (tabular), Digits (image),
+syntheticTS (time-series), and karateClubGraph (graph) sets:
 
 ```bash
-python cli.py iris digits syntheticTS
+python cli.py iris digits syntheticTS karateClubGraph
 ```
 
 Run only particular detectors:
@@ -79,7 +79,8 @@ K‑Nearest Neighbors, Histogram‑Based Outlier Score, One‑Class SVM, DBSCAN,
 Elliptic Envelope, Gaussian Mixture, Sklearn LOF, KMeans,
 PCA Reconstruction, Mahalanobis distance, Kernel Density, Autoencoder,
  Denoising Autoencoder, Variational Autoencoder, LSTM Autoencoder, Transformer,
- COPOD, Feature Bagging, LODA, ABOD, AnoGAN, and MAD-GAN.
+ COPOD, Feature Bagging, LODA, ABOD, AnoGAN, MAD-GAN,
+ Degree Centrality, and Graph Isolation Forest.
 
 ## Contributing
 Contributions to expand the detector library are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on adding new algorithms.

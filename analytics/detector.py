@@ -12,6 +12,8 @@ from pyod.models.copod import COPOD
 from pyod.models.feature_bagging import FeatureBagging
 from pyod.models.loda import LODA
 from pyod.models.abod import ABOD
+from sklearn.preprocessing import StandardScaler
+import networkx as nx
 
 from analytics.lof import LOF
 from analytics.base import BaseDetector
@@ -619,3 +621,46 @@ class MADGANDetector(BaseDetector):
         with torch.no_grad():
             scores = 1 - self.discriminator(tensor).squeeze().numpy()
         return scores
+
+
+class DegreeCentralityDetector(BaseDetector):
+    """Flag nodes with unusual degree centrality in a graph."""
+
+    def get_name(self):
+        return "Degree Centrality"
+
+    def fit(self, graph, **params):
+        self.nodes = list(graph.nodes())
+        centrality = nx.degree_centrality(graph)
+        values = np.array([centrality[n] for n in self.nodes]).reshape(-1, 1)
+        self.scaler = StandardScaler().fit(values)
+        self.values = values
+        return self
+
+    def score(self, graph=None):
+        z = np.abs(self.scaler.transform(self.values))
+        return z.ravel()
+
+
+class GraphIsolationForestDetector(BaseDetector):
+    """Apply Isolation Forest on basic graph structural features."""
+
+    def get_name(self):
+        return "Graph Isolation Forest"
+
+    def _graph_features(self, graph):
+        degrees = dict(graph.degree())
+        clustering = nx.clustering(graph)
+        return np.array(
+            [[degrees[n], clustering[n]] for n in graph.nodes()], dtype=float
+        )
+
+    def fit(self, graph, **params):
+        self.nodes = list(graph.nodes())
+        X = self._graph_features(graph)
+        self.model = IsolationForest(**params).fit(X)
+        return self
+
+    def score(self, graph):
+        X = self._graph_features(graph)
+        return self.model.decision_function(X)

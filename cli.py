@@ -5,6 +5,9 @@ Use ``--summary`` to display information about the available datasets instead
 of running the detectors.
 """
 import argparse
+from collections import Counter
+import pandas as pd
+import networkx as nx
 from benchmarks.load_all_datasets import load_all_datasets
 from analytics.detector import (
     IsolationForestDetector,
@@ -31,6 +34,8 @@ from analytics.detector import (
     TransformerDetector,
     AnoGANDetector,
     MADGANDetector,
+    DegreeCentralityDetector,
+    GraphIsolationForestDetector,
 )
 from sklearn.metrics import roc_auc_score
 
@@ -44,11 +49,17 @@ def summarize_datasets(datasets=None):
         df = ds["dataframe"]
         features = ds["feature_cols"]
         labels = ds["label_col"]
-        counts = df[labels].value_counts().to_dict()
         print(f"Dataset: {name}")
-        print(f"  samples: {len(df)}")
-        print(f"  features: {len(features)}")
-        print(f"  label distribution: {counts}")
+        if isinstance(df, pd.DataFrame):
+            counts = df[labels].value_counts().to_dict()
+            print(f"  samples: {len(df)}")
+            print(f"  features: {len(features)}")
+            print(f"  label distribution: {counts}")
+        else:
+            counts = Counter(nx.get_node_attributes(df, labels).values())
+            print(f"  nodes: {df.number_of_nodes()}")
+            print(f"  edges: {df.number_of_edges()}")
+            print(f"  label distribution: {dict(counts)}")
         print()
 
 
@@ -77,6 +88,8 @@ DETECTORS = {
     "abod": ABODDetector(),
     "anogan": AnoGANDetector(),
     "madgan": MADGANDetector(),
+    "degree_centrality": DegreeCentralityDetector(),
+    "graph_isolation_forest": GraphIsolationForestDetector(),
 }
 
 
@@ -96,9 +109,17 @@ def run_benchmarks(datasets=None, detectors=None):
         labels = ds["label_col"]
         print(f"Dataset: {name}")
         for det_name, detector in selected:
-            scores = detector.detect_anomalies(df[features])
-            auc = roc_auc_score(df[labels], scores)
-            print(f"  {det_name}: AUC={auc:.3f}")
+            try:
+                if isinstance(df, pd.DataFrame):
+                    scores = detector.detect_anomalies(df[features])
+                    y_true = df[labels]
+                else:
+                    scores = detector.detect_anomalies(df)
+                    y_true = [data[labels] for _, data in df.nodes(data=True)]
+                auc = roc_auc_score(y_true, scores)
+                print(f"  {det_name}: AUC={auc:.3f}")
+            except Exception as e:
+                print(f"  {det_name}: skipped ({e})")
         print()
 
 
