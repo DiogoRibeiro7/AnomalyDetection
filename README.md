@@ -91,12 +91,14 @@ python cli.py --plugins my_plugin_module --detectors my_custom_detector
 ```
 
 The module ``my_plugin_module`` should call
-``analytics.detectors.register_detector`` during import. Simple grid search
-utilities are available in :mod:`analytics.hyperparam`:
+``analytics.detectors.register_detector`` during import. Stratified
+cross-validation utilities are available in :mod:`analytics.hyperparam`:
 
 ```python
 from analytics.hyperparam import grid_search
-best_params, score = grid_search("isolation_forest", {"n_estimators": [50, 100]}, X, y)
+best_params, score = grid_search(
+    "isolation_forest", {"n_estimators": [50, 100]}, X, y, cv=5
+)
 ```
 
 ### Leaderboard output
