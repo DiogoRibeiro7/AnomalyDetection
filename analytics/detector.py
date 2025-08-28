@@ -2,19 +2,12 @@ from sklearn.covariance import EllipticEnvelope, EmpiricalCovariance
 from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
 from sklearn.manifold import TSNE
-from sksos import SOS
 from sklearn.neighbors import LocalOutlierFactor, NearestNeighbors, KernelDensity
 from sklearn.svm import OneClassSVM
 from sklearn.cluster import DBSCAN, KMeans
 from sklearn.mixture import GaussianMixture
 from sklearn.neural_network import MLPRegressor
-from pyod.models.copod import COPOD
-from pyod.models.feature_bagging import FeatureBagging
-from pyod.models.loda import LODA
-from pyod.models.abod import ABOD
 from sklearn.preprocessing import StandardScaler
-import networkx as nx
-from river import anomaly
 
 from analytics.lof import LOF
 from analytics.base import BaseDetector
@@ -90,21 +83,20 @@ class IsolationForestDetector(BaseDetector):
 
 
 class LOFDetector(BaseDetector):
+    """Local Outlier Factor implementation allowing new data scoring."""
+
     def get_name(self):
         return "Local Outlier Factor"
 
     def fit(self, data, normalize=False, **params):
         X = [tuple(x) for x in data.to_records(index=False)]
         self.lof = LOF(X, normalize=normalize)
-        self.data = X
         self.min_pts = params.get("min_pts", 3)
         return self
 
     def score(self, data):
-        return [
-            -self.lof.local_outlier_factor(self.min_pts, tuple(self.data[i]))
-            for i in range(len(self.data))
-        ]
+        X = [tuple(x) for x in data.to_records(index=False)]
+        return [-self.lof.local_outlier_factor(self.min_pts, point) for point in X]
 
 
 class SOSDetector(BaseDetector):
@@ -112,6 +104,8 @@ class SOSDetector(BaseDetector):
         return "Stochastic Outlier Selection"
 
     def fit(self, data, **params):
+        from sksos import SOS  # lazy import
+
         perplexity = params.get("perplexity", 30)
         metric = params.get("metric", "euclidean")
         eps = params.get("eps", 1e-5)
@@ -282,19 +276,20 @@ class KMeansDetector(BaseDetector):
 
 
 class PCAReconstructionDetector(BaseDetector):
+    """Use PCA reconstruction error as anomaly score."""
+
     def get_name(self):
         return "PCA Reconstruction"
 
     def fit(self, data, **params):
         self.n_components = params.pop("n_components", 0.95)
-        self.pca = PCA(n_components=self.n_components)
-        transformed = self.pca.fit_transform(data)
-        self.reconstructed = self.pca.inverse_transform(transformed)
-        self.data = data
+        self.pca = PCA(n_components=self.n_components).fit(data)
         return self
 
     def score(self, data):
-        errors = np.linalg.norm(self.data - self.reconstructed, axis=1)
+        transformed = self.pca.transform(data)
+        reconstructed = self.pca.inverse_transform(transformed)
+        errors = np.linalg.norm(data - reconstructed, axis=1)
         return -errors
 
 
@@ -326,6 +321,8 @@ class KDEDetector(BaseDetector):
 
 
 class AutoencoderDetector(BaseDetector):
+    """Shallow autoencoder using reconstruction error as anomaly score."""
+
     def get_name(self):
         return "Autoencoder"
 
@@ -333,12 +330,11 @@ class AutoencoderDetector(BaseDetector):
         hidden_layer_sizes = params.pop("hidden_layer_sizes", (32, 32, 32))
         self.model = MLPRegressor(hidden_layer_sizes=hidden_layer_sizes, max_iter=2000)
         self.model.fit(data, data)
-        self.data = data
         return self
 
     def score(self, data):
-        reconstructed = self.model.predict(self.data)
-        errors = np.linalg.norm(self.data - reconstructed, axis=1)
+        reconstructed = self.model.predict(data)
+        errors = np.linalg.norm(data - reconstructed, axis=1)
         return -errors
 
 
@@ -409,6 +405,8 @@ class OnlineIsolationForestDetector(BaseDetector):
         return "Online Isolation Forest"
 
     def fit(self, data, **params):
+        from river import anomaly
+
         self.model = anomaly.IsolationForest(**params)
         for row in self._to_dicts(data):
             self.model.learn_one(row)
@@ -431,6 +429,8 @@ class RandomCutForestDetector(BaseDetector):
         return "Random Cut Forest"
 
     def fit(self, data, **params):
+        from river import anomaly
+
         self.model = anomaly.RandomCutForest(**params)
         for row in self._to_dicts(data):
             self.model.learn_one(row)
@@ -447,6 +447,8 @@ class RandomCutForestDetector(BaseDetector):
 
 
 class DenoisingAutoencoderDetector(BaseDetector):
+    """Denoising autoencoder that reconstructs clean input."""
+
     def get_name(self):
         return "Denoising Autoencoder"
 
@@ -455,12 +457,11 @@ class DenoisingAutoencoderDetector(BaseDetector):
         noisy = data + noise_level * np.random.normal(size=data.shape)
         self.model = MLPRegressor(hidden_layer_sizes=hidden, max_iter=2000)
         self.model.fit(noisy, data)
-        self.data = data
         return self
 
     def score(self, data):
-        reconstructed = self.model.predict(self.data)
-        errors = np.linalg.norm(self.data - reconstructed, axis=1)
+        reconstructed = self.model.predict(data)
+        errors = np.linalg.norm(data - reconstructed, axis=1)
         return -errors
 
 
@@ -486,6 +487,8 @@ class VariationalAutoencoderDetector(BaseDetector):
 
 
 class LSTMAutoencoderDetector(BaseDetector):
+    """LSTM autoencoder for sequence reconstruction."""
+
     def get_name(self):
         return "LSTM Autoencoder"
 
@@ -510,26 +513,30 @@ class LSTMAutoencoderDetector(BaseDetector):
                 out, _ = self.decoder(dec_input)
                 return out
 
-        model = LSTMAE(tensor.size(-1), hidden_size)
-        optimiz = optim.Adam(model.parameters(), lr=lr)
+        self.model = LSTMAE(tensor.size(-1), hidden_size)
+        optimiz = optim.Adam(self.model.parameters(), lr=lr)
         loss_fn = nn.MSELoss()
         for _ in range(epochs):
             optimiz.zero_grad()
-            output = model(tensor)
+            output = self.model(tensor)
             loss = loss_fn(output, tensor)
             loss.backward()
             optimiz.step()
-
-        self.reconstructed = model(tensor).detach().numpy()
-        self.X = tensor.detach().numpy()
         return self
 
     def score(self, data):
-        errors = np.linalg.norm(self.X - self.reconstructed, axis=(1, 2))
+        import torch
+
+        X = data.values if isinstance(data, pd.DataFrame) else data
+        tensor = torch.tensor(X, dtype=torch.float32).unsqueeze(1)
+        reconstructed = self.model(tensor).detach().numpy()
+        errors = np.linalg.norm(tensor.numpy() - reconstructed, axis=(1, 2))
         return -errors
 
 
 class TransformerDetector(BaseDetector):
+    """Transformer-based autoencoder for anomaly detection."""
+
     def get_name(self):
         return "Transformer"
 
@@ -558,22 +565,24 @@ class TransformerDetector(BaseDetector):
                 dec = self.decoder(h, h)
                 return self.output(dec)
 
-        model = TransAE(tensor.size(-1), d_model, nhead)
-        optimiz = optim.Adam(model.parameters(), lr=lr)
+        self.model = TransAE(tensor.size(-1), d_model, nhead)
+        optimiz = optim.Adam(self.model.parameters(), lr=lr)
         loss_fn = nn.MSELoss()
         for _ in range(epochs):
             optimiz.zero_grad()
-            output = model(tensor)
+            output = self.model(tensor)
             loss = loss_fn(output, tensor)
             loss.backward()
             optimiz.step()
-
-        self.reconstructed = model(tensor).detach().numpy()
-        self.X = tensor.detach().numpy()
         return self
 
     def score(self, data):
-        errors = np.linalg.norm(self.X - self.reconstructed, axis=(1, 2))
+        import torch
+
+        X = data.values if isinstance(data, pd.DataFrame) else data
+        tensor = torch.tensor(X, dtype=torch.float32).unsqueeze(1)
+        reconstructed = self.model(tensor).detach().numpy()
+        errors = np.linalg.norm(tensor.numpy() - reconstructed, axis=(1, 2))
         return -errors
 
 
@@ -675,15 +684,19 @@ class DegreeCentralityDetector(BaseDetector):
         return "Degree Centrality"
 
     def fit(self, graph, **params):
-        self.nodes = list(graph.nodes())
+        import networkx as nx
+
         centrality = nx.degree_centrality(graph)
-        values = np.array([centrality[n] for n in self.nodes]).reshape(-1, 1)
+        values = np.array(list(centrality.values())).reshape(-1, 1)
         self.scaler = StandardScaler().fit(values)
-        self.values = values
         return self
 
-    def score(self, graph=None):
-        z = np.abs(self.scaler.transform(self.values))
+    def score(self, graph):
+        import networkx as nx
+
+        centrality = nx.degree_centrality(graph)
+        values = np.array(list(centrality.values())).reshape(-1, 1)
+        z = np.abs(self.scaler.transform(values))
         return z.ravel()
 
 
@@ -694,6 +707,8 @@ class GraphIsolationForestDetector(BaseDetector):
         return "Graph Isolation Forest"
 
     def _graph_features(self, graph):
+        import networkx as nx
+
         degrees = dict(graph.degree())
         clustering = nx.clustering(graph)
         return np.array(
@@ -723,16 +738,19 @@ class ARIMADetector(BaseDetector):
         X = data.values if isinstance(data, pd.DataFrame) else np.asarray(data)
         if X.ndim == 1:
             X = X.reshape(1, -1)
-        self.scores = []
-        for series in X:
-            model = ARIMA(series, order=order).fit()
-            pred = model.predict(start=0, end=len(series) - 1)
-            resid = np.abs(series - pred)
-            self.scores.append(resid.mean())
+        self.models = [ARIMA(series, order=order).fit() for series in X]
         return self
 
     def score(self, data):
-        return np.array(self.scores)
+        X = data.values if isinstance(data, pd.DataFrame) else np.asarray(data)
+        if X.ndim == 1:
+            X = X.reshape(1, -1)
+        scores = []
+        for series, model in zip(X, self.models):
+            pred = model.predict(start=0, end=len(series) - 1)
+            resid = np.abs(series - pred)
+            scores.append(resid.mean())
+        return np.array(scores)
 
 
 class ProphetDetector(BaseDetector):
@@ -747,7 +765,7 @@ class ProphetDetector(BaseDetector):
         X = data.values if isinstance(data, pd.DataFrame) else np.asarray(data)
         if X.ndim == 1:
             X = X.reshape(1, -1)
-        self.scores = []
+        self.models = []
         for series in X:
             df = pd.DataFrame(
                 {
@@ -756,10 +774,22 @@ class ProphetDetector(BaseDetector):
                 }
             )
             model = Prophet(**params).fit(df)
-            forecast = model.predict(df)
-            resid = np.abs(df["y"].values - forecast["yhat"].values)
-            self.scores.append(resid.mean())
+            self.models.append(model)
         return self
 
     def score(self, data):
-        return np.array(self.scores)
+        X = data.values if isinstance(data, pd.DataFrame) else np.asarray(data)
+        if X.ndim == 1:
+            X = X.reshape(1, -1)
+        scores = []
+        for series, model in zip(X, self.models):
+            df = pd.DataFrame(
+                {
+                    "ds": pd.date_range(start="2000", periods=len(series), freq="D"),
+                    "y": series,
+                }
+            )
+            forecast = model.predict(df)
+            resid = np.abs(df["y"].values - forecast["yhat"].values)
+            scores.append(resid.mean())
+        return np.array(scores)

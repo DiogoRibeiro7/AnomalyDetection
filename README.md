@@ -82,5 +82,30 @@ PCA Reconstruction, Mahalanobis distance, Kernel Density, Autoencoder,
  COPOD, Feature Bagging, LODA, ABOD, Online Isolation Forest, Random Cut Forest,
  AnoGAN, MAD-GAN, Degree Centrality, Graph Isolation Forest, ARIMA, and Prophet.
 
+### Plugins and hyperparameter search
+
+External detector packages can register themselves via the plugin interface:
+
+```bash
+python cli.py --plugins my_plugin_module --detectors my_custom_detector
+```
+
+The module ``my_plugin_module`` should call
+``analytics.detectors.register_detector`` during import. Simple grid search
+utilities are available in :mod:`analytics.hyperparam`:
+
+```python
+from analytics.hyperparam import grid_search
+best_params, score = grid_search("isolation_forest", {"n_estimators": [50, 100]}, X, y)
+```
+
+### Leaderboard output
+
+Benchmark results can be appended to a CSV leaderboard:
+
+```bash
+python cli.py --detectors isolation_forest --datasets iris --leaderboard results.csv
+```
+
 ## Contributing
 Contributions to expand the detector library are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on adding new algorithms.

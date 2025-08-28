@@ -8,45 +8,18 @@ import argparse
 from collections import Counter
 import pandas as pd
 import networkx as nx
-from benchmarks.load_all_datasets import load_all_datasets
-from analytics.detector import (
-    IsolationForestDetector,
-    SOSDetector,
-    KNNDetector,
-    HBOSDetector,
-    EllipticEnvelopeDetector,
-    GaussianMixtureDetector,
-    SklearnLOFDetector,
-    KMeansDetector,
-    PCAReconstructionDetector,
-    MahalanobisDetector,
-    OneClassSVMDetector,
-    DBSCANDetector,
-    KDEDetector,
-    AutoencoderDetector,
-    COPODDetector,
-    FeatureBaggingDetector,
-    LODADetector,
-    ABODDetector,
-    OnlineIsolationForestDetector,
-    RandomCutForestDetector,
-    DenoisingAutoencoderDetector,
-    VariationalAutoencoderDetector,
-    LSTMAutoencoderDetector,
-    TransformerDetector,
-    AnoGANDetector,
-    MADGANDetector,
-    DegreeCentralityDetector,
-    GraphIsolationForestDetector,
-    ARIMADetector,
-    ProphetDetector,
-)
 from sklearn.metrics import roc_auc_score
+
+from benchmarks.load_all_datasets import load_all_datasets
+from analytics.detectors import (
+    DETECTOR_REGISTRY,
+    get_detector_class,
+)
 
 
 def summarize_datasets(datasets=None):
     """Print basic information about the available datasets."""
-    for ds in load_all_datasets():
+    for ds in load_all_datasets(datasets):
         name = ds["name"]
         if datasets and name not in datasets:
             continue
@@ -67,51 +40,29 @@ def summarize_datasets(datasets=None):
         print()
 
 
-DETECTORS = {
-    "isolation_forest": IsolationForestDetector(),
-    "sos": SOSDetector(),
-    "knn": KNNDetector(),
-    "hbos": HBOSDetector(),
-    "ocsvm": OneClassSVMDetector(),
-    "dbscan": DBSCANDetector(),
-    "elliptic_envelope": EllipticEnvelopeDetector(),
-    "gaussian_mixture": GaussianMixtureDetector(),
-    "sklearn_lof": SklearnLOFDetector(),
-    "kmeans": KMeansDetector(),
-    "pca_reconstruction": PCAReconstructionDetector(),
-    "mahalanobis": MahalanobisDetector(),
-    "kde": KDEDetector(),
-    "autoencoder": AutoencoderDetector(),
-    "denoising_autoencoder": DenoisingAutoencoderDetector(),
-    "variational_autoencoder": VariationalAutoencoderDetector(),
-    "lstm_autoencoder": LSTMAutoencoderDetector(),
-    "transformer": TransformerDetector(),
-    "copod": COPODDetector(),
-    "feature_bagging": FeatureBaggingDetector(),
-    "loda": LODADetector(),
-    "abod": ABODDetector(),
-    "online_isolation_forest": OnlineIsolationForestDetector(),
-    "random_cut_forest": RandomCutForestDetector(),
-    "anogan": AnoGANDetector(),
-    "madgan": MADGANDetector(),
-    "degree_centrality": DegreeCentralityDetector(),
-    "graph_isolation_forest": GraphIsolationForestDetector(),
-    "arima": ARIMADetector(),
-    "prophet": ProphetDetector(),
-}
+# Instantiate detectors lazily from the registry
+DETECTORS = {name: get_detector_class(name)() for name in DETECTOR_REGISTRY}
 
 
-def run_benchmarks(datasets=None, detectors=None):
-    """Run benchmarks for the specified datasets and detectors."""
+def run_benchmarks(datasets=None, detectors=None, leaderboard=None):
+    """Run benchmarks for the specified datasets and detectors.
+
+    Parameters
+    ----------
+    datasets: list[str] | None
+        Dataset names to evaluate. ``None`` evaluates all available datasets.
+    detectors: list[str] | None
+        Detector names to evaluate. ``None`` evaluates all registered detectors.
+    leaderboard: str | None
+        Optional path to a CSV file where results are appended.
+    """
     if detectors:
         selected = [(n, DETECTORS[n]) for n in detectors if n in DETECTORS]
     else:
         selected = DETECTORS.items()
 
-    for ds in load_all_datasets():
+    for ds in load_all_datasets(datasets):
         name = ds["name"]
-        if datasets and name not in datasets:
-            continue
         df = ds["dataframe"]
         features = ds["feature_cols"]
         labels = ds["label_col"]
@@ -126,7 +77,13 @@ def run_benchmarks(datasets=None, detectors=None):
                     y_true = [data[labels] for _, data in df.nodes(data=True)]
                 auc = roc_auc_score(y_true, scores)
                 print(f"  {det_name}: AUC={auc:.3f}")
-            except Exception as e:
+                if leaderboard:
+                    import csv
+
+                    with open(leaderboard, "a", newline="", encoding="utf-8") as fh:
+                        writer = csv.writer(fh)
+                        writer.writerow([name, det_name, auc])
+            except Exception as e:  # pragma: no cover - benchmarking utility
                 print(f"  {det_name}: skipped ({e})")
         print()
 
@@ -152,15 +109,27 @@ def main():
         "--config",
         help="Path to YAML configuration specifying datasets and detectors",
     )
+    parser.add_argument(
+        "--plugins",
+        nargs="*",
+        help="Plugin modules providing additional detectors",
+    )
+    parser.add_argument(
+        "--leaderboard",
+        help="CSV file path to append benchmark results",
+    )
     args = parser.parse_args()
+    if args.plugins:
+        for mod in args.plugins:
+            __import__(mod)
     if args.config:
         from benchmarks.config_benchmark import run_from_config
 
-        run_from_config(args.config)
+        run_from_config(args.config, leaderboard=args.leaderboard)
     elif args.summary:
         summarize_datasets(args.datasets)
     else:
-        run_benchmarks(args.datasets, args.detectors)
+        run_benchmarks(args.datasets, args.detectors, leaderboard=args.leaderboard)
 
 
 if __name__ == "__main__":
