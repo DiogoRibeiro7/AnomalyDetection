@@ -42,8 +42,8 @@ def summarize_datasets(datasets=None):
         print()
 
 
-# Instantiate detectors lazily from the registry
-DETECTORS = {name: get_detector_class(name)() for name in DETECTOR_REGISTRY}
+# Detector instances are created on demand to avoid importing optional
+# dependencies unless required.
 
 
 ALLOWED_PLUGIN_PREFIX = "plugins."
@@ -72,9 +72,9 @@ def run_benchmarks(datasets=None, detectors=None, leaderboard=None):
         Optional path to a CSV file where results are appended.
     """
     if detectors:
-        selected = [(n, DETECTORS[n]) for n in detectors if n in DETECTORS]
+        selected = [n for n in detectors if n in DETECTOR_REGISTRY]
     else:
-        selected = DETECTORS.items()
+        selected = list(DETECTOR_REGISTRY)
 
     for ds in load_all_datasets(datasets):
         name = ds["name"]
@@ -82,7 +82,8 @@ def run_benchmarks(datasets=None, detectors=None, leaderboard=None):
         features = ds["feature_cols"]
         labels = ds["label_col"]
         print(f"Dataset: {name}")
-        for det_name, detector in selected:
+        for det_name in selected:
+            detector = get_detector_class(det_name)()
             try:
                 if isinstance(df, pd.DataFrame):
                     scores = detector.detect_anomalies(df[features])

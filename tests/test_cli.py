@@ -1,5 +1,7 @@
 import pytest
 
+pytest.importorskip("networkx")
+
 from cli import run_benchmarks, load_plugins, summarize_datasets
 
 

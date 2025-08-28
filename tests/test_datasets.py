@@ -1,3 +1,7 @@
+import pytest
+
+pytest.importorskip("networkx")
+
 from benchmarks.load_datasets import (
     load_iris,
     load_digits,
@@ -22,6 +26,7 @@ def test_digits_loader():
 
 
 def test_graph_loader():
+    pytest.importorskip("networkx")
     G, features, label, name = load_karate_club_graph()
     assert name == "karateClubGraph"
     assert label == "label"

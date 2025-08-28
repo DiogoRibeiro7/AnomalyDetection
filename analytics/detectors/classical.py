@@ -120,24 +120,30 @@ class HBOSDetector(BaseDetector):
         k = params.get("k", 3)
         if isinstance(data, pd.DataFrame):
             data = data.to_numpy()
-        self.histograms = {}
-        for i in range(data.shape[1]):
+        n_features = data.shape[1]
+        self.edges_left = np.zeros((n_features, k))
+        self.edges_right = np.zeros((n_features, k))
+        self.hist = np.zeros((n_features, k))
+        for i in range(n_features):
             feature = data[:, i]
             edges = _compute_variable_width_edges(feature, k)
-            self.histograms[i] = np.histogram(feature, bins=edges, density=True)
+            hist, _ = np.histogram(feature, bins=edges, density=True)
+            self.hist[i] = hist
+            self.edges_left[i] = edges[:-1]
+            right = edges[1:]
+            right[-1] = np.inf
+            self.edges_right[i] = right
+        self.log_hist = np.log(self.hist + 1e-12)
         return self
 
     def score(self, data):
         if isinstance(data, pd.DataFrame):
             data = data.to_numpy()
-        n_samples = data.shape[0]
-        log_probs = np.zeros(n_samples)
-        for j in range(data.shape[1]):
-            hist, edges = self.histograms[j]
-            idx = np.digitize(data[:, j], edges[1:-1], right=False)
-            idx = np.clip(idx, 0, len(hist) - 1)
-            log_probs += np.log(hist[idx] + 1e-12)
-        return log_probs
+        mask = (data[:, :, None] >= self.edges_left[None, :, :]) & (
+            data[:, :, None] < self.edges_right[None, :, :]
+        )
+        log_probs = (mask * self.log_hist[None, :, :]).sum(axis=2)
+        return log_probs.sum(axis=1)
 
 
 class KNNDetector(BaseDetector):
