@@ -15,7 +15,7 @@ Thank you for your interest in improving the anomaly detection library. This gui
    ```
 
 ## Adding a New Detector
-1. Create a detector class inheriting from `BaseDetector` in `analytics/detector.py` or a dedicated module.
+1. Create a detector class inheriting from `BaseDetector` within the appropriate submodule under `analytics/detectors/` (e.g., `classical.py`, `deep.py`).
 2. Implement the `fit` and `score` methods. Use existing detectors as references.
 3. Register the detector in the CLI registry so it can be selected with `--detectors`.
 4. Add unit tests covering the new detector’s behaviour.

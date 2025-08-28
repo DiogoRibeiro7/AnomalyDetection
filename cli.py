@@ -6,6 +6,8 @@ of running the detectors.
 """
 import argparse
 from collections import Counter
+from importlib import import_module
+
 import pandas as pd
 import networkx as nx
 from sklearn.metrics import roc_auc_score
@@ -42,6 +44,19 @@ def summarize_datasets(datasets=None):
 
 # Instantiate detectors lazily from the registry
 DETECTORS = {name: get_detector_class(name)() for name in DETECTOR_REGISTRY}
+
+
+ALLOWED_PLUGIN_PREFIX = "plugins."
+
+
+def load_plugins(modules):
+    """Import plugin modules while restricting the allowed namespace."""
+    for mod in modules:
+        if not mod.startswith(ALLOWED_PLUGIN_PREFIX):
+            raise ValueError(
+                f"Plugin '{mod}' is not allowed; must start with '{ALLOWED_PLUGIN_PREFIX}'"
+            )
+        import_module(mod)
 
 
 def run_benchmarks(datasets=None, detectors=None, leaderboard=None):
@@ -120,8 +135,7 @@ def main():
     )
     args = parser.parse_args()
     if args.plugins:
-        for mod in args.plugins:
-            __import__(mod)
+        load_plugins(args.plugins)
     if args.config:
         from benchmarks.config_benchmark import run_from_config
 

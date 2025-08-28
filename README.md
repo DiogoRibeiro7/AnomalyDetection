@@ -84,13 +84,14 @@ PCA Reconstruction, Mahalanobis distance, Kernel Density, Autoencoder,
 
 ### Plugins and hyperparameter search
 
-External detector packages can register themselves via the plugin interface:
+External detector packages can register themselves via the plugin interface.
+Plugins must reside in modules whose names start with ``plugins.``:
 
 ```bash
-python cli.py --plugins my_plugin_module --detectors my_custom_detector
+python cli.py --plugins plugins.my_module --detectors my_custom_detector
 ```
 
-The module ``my_plugin_module`` should call
+The module ``plugins.my_module`` should call
 ``analytics.detectors.register_detector`` during import. Stratified
 cross-validation utilities are available in :mod:`analytics.hyperparam`:
 
