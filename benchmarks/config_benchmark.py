@@ -10,7 +10,11 @@ import yaml
 from cli import run_benchmarks
 
 
-def run_from_config(path: str | Path, leaderboard: str | None = None) -> None:
+def run_from_config(
+    path: str | Path,
+    leaderboard: str | None = None,
+    n_jobs: int | None = None,
+) -> None:
     """Execute benchmarks defined in a YAML configuration file.
 
     Parameters
@@ -24,4 +28,11 @@ def run_from_config(path: str | Path, leaderboard: str | None = None) -> None:
 
     datasets: Iterable[str] | None = config.get("datasets")
     detectors: Iterable[str] | None = config.get("detectors")
-    run_benchmarks(datasets, detectors, leaderboard=leaderboard)
+    configured_jobs = config.get("n_jobs")
+    effective_jobs = n_jobs if n_jobs is not None else configured_jobs
+    run_benchmarks(
+        datasets,
+        detectors,
+        leaderboard=leaderboard,
+        n_jobs=effective_jobs,
+    )

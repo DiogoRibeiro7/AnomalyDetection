@@ -12,6 +12,7 @@ pandas = "*"
 scikit-learn = "*"
 scikit-sos = "*"
 pyod = "*"
+combo = "*"
 torch = "*"
 tensorflow = "*"
 pyyaml = "*"
@@ -23,6 +24,7 @@ prophet = "*"
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
 pre-commit = "*"
+hypothesis = "*"
 
 [tool.poetry.scripts]
 benchmark-cli = "cli:main"

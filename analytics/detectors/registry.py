@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from importlib import import_module
-from typing import Dict, Type
+from typing import MutableMapping, Type
 
 from analytics.base import BaseDetector
 
-DETECTOR_REGISTRY: Dict[str, str] = {}
+DETECTOR_REGISTRY: MutableMapping[str, str] = {}
 
 
 def register_detector(name: str, path: str) -> None:
