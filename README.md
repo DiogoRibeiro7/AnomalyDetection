@@ -40,13 +40,15 @@ For example, run benchmarks on the Iris (tabular), Digits (image),
 synthetic_timeseries (time-series), and karate_club_graph (graph) sets:
 
 ```bash
-python cli.py iris digits synthetic_timeseries karate_club_graph
+python cli.py iris digits fashion_mnist_sample nab_art_daily_small_noise synthetic_timeseries karate_club_graph
 ```
 
 Legacy display names (for example, ``wisconsinBreast``) remain supported for
 backwards compatibility, but the CLI now documents canonical loader keys such as
 ``wisconsin_breast_cancer`` to make configuration files and tags easier to
-reason about.
+reason about. Newly added lightweight datasets like ``fashion_mnist_sample`` and
+``nab_art_daily_small_noise`` broaden image and time-series coverage without
+incurring large download requirements.
 
 Run only particular detectors:
 

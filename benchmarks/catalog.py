@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping, Sequence
 from functools import lru_cache
 from inspect import getmembers, isfunction
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List
+from typing import Any, Callable, Dict, List
 
 import yaml
 
@@ -62,7 +63,7 @@ def list_available_datasets() -> List[str]:
     return list(get_dataset_functions().keys())
 
 
-def resolve_dataset_names(selectors) -> List[str] | None:
+def resolve_dataset_names(selectors: Any) -> List[str] | None:
     """Resolve *selectors* into canonical dataset names.
 
     The *selectors* argument accepts strings (dataset names or ``tag:<name>``),
@@ -75,7 +76,7 @@ def resolve_dataset_names(selectors) -> List[str] | None:
     if selectors is None:
         return None
 
-    if isinstance(selectors, (list, tuple)):
+    if isinstance(selectors, Sequence) and not isinstance(selectors, (str, bytes)):
         combined: List[str] = []
         for entry in selectors:
             names = resolve_dataset_names(entry)
@@ -84,7 +85,7 @@ def resolve_dataset_names(selectors) -> List[str] | None:
             combined.extend(names)
         return _dedupe(combined)
 
-    if isinstance(selectors, dict):
+    if isinstance(selectors, Mapping):
         keys = set(selectors)
         if {"include", "exclude", "limit"} & keys:
             include_spec = selectors.get("include")

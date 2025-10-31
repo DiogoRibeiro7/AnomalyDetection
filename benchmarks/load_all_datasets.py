@@ -2,16 +2,22 @@
 
 from __future__ import annotations
 
+import logging
+from collections.abc import Sequence
+from typing import Any, Dict, List
+
 from benchmarks.catalog import get_dataset_functions, get_dataset_metadata
 
+logger = logging.getLogger(__name__)
 
-def load_all_datasets(names=None):
+
+def load_all_datasets(names: Sequence[str] | None = None) -> List[Dict[str, Any]]:
     """Load benchmark datasets by their canonical names.
 
     Parameters
     ----------
-    names: list[str] | None
-        Optional list of canonical dataset identifiers (e.g. ``"iris"``).
+    names: Sequence[str] | None
+        Optional sequence of canonical dataset identifiers (e.g. ``"iris"``).
         ``None`` loads every dataset available in :mod:`benchmarks.load_datasets`.
     """
 
@@ -23,6 +29,11 @@ def load_all_datasets(names=None):
         if missing:
             available = ", ".join(sorted(functions))
             missing_str = ", ".join(missing)
+            logger.error(
+                "Unknown dataset selector(s): %s. Available datasets: %s",
+                missing_str,
+                available,
+            )
             raise KeyError(
                 "Unknown dataset selector(s): "
                 f"{missing_str}. Available datasets: {available}"
