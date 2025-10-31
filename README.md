@@ -32,16 +32,21 @@ python cli.py
 Select specific datasets by name:
 
 ```bash
-python cli.py wisconsinBreast cardio
+python cli.py wisconsin_breast_cancer cardio
 ```
 
 The suite now includes tabular, image, time-series, and graph datasets.
 For example, run benchmarks on the Iris (tabular), Digits (image),
-syntheticTS (time-series), and karateClubGraph (graph) sets:
+synthetic_timeseries (time-series), and karate_club_graph (graph) sets:
 
 ```bash
-python cli.py iris digits syntheticTS karateClubGraph
+python cli.py iris digits synthetic_timeseries karate_club_graph
 ```
+
+Legacy display names (for example, ``wisconsinBreast``) remain supported for
+backwards compatibility, but the CLI now documents canonical loader keys such as
+``wisconsin_breast_cancer`` to make configuration files and tags easier to
+reason about.
 
 Run only particular detectors:
 

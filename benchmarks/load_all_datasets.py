@@ -19,7 +19,15 @@ def load_all_datasets(names=None):
     if names is None:
         selected = list(functions.items())
     else:
-        selected = [(name, functions[name]) for name in names if name in functions]
+        missing = [name for name in names if name not in functions]
+        if missing:
+            available = ", ".join(sorted(functions))
+            missing_str = ", ".join(missing)
+            raise KeyError(
+                "Unknown dataset selector(s): "
+                f"{missing_str}. Available datasets: {available}"
+            )
+        selected = [(name, functions[name]) for name in names]
 
     datasets = []
     for key, func in selected:

@@ -10,6 +10,8 @@ def test_catalog_includes_new_datasets() -> None:
     names = catalog.list_available_datasets()
     assert "thyroid" in names
     assert "kddcup_sample" in names
+    assert "fashion_mnist_sample" in names
+    assert "nab_art_daily_small_noise" in names
     thyroid_meta = catalog.get_dataset_metadata("thyroid")
     assert "tabular" in thyroid_meta.get("tags", [])
 
@@ -36,9 +38,25 @@ def test_resolve_dataset_names_preserves_unknown() -> None:
     assert names == ["custom_dataset"]
 
 
+def test_resolve_dataset_names_supports_display_aliases() -> None:
+    names = catalog.resolve_dataset_names("wisconsinBreast")
+    assert names == ["wisconsin_breast_cancer"]
+    nab_names = catalog.resolve_dataset_names("nabArtDaily")
+    assert nab_names == ["nab_art_daily_small_noise"]
+
+
 def test_load_all_datasets_includes_metadata() -> None:
     datasets = load_all_datasets(["thyroid"])
     assert datasets
     entry = datasets[0]
     assert entry["metadata"]["tags"]
     assert entry["key"] == "thyroid"
+
+
+def test_load_all_datasets_raises_on_unknown() -> None:
+    try:
+        load_all_datasets(["not_a_dataset"])
+    except KeyError as exc:
+        assert "Unknown dataset selector" in str(exc)
+    else:  # pragma: no cover - defensive fallback
+        raise AssertionError("Expected KeyError for unknown dataset selector")

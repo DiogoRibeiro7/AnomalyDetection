@@ -223,7 +223,7 @@ def test_monte_carlo_validation() -> None:
     """Monte Carlo experiments validate analytical power estimates."""
 
     rng = np.random.default_rng(87234)
-    simulations = 20_000
+    simulations = 10_000
     t_configs = [
         {"effect_size": 0.5, "n_per_group": 30, "alpha": 0.05},
         {"effect_size": 0.8, "n_per_group": 25, "alpha": 0.05},

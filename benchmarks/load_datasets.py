@@ -217,6 +217,18 @@ def load_digits():
     return df, features, "Class", "digits"
 
 
+def load_fashion_mnist_sample():
+    """Load a lightweight synthetic slice of the Fashion-MNIST dataset."""
+
+    path = os.path.join(
+        os.sep.join(os.path.realpath(__file__).split(os.sep)[:-1]),
+        "fashion_mnist_sample.csv",
+    )
+    df = pd.read_csv(path)
+    features = [column for column in df.columns if column != "Class"]
+    return df, features, "Class", "fashionMNISTSample"
+
+
 def load_synthetic_timeseries():
     """Generate a simple synthetic time-series dataset.
 
@@ -268,6 +280,22 @@ def load_thyroid():
     )
     features = [column for column in df.columns if column != "Class"]
     return df, features, "Class", "thyroid"
+
+
+def load_nab_art_daily_small_noise():
+    """Load a compact NAB art daily time-series with engineered features."""
+
+    path = os.path.join(
+        os.sep.join(os.path.realpath(__file__).split(os.sep)[:-1]),
+        "nab_art_daily_small_noise.csv",
+    )
+    df = pd.read_csv(path, parse_dates=["timestamp"])
+    # Encode cyclical hour-of-day signals to provide useful temporal features.
+    hours = df["timestamp"].dt.hour.astype(float)
+    df["hour_sin"] = np.sin(2 * np.pi * hours / 24.0)
+    df["hour_cos"] = np.cos(2 * np.pi * hours / 24.0)
+    features = ["value", "hour_sin", "hour_cos"]
+    return df, features, "Class", "nabArtDaily"
 
 
 def load_kddcup_sample():

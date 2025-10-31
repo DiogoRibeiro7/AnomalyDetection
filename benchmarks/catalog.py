@@ -5,7 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 from inspect import getmembers, isfunction
 from pathlib import Path
-from typing import Iterable, List
+from typing import Any, Callable, Dict, Iterable, List
 
 import yaml
 
@@ -13,17 +13,19 @@ import benchmarks.load_datasets
 
 _CATALOG_PATH = Path(__file__).with_name("datasets.yml")
 
+DatasetLoader = Callable[[], tuple[Any, list[str] | None, str, str]]
+
 
 @lru_cache(maxsize=1)
-def get_dataset_functions() -> dict[str, callable]:
+def get_dataset_functions() -> dict[str, DatasetLoader]:
     """Return mapping of canonical dataset names to loader callables."""
 
-    functions: dict[str, callable] = {}
+    functions: dict[str, DatasetLoader] = {}
     for func_name, func in getmembers(benchmarks.load_datasets, isfunction):
         if not func_name.startswith("load_"):
             continue
         key = func_name.replace("load_", "")
-        functions[key] = func
+        functions[key] = func  # type: ignore[assignment]
     return functions
 
 
@@ -36,7 +38,16 @@ def load_catalog() -> dict[str, dict[str, object]]:
     with _CATALOG_PATH.open("r", encoding="utf-8") as fh:
         data = yaml.safe_load(fh) or {}
     raw_catalog = data.get("datasets", {})
-    return {str(name): (details or {}) for name, details in raw_catalog.items()}
+    catalog: dict[str, dict[str, object]] = {}
+    for name, details in raw_catalog.items():
+        meta = dict(details or {})
+        aliases = meta.get("aliases") or []
+        if isinstance(aliases, (list, tuple)):
+            meta["aliases"] = [str(alias) for alias in aliases if alias]
+        else:
+            meta["aliases"] = []
+        catalog[str(name)] = meta
+    return catalog
 
 
 def get_dataset_metadata(name: str) -> dict[str, object]:
@@ -60,6 +71,7 @@ def resolve_dataset_names(selectors) -> List[str] | None:
     """
 
     available = list_available_datasets()
+    alias_map = _build_alias_map()
     if selectors is None:
         return None
 
@@ -97,6 +109,9 @@ def resolve_dataset_names(selectors) -> List[str] | None:
         if selectors.startswith("tag:"):
             return _expand_tag(selectors.split(":", 1)[1], available)
         normalized = selectors.replace("load_", "")
+        canonical = _lookup_alias(normalized, alias_map)
+        if canonical:
+            return [canonical]
         return [normalized]
 
     return []
@@ -119,3 +134,44 @@ def _dedupe(items: Iterable[str]) -> List[str]:
             ordered.append(item)
             seen.add(item)
     return ordered
+
+
+@lru_cache(maxsize=1)
+def _build_alias_map() -> Dict[str, str]:
+    """Return mapping of known dataset aliases to canonical loader keys."""
+
+    alias_map: Dict[str, str] = {}
+    for canonical in list_available_datasets():
+        alias_map[canonical] = canonical
+        alias_map[canonical.lower()] = canonical
+
+    catalog = load_catalog()
+    for canonical, meta in catalog.items():
+        display_name = meta.get("display_name")
+        if isinstance(display_name, str) and display_name:
+            alias_map.setdefault(display_name, canonical)
+            alias_map.setdefault(display_name.lower(), canonical)
+        aliases = meta.get("aliases") or []
+        if isinstance(aliases, Iterable):
+            for alias in aliases:
+                if not isinstance(alias, str) or not alias:
+                    continue
+                alias_map.setdefault(alias, canonical)
+                alias_map.setdefault(alias.lower(), canonical)
+
+    for canonical, loader in get_dataset_functions().items():
+        try:
+            _, _, _, display_name = loader()
+        except Exception:  # pragma: no cover - loader failure handled elsewhere
+            continue
+        if display_name:
+            alias_map.setdefault(display_name, canonical)
+            alias_map.setdefault(display_name.lower(), canonical)
+            alias_map.setdefault(display_name.replace(" ", "_").lower(), canonical)
+    return alias_map
+
+
+def _lookup_alias(name: str, alias_map: Dict[str, str]) -> str | None:
+    if not name:
+        return None
+    return alias_map.get(name) or alias_map.get(name.lower())
