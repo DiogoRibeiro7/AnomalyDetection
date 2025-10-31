@@ -31,7 +31,26 @@ def _patch_dataset_loader(monkeypatch: pytest.MonkeyPatch, dataset: dict[str, ob
             return []
         return [dataset]
 
+    def _fake_resolver(selectors):
+        if selectors is None:
+            return [dataset["name"]]
+        if isinstance(selectors, dict):
+            include = selectors.get("include")
+            if include is None:
+                return [dataset["name"]]
+            return _fake_resolver(include)
+        if isinstance(selectors, (list, tuple)):
+            return [
+                dataset["name"]
+                for entry in selectors
+                if entry == dataset["name"]
+            ]
+        if selectors == dataset["name"]:
+            return [dataset["name"]]
+        return []
+
     monkeypatch.setattr(cli, "load_all_datasets", _fake_loader)
+    monkeypatch.setattr(cli, "resolve_dataset_names", _fake_resolver)
 
 
 def _install_stub_detector(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -49,6 +68,27 @@ def _install_stub_detector(monkeypatch: pytest.MonkeyPatch) -> None:
     def _get_detector(name: str) -> type[StubDetector]:
         assert name == "stub"
         return StubDetector
+
+    monkeypatch.setattr(cli, "get_detector_class", _get_detector)
+
+
+def _install_param_detector(monkeypatch: pytest.MonkeyPatch, scales: list[float]) -> None:
+    """Register a detector that records the initialization scale."""
+
+    class ParamDetector:
+        def __init__(self, scale: float = 1.0):
+            self.scale = scale
+            scales.append(scale)
+
+        def detect_anomalies(self, values: pd.DataFrame) -> np.ndarray:
+            return values.iloc[:, 0].to_numpy(dtype=float) * self.scale
+
+    registry = {"param_stub": "tests.test_integration:ParamDetector"}
+    monkeypatch.setattr(cli, "DETECTOR_REGISTRY", registry)
+
+    def _get_detector(name: str) -> type[ParamDetector]:
+        assert name == "param_stub"
+        return ParamDetector
 
     monkeypatch.setattr(cli, "get_detector_class", _get_detector)
 
@@ -183,3 +223,43 @@ def test_cli_registers_plugin(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, c
     assert "plugin_stub" in shared_registry
     assert "plugin_stub" in output
     assert "AUC=1.000" in output
+
+
+def test_config_supports_defaults_and_labels(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Config-driven runs should support detector defaults, labels, and plugins."""
+
+    dataset = _mock_dataset()
+    _patch_dataset_loader(monkeypatch, dataset)
+
+    recorded_scales: list[float] = []
+    _install_param_detector(monkeypatch, recorded_scales)
+
+    config_path = tmp_path / "config.yaml"
+    leaderboard_path = tmp_path / "leaderboard.csv"
+    config_path.write_text(
+        "leaderboard: " + str(leaderboard_path) + "\n"
+        "plugins: []\n"
+        "datasets:\n"
+        "  include:\n"
+        "    - mock_dataset\n"
+        "detectors:\n"
+        "  defaults:\n"
+        "    params:\n"
+        "      scale: 2.0\n"
+        "  include:\n"
+        "    - name: param_stub\n"
+        "      label: scaled_stub\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(sys, "argv", ["cli.py", "--config", str(config_path)])
+    cli.main()
+
+    output = capsys.readouterr().out
+    assert "scaled_stub (scale=2.0)" in output
+    assert recorded_scales == [2.0]
+
+    leaderboard_contents = leaderboard_path.read_text(encoding="utf-8").strip()
+    assert leaderboard_contents == "mock_dataset,scaled_stub,1.0"

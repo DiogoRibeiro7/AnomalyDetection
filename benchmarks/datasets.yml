@@ -1,0 +1,40 @@
+datasets:
+  arrhythmia:
+    tags: [tabular, medical, high_dimensional]
+    source: https://archive.ics.uci.edu/ml/datasets/Arrhythmia
+    task: classification
+  cardio:
+    tags: [tabular, medical, time_series]
+    source: https://archive.ics.uci.edu/ml/datasets/Cardiotocography
+    task: classification
+  digits:
+    tags: [tabular, image, toy]
+    source: https://scikit-learn.org/stable/auto_examples/datasets/plot_digits_last_image.html
+    task: classification
+  iris:
+    tags: [tabular, botanical, toy]
+    source: https://archive.ics.uci.edu/ml/datasets/iris
+    task: classification
+  karate_club_graph:
+    tags: [graph, social, toy]
+    source: https://networkrepository.com/karate.php
+    task: community_detection
+  kddcup_sample:
+    tags: [tabular, network, security]
+    source: https://kdd.ics.uci.edu/databases/kddcup99/kddcup99.html
+    task: intrusion_detection
+  lympho:
+    tags: [tabular, medical]
+    source: https://archive.ics.uci.edu/ml/datasets/Lymphography
+    task: classification
+  synthetic_timeseries:
+    tags: [time_series, synthetic]
+    task: anomaly_detection
+  thyroid:
+    tags: [tabular, medical]
+    source: https://archive.ics.uci.edu/ml/datasets/Thyroid+Disease
+    task: classification
+  wisconsin_breast_cancer:
+    tags: [tabular, medical]
+    source: https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Original)
+    task: classification

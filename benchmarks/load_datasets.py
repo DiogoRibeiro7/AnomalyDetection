@@ -257,6 +257,32 @@ def load_karate_club_graph():
     return G, None, "label", "karateClubGraph"
 
 
+def load_thyroid():
+    """Load a compact slice of the Thyroid benchmark dataset."""
+
+    df = pd.read_csv(
+        os.path.join(
+            os.sep.join(os.path.realpath(__file__).split(os.sep)[:-1]),
+            "thyroid.csv",
+        )
+    )
+    features = [column for column in df.columns if column != "Class"]
+    return df, features, "Class", "thyroid"
+
+
+def load_kddcup_sample():
+    """Load a lightweight subset of the KDD Cup '99 intrusion dataset."""
+
+    df = pd.read_csv(
+        os.path.join(
+            os.sep.join(os.path.realpath(__file__).split(os.sep)[:-1]),
+            "kddcup_sample.csv",
+        )
+    )
+    features = [column for column in df.columns if column != "Class"]
+    return df, features, "Class", "kddcupSample"
+
+
 # def load_shuttle():
 #     """
 #     The original Statlog (Shuttle) dataset from UCI machine learning repository is a multi-class classification dataset
