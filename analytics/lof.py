@@ -12,25 +12,70 @@ This module implements the Local Outlier Factor algorithm.
 """
 from __future__ import division
 import warnings
+from collections import OrderedDict
+from threading import RLock
 
-# Cache for pairwise distance computations used by LOF
-_DISTANCE_CACHE = {}
+
+class _LRUDistanceCache:
+    """Thread-safe LRU cache specialised for LOF distance computations."""
+
+    def __init__(self, maxsize=1024):
+        self.maxsize = maxsize
+        self._lock = RLock()
+        self._data = OrderedDict()
+
+    def get(self, key):
+        with self._lock:
+            value = self._data.pop(key)
+            self._data[key] = value
+            return value
+
+    def set(self, key, value):
+        with self._lock:
+            if key in self._data:
+                self._data.pop(key)
+            self._data[key] = value
+            if len(self._data) > self.maxsize:
+                self._data.popitem(last=False)
+
+    def clear(self):
+        with self._lock:
+            self._data.clear()
+
+    def __contains__(self, key):
+        with self._lock:
+            return key in self._data
+
+
+_DISTANCE_CACHE = _LRUDistanceCache(maxsize=4096)
 
 
 def clear_distance_cache():
-    """Clear the global LOF distance cache."""
+    """Clear the cached pairwise distances used by LOF computations."""
     _DISTANCE_CACHE.clear()
+
+
+def _make_hashable(instance):
+    """Convert an iterable instance description into a hashable tuple."""
+
+    if isinstance(instance, tuple):
+        return instance
+    return tuple(instance)
 
 
 def distance_euclidean(instance1, instance2):
     """Computes the distance between two instances. Instances should be tuples of equal length.
     Returns: Euclidean distance
     Signature: ((attr_1_1, attr_1_2, ...), (attr_2_1, attr_2_2, ...)) -> float"""
-    key = (instance1, instance2)
-    if key in _DISTANCE_CACHE:
-        return _DISTANCE_CACHE[key]
-    if (instance2, instance1) in _DISTANCE_CACHE:
-        return _DISTANCE_CACHE[(instance2, instance1)]
+    normalized_instance1 = _make_hashable(instance1)
+    normalized_instance2 = _make_hashable(instance2)
+    forward_key = (normalized_instance1, normalized_instance2)
+    reverse_key = (normalized_instance2, normalized_instance1)
+
+    if forward_key in _DISTANCE_CACHE:
+        return _DISTANCE_CACHE.get(forward_key)
+    if reverse_key in _DISTANCE_CACHE:
+        return _DISTANCE_CACHE.get(reverse_key)
 
     def detect_value_type(attribute):
         """Detects the value type (number or non-number).
@@ -70,8 +115,8 @@ def distance_euclidean(instance1, instance2):
                 differences[i] = 1
     # compute RMSE (root mean squared error)
     rmse = (sum(map(lambda x: x**2, differences)) / len(differences)) ** 0.5
-    _DISTANCE_CACHE[key] = rmse
-    _DISTANCE_CACHE[(instance2, instance1)] = rmse
+    _DISTANCE_CACHE.set(forward_key, rmse)
+    _DISTANCE_CACHE.set(reverse_key, rmse)
     return rmse
 
 
@@ -79,6 +124,7 @@ class LOF:
     """Helper class for performing LOF computations and instances normalization."""
 
     def __init__(self, instances, normalize=True, distance_function=distance_euclidean):
+        clear_distance_cache()
         self.instances = instances
         self.normalize = normalize
         self.distance_function = distance_function

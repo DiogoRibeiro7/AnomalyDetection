@@ -32,16 +32,24 @@ python cli.py
 Select specific datasets by name:
 
 ```bash
-python cli.py wisconsinBreast cardio
+python cli.py wisconsin_breast_cancer cardio
 ```
 
 The suite now includes tabular, image, time-series, and graph datasets.
 For example, run benchmarks on the Iris (tabular), Digits (image),
-syntheticTS (time-series), and karateClubGraph (graph) sets:
+synthetic_timeseries (time-series), nab_machine_temperature (industrial
+time-series), and karate_club_graph (graph) sets:
 
 ```bash
-python cli.py iris digits syntheticTS karateClubGraph
+python cli.py iris digits fashion_mnist_sample nab_art_daily_small_noise nab_machine_temperature synthetic_timeseries karate_club_graph
 ```
+
+Legacy display names (for example, ``wisconsinBreast``) remain supported for
+backwards compatibility, but the CLI now documents canonical loader keys such as
+``wisconsin_breast_cancer`` to make configuration files and tags easier to
+reason about. Newly added lightweight datasets like ``fashion_mnist_sample`` and
+``nab_art_daily_small_noise`` and ``nab_machine_temperature`` broaden image and
+time-series coverage without incurring large download requirements.
 
 Run only particular detectors:
 

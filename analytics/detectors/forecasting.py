@@ -2,10 +2,34 @@
 
 from __future__ import annotations
 
+from typing import Any, Sequence, Union
+
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 
 from analytics.base import BaseDetector
+
+
+ArrayLike = Union[
+    pd.DataFrame,
+    Sequence[float],
+    Sequence[Sequence[float]],
+    NDArray[np.floating[Any]],
+]
+ScoreArray = NDArray[np.floating[Any]]
+
+
+def _ensure_series_matrix(data: ArrayLike) -> NDArray[np.floating[Any]]:
+    """Convert supported sequence inputs to a 2D NumPy array."""
+
+    if isinstance(data, pd.DataFrame):
+        arr = data.to_numpy(dtype=float)
+    else:
+        arr = np.asarray(data, dtype=float)
+    if arr.ndim == 1:
+        arr = arr.reshape(1, -1)
+    return arr
 
 
 class ARIMADetector(BaseDetector):
@@ -14,25 +38,26 @@ class ARIMADetector(BaseDetector):
     def get_name(self) -> str:
         return "ARIMA"
 
-    def fit(self, data, order=(5, 1, 0), **params):
+    def fit(
+        self,
+        data: ArrayLike,
+        order: tuple[int, int, int] = (5, 1, 0),
+        **params: Any,
+    ) -> ARIMADetector:
         from statsmodels.tsa.arima.model import ARIMA
 
-        X = data.values if isinstance(data, pd.DataFrame) else np.asarray(data)
-        if X.ndim == 1:
-            X = X.reshape(1, -1)
-        self.models = [ARIMA(series, order=order).fit() for series in X]
+        X = _ensure_series_matrix(data)
+        self.models = [ARIMA(series, order=order, **params).fit() for series in X]
         return self
 
-    def score(self, data):
-        X = data.values if isinstance(data, pd.DataFrame) else np.asarray(data)
-        if X.ndim == 1:
-            X = X.reshape(1, -1)
+    def score(self, data: ArrayLike) -> ScoreArray:
+        X = _ensure_series_matrix(data)
         scores = []
         for series, model in zip(X, self.models):
             pred = model.predict(start=0, end=len(series) - 1)
             resid = np.abs(series - pred)
             scores.append(resid.mean())
-        return np.array(scores)
+        return np.asarray(scores, dtype=float)
 
 
 class ProphetDetector(BaseDetector):
@@ -41,12 +66,10 @@ class ProphetDetector(BaseDetector):
     def get_name(self) -> str:
         return "Prophet"
 
-    def fit(self, data, **params):
+    def fit(self, data: ArrayLike, **params: Any) -> ProphetDetector:
         from prophet import Prophet
 
-        X = data.values if isinstance(data, pd.DataFrame) else np.asarray(data)
-        if X.ndim == 1:
-            X = X.reshape(1, -1)
+        X = _ensure_series_matrix(data)
         self.models = []
         for series in X:
             df = pd.DataFrame(
@@ -59,10 +82,8 @@ class ProphetDetector(BaseDetector):
             self.models.append(model)
         return self
 
-    def score(self, data):
-        X = data.values if isinstance(data, pd.DataFrame) else np.asarray(data)
-        if X.ndim == 1:
-            X = X.reshape(1, -1)
+    def score(self, data: ArrayLike) -> ScoreArray:
+        X = _ensure_series_matrix(data)
         scores = []
         for series, model in zip(X, self.models):
             df = pd.DataFrame(
@@ -74,7 +95,10 @@ class ProphetDetector(BaseDetector):
             forecast = model.predict(df)
             resid = np.abs(df["y"].values - forecast["yhat"].values)
             scores.append(resid.mean())
-        return np.array(scores)
+        return np.asarray(scores, dtype=float)
 
 
-__all__ = [name for name in globals() if name.endswith("Detector")]
+__all__ = [
+    "ARIMADetector",
+    "ProphetDetector",
+]

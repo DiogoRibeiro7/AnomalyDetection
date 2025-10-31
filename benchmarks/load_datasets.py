@@ -217,6 +217,18 @@ def load_digits():
     return df, features, "Class", "digits"
 
 
+def load_fashion_mnist_sample():
+    """Load a lightweight synthetic slice of the Fashion-MNIST dataset."""
+
+    path = os.path.join(
+        os.sep.join(os.path.realpath(__file__).split(os.sep)[:-1]),
+        "fashion_mnist_sample.csv",
+    )
+    df = pd.read_csv(path)
+    features = [column for column in df.columns if column != "Class"]
+    return df, features, "Class", "fashionMNISTSample"
+
+
 def load_synthetic_timeseries():
     """Generate a simple synthetic time-series dataset.
 
@@ -255,6 +267,65 @@ def load_karate_club_graph():
     for n, data in G.nodes(data=True):
         data["label"] = 1 if data["club"] == "Mr. Hi" else 0
     return G, None, "label", "karateClubGraph"
+
+
+def load_thyroid():
+    """Load a compact slice of the Thyroid benchmark dataset."""
+
+    df = pd.read_csv(
+        os.path.join(
+            os.sep.join(os.path.realpath(__file__).split(os.sep)[:-1]),
+            "thyroid.csv",
+        )
+    )
+    features = [column for column in df.columns if column != "Class"]
+    return df, features, "Class", "thyroid"
+
+
+def load_nab_art_daily_small_noise():
+    """Load a compact NAB art daily time-series with engineered features."""
+
+    path = os.path.join(
+        os.sep.join(os.path.realpath(__file__).split(os.sep)[:-1]),
+        "nab_art_daily_small_noise.csv",
+    )
+    df = pd.read_csv(path, parse_dates=["timestamp"])
+    # Encode cyclical hour-of-day signals to provide useful temporal features.
+    hours = df["timestamp"].dt.hour.astype(float)
+    df["hour_sin"] = np.sin(2 * np.pi * hours / 24.0)
+    df["hour_cos"] = np.cos(2 * np.pi * hours / 24.0)
+    features = ["value", "hour_sin", "hour_cos"]
+    return df, features, "Class", "nabArtDaily"
+
+
+def load_nab_machine_temperature():
+    """Load a lightweight NAB machine temperature control example."""
+
+    path = os.path.join(
+        os.sep.join(os.path.realpath(__file__).split(os.sep)[:-1]),
+        "nab_machine_temperature.csv",
+    )
+    df = pd.read_csv(path, parse_dates=["timestamp"])
+    df["minute_of_day"] = (
+        df["timestamp"].dt.hour * 60 + df["timestamp"].dt.minute
+    ).astype(float)
+    df["minute_sin"] = np.sin(2 * np.pi * df["minute_of_day"] / (24 * 60))
+    df["minute_cos"] = np.cos(2 * np.pi * df["minute_of_day"] / (24 * 60))
+    features = ["value", "minute_sin", "minute_cos"]
+    return df, features, "Class", "nabMachineTemperature"
+
+
+def load_kddcup_sample():
+    """Load a lightweight subset of the KDD Cup '99 intrusion dataset."""
+
+    df = pd.read_csv(
+        os.path.join(
+            os.sep.join(os.path.realpath(__file__).split(os.sep)[:-1]),
+            "kddcup_sample.csv",
+        )
+    )
+    features = [column for column in df.columns if column != "Class"]
+    return df, features, "Class", "kddcupSample"
 
 
 # def load_shuttle():

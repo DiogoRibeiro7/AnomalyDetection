@@ -21,6 +21,21 @@ Thank you for your interest in improving the anomaly detection library. This gui
 4. Add unit tests covering the new detector’s behaviour.
 5. Update the README with a brief description of the detector and any usage notes.
 
+## Expanding Benchmark Datasets
+1. Add compact dataset assets under `benchmarks/` (for example CSV files). Prefer small, redistributable excerpts that keep tests fast.
+2. Implement a loader in `benchmarks/load_datasets.py` that returns `(dataframe, feature_columns, label_column, display_name)`.
+3. Describe the dataset in `benchmarks/datasets.yml`, including tags (e.g., `tabular`, `graph`, `time_series`) and source metadata so others can find the original reference.
+4. Cover new loaders with tests—`tests/test_benchmark_catalog.py` contains examples that assert catalog registration and metadata exposure.
+
+## Benchmark Configuration & Community Tooling
+- The CLI accepts YAML configurations via `--config`. See `benchmarks/config_benchmark.py` for supported keys. You can:
+  - Select datasets by name, by tag (`tag:tabular`), or via `include`/`exclude`/`limit` selectors.
+  - Provide detector defaults (`detectors.defaults.params`) and per-detector overrides (`detectors.include`).
+  - Assign human-friendly labels (`label`) so leaderboard exports stay readable.
+  - Declare plugins under `plugins` to auto-load community detectors.
+- Keep configuration-focused tests alongside `tests/test_integration.py` to ensure new capabilities remain stable.
+- When proposing new tooling (dataset generators, reporting utilities, dashboards), document the workflow in the README and add usage notes or templates that the community can extend.
+
 ## Coding Standards
 - Follow PEP 8 style and run `pre-commit run --files <changed-files>` before committing.
 - Include type hints for public functions.
