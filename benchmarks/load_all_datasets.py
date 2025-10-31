@@ -4,14 +4,18 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
-from typing import Any, Dict, List
+from typing import List
 
-from benchmarks.catalog import get_dataset_functions, get_dataset_metadata
+from benchmarks.catalog import (
+    DatasetSpec,
+    get_dataset_functions,
+    get_dataset_metadata,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def load_all_datasets(names: Sequence[str] | None = None) -> List[Dict[str, Any]]:
+def load_all_datasets(names: Sequence[str] | None = None) -> List[DatasetSpec]:
     """Load benchmark datasets by their canonical names.
 
     Parameters
@@ -40,7 +44,7 @@ def load_all_datasets(names: Sequence[str] | None = None) -> List[Dict[str, Any]
             )
         selected = [(name, functions[name]) for name in names]
 
-    datasets = []
+    datasets: List[DatasetSpec] = []
     for key, func in selected:
         df, feature_cols, label_col, display_name = func()
         datasets.append(

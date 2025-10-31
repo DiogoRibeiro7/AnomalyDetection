@@ -2,23 +2,49 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable, Mapping, Sequence
 from functools import lru_cache
 from inspect import getmembers, isfunction
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, TypeAlias, TypedDict
 
 import yaml
 
+logger = logging.getLogger(__name__)
+
 import benchmarks.load_datasets
+
+__all__ = [
+    "DatasetLoader",
+    "DatasetRegistry",
+    "DatasetSpec",
+    "get_dataset_functions",
+    "load_catalog",
+    "get_dataset_metadata",
+    "list_available_datasets",
+    "resolve_dataset_names",
+]
 
 _CATALOG_PATH = Path(__file__).with_name("datasets.yml")
 
-DatasetLoader = Callable[[], tuple[Any, list[str] | None, str, str]]
+DatasetLoader: TypeAlias = Callable[[], tuple[Any, list[str] | None, str, str]]
+DatasetRegistry: TypeAlias = dict[str, DatasetLoader]
+
+
+class DatasetSpec(TypedDict):
+    """Structured dataset entry returned by ``load_all_datasets``."""
+
+    dataframe: Any
+    feature_cols: list[str] | None
+    label_col: str
+    name: str
+    key: str
+    metadata: dict[str, object]
 
 
 @lru_cache(maxsize=1)
-def get_dataset_functions() -> dict[str, DatasetLoader]:
+def get_dataset_functions() -> DatasetRegistry:
     """Return mapping of canonical dataset names to loader callables."""
 
     functions: dict[str, DatasetLoader] = {}
@@ -113,6 +139,8 @@ def resolve_dataset_names(selectors: Any) -> List[str] | None:
         canonical = _lookup_alias(normalized, alias_map)
         if canonical:
             return [canonical]
+        if normalized not in available:
+            logger.warning("Unknown dataset selector '%s'", selectors)
         return [normalized]
 
     return []

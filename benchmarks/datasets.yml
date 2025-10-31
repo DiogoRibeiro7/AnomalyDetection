@@ -53,6 +53,12 @@ datasets:
     tags: [time_series, real_world]
     source: https://github.com/numenta/NAB/blob/master/data/realKnownCause/art_daily_small_noise.csv
     task: anomaly_detection
+  nab_machine_temperature:
+    display_name: nabMachineTemperature
+    aliases: [machine_temperature, nabMachineTemp]
+    tags: [time_series, industrial, real_world]
+    source: https://github.com/numenta/NAB
+    task: anomaly_detection
   synthetic_timeseries:
     display_name: syntheticTS
     aliases: [syntheticTS]

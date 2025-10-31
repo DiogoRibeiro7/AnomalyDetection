@@ -5,6 +5,7 @@ Use ``--summary`` to display information about the available datasets instead
 of running the detectors.
 """
 import argparse
+import logging
 import os
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -22,11 +23,20 @@ from analytics.detectors import (
 )
 
 
+logger = logging.getLogger(__name__)
+
+
 def summarize_datasets(datasets=None):
     """Print basic information about the available datasets."""
 
     resolved = resolve_dataset_names(datasets)
-    for ds in load_all_datasets(resolved):
+    try:
+        dataset_entries = load_all_datasets(resolved)
+    except KeyError as exc:  # pragma: no cover - defensive logging
+        logger.error("%s", exc)
+        raise
+
+    for ds in dataset_entries:
         name = ds["name"]
         df = ds["dataframe"]
         features = ds["feature_cols"]
@@ -181,7 +191,11 @@ def run_benchmarks(datasets=None, detectors=None, leaderboard=None, n_jobs=None)
         ]
 
     resolved_datasets = resolve_dataset_names(datasets)
-    datasets_to_run = list(load_all_datasets(resolved_datasets))
+    try:
+        datasets_to_run = list(load_all_datasets(resolved_datasets))
+    except KeyError as exc:
+        logger.error("%s", exc)
+        raise
 
     if not datasets_to_run:
         return

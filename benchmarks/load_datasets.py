@@ -298,6 +298,23 @@ def load_nab_art_daily_small_noise():
     return df, features, "Class", "nabArtDaily"
 
 
+def load_nab_machine_temperature():
+    """Load a lightweight NAB machine temperature control example."""
+
+    path = os.path.join(
+        os.sep.join(os.path.realpath(__file__).split(os.sep)[:-1]),
+        "nab_machine_temperature.csv",
+    )
+    df = pd.read_csv(path, parse_dates=["timestamp"])
+    df["minute_of_day"] = (
+        df["timestamp"].dt.hour * 60 + df["timestamp"].dt.minute
+    ).astype(float)
+    df["minute_sin"] = np.sin(2 * np.pi * df["minute_of_day"] / (24 * 60))
+    df["minute_cos"] = np.cos(2 * np.pi * df["minute_of_day"] / (24 * 60))
+    features = ["value", "minute_sin", "minute_cos"]
+    return df, features, "Class", "nabMachineTemperature"
+
+
 def load_kddcup_sample():
     """Load a lightweight subset of the KDD Cup '99 intrusion dataset."""
 

@@ -12,6 +12,7 @@ def test_catalog_includes_new_datasets() -> None:
     assert "kddcup_sample" in names
     assert "fashion_mnist_sample" in names
     assert "nab_art_daily_small_noise" in names
+    assert "nab_machine_temperature" in names
     thyroid_meta = catalog.get_dataset_metadata("thyroid")
     assert "tabular" in thyroid_meta.get("tags", [])
 
@@ -43,6 +44,8 @@ def test_resolve_dataset_names_supports_display_aliases() -> None:
     assert names == ["wisconsin_breast_cancer"]
     nab_names = catalog.resolve_dataset_names("nabArtDaily")
     assert nab_names == ["nab_art_daily_small_noise"]
+    machine_names = catalog.resolve_dataset_names("machine_temperature")
+    assert machine_names == ["nab_machine_temperature"]
 
 
 def test_load_all_datasets_includes_metadata() -> None:

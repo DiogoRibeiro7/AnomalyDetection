@@ -19,6 +19,7 @@ from industrialstats.analysis.power_analysis import (
 )
 
 TOLERANCE = 0.01
+SIMULATIONS_PER_CONFIGURATION = 10_000
 
 
 def _anova_group_means(effect_size: float, n_groups: int) -> np.ndarray:
@@ -223,13 +224,14 @@ def test_monte_carlo_validation() -> None:
     """Monte Carlo experiments validate analytical power estimates."""
 
     rng = np.random.default_rng(87234)
-    simulations = 10_000
     t_configs = [
         {"effect_size": 0.5, "n_per_group": 30, "alpha": 0.05},
         {"effect_size": 0.8, "n_per_group": 25, "alpha": 0.05},
     ]
     for cfg in t_configs:
-        empirical = _simulate_t_test(**cfg, simulations=simulations, rng=rng)
+        empirical = _simulate_t_test(
+            **cfg, simulations=SIMULATIONS_PER_CONFIGURATION, rng=rng
+        )
         theoretical = t_test_power(**cfg)
         assert empirical == pytest.approx(theoretical, abs=TOLERANCE)
 
@@ -238,7 +240,9 @@ def test_monte_carlo_validation() -> None:
         {"effect_size": 0.3, "n_per_group": 20, "n_groups": 5, "alpha": 0.05},
     ]
     for cfg in anova_configs:
-        empirical = _simulate_anova(**cfg, simulations=simulations, rng=rng)
+        empirical = _simulate_anova(
+            **cfg, simulations=SIMULATIONS_PER_CONFIGURATION, rng=rng
+        )
         theoretical = anova_power(**cfg)
         assert empirical == pytest.approx(theoretical, abs=TOLERANCE)
 
@@ -247,7 +251,9 @@ def test_monte_carlo_validation() -> None:
         {"effect_size": 0.9, "n_factors": 3, "n_per_cell": 8, "alpha": 0.05},
     ]
     for cfg in factorial_configs:
-        empirical = _simulate_factorial(**cfg, simulations=simulations, rng=rng)
+        empirical = _simulate_factorial(
+            **cfg, simulations=SIMULATIONS_PER_CONFIGURATION, rng=rng
+        )
         theoretical = factorial_power(**cfg)
         assert empirical == pytest.approx(theoretical, abs=TOLERANCE)
 
