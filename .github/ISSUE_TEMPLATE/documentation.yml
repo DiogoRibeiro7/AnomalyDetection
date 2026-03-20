@@ -1,0 +1,32 @@
+name: Documentation
+description: Request changes or additions to project documentation.
+title: "[Docs]: "
+labels:
+  - documentation
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Documentation Gap
+      description: What is unclear, missing, or incorrect?
+      placeholder: The README does not explain...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Update
+      description: What should be added or changed?
+      placeholder: Add a section with...
+    validations:
+      required: true
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Affected Files/Sections
+      description: Include paths and sections if known.
+      placeholder: README.md - Installation section
+    validations:
+      required: false
