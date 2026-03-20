@@ -4,12 +4,13 @@ Thank you for your interest in improving the anomaly detection library. This gui
 
 ## Getting Started
 1. Fork the repository and clone your fork.
-2. Install dependencies and pre-commit hooks:
+2. Use Python `3.12` (for example `3.12.x`). Python `3.13` is currently unsupported.
+3. Install dependencies and pre-commit hooks:
    ```bash
    poetry install
    pre-commit install
    ```
-3. Ensure tests run:
+4. Ensure tests run:
    ```bash
    pytest -q
    ```

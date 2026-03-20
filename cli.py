@@ -11,6 +11,10 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from importlib import import_module
 
+from analytics.runtime import ensure_supported_python
+
+ensure_supported_python()
+
 import pandas as pd
 import networkx as nx
 from sklearn.metrics import roc_auc_score
