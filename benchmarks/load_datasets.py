@@ -106,7 +106,7 @@ def load_lympho():
             "lymphography.dat",
         )
     )
-    features = list(set(df.columns) - {"Class"})
+    features = [column for column in df.columns if column != "Class"]
     df["Class"] = df["Class"].map(
         {"fibrosis": 0, "normal": 0, "metastases": 1, "malign_lymph": 1}
     )
@@ -133,7 +133,7 @@ def load_cardio():
     df = df[df["NSP"] <= 1]
     df["Class"] = df["NSP"].map({0: 1, 1: 0})
     df = df.drop("NSP", axis=1)
-    features = list(set(df.columns) - {"NSP"})
+    features = [column for column in df.columns if column != "Class"]
 
     return df, features, "Class", "cardio"
 
