@@ -180,6 +180,7 @@ def _build_alias_map() -> Dict[str, str]:
         if isinstance(display_name, str) and display_name:
             alias_map.setdefault(display_name, canonical)
             alias_map.setdefault(display_name.lower(), canonical)
+            alias_map.setdefault(display_name.replace(" ", "_").lower(), canonical)
         aliases = meta.get("aliases") or []
         if isinstance(aliases, Iterable):
             for alias in aliases:
@@ -187,16 +188,6 @@ def _build_alias_map() -> Dict[str, str]:
                     continue
                 alias_map.setdefault(alias, canonical)
                 alias_map.setdefault(alias.lower(), canonical)
-
-    for canonical, loader in get_dataset_functions().items():
-        try:
-            _, _, _, display_name = loader()
-        except Exception:  # pragma: no cover - loader failure handled elsewhere
-            continue
-        if display_name:
-            alias_map.setdefault(display_name, canonical)
-            alias_map.setdefault(display_name.lower(), canonical)
-            alias_map.setdefault(display_name.replace(" ", "_").lower(), canonical)
     return alias_map
 
 
