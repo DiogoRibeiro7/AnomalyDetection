@@ -103,6 +103,10 @@ The module ``plugins.my_module`` should call
 ``analytics.detectors.register_detector`` during import. Stratified
 cross-validation utilities are available in :mod:`analytics.hyperparam`:
 
+Detector keys are protected against accidental collisions by default. To
+intentionally replace an existing detector registration, pass
+``allow_override=True`` to ``register_detector``.
+
 ```python
 from analytics.hyperparam import grid_search
 best_params, score = grid_search(
