@@ -5,10 +5,13 @@ Use ``--summary`` to display information about the available datasets instead
 of running the detectors.
 """
 import argparse
+import csv
+import json
 import logging
 import os
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
 from importlib import import_module
 
 from analytics.runtime import ensure_supported_python
@@ -28,6 +31,16 @@ from analytics.detectors import (
 
 
 logger = logging.getLogger(__name__)
+LEADERBOARD_HEADER = [
+    "run_timestamp_utc",
+    "dataset_name",
+    "dataset_key",
+    "detector_name",
+    "detector_label",
+    "detector_params",
+    "auc",
+    "error",
+]
 
 
 def summarize_datasets(datasets=None):
@@ -167,6 +180,39 @@ def _resolve_detector_entries(selection):
     return []
 
 
+def _append_leaderboard_rows(leaderboard_path, datasets_to_run, detector_entries, results):
+    write_header = not os.path.exists(leaderboard_path) or os.path.getsize(leaderboard_path) == 0
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    with open(leaderboard_path, "a", newline="", encoding="utf-8") as fh:
+        writer = csv.writer(fh)
+        if write_header:
+            writer.writerow(LEADERBOARD_HEADER)
+
+        for dataset_spec in datasets_to_run:
+            dataset_name = dataset_spec["name"]
+            dataset_key = dataset_spec.get("key") or dataset_name
+            for det_spec in detector_entries:
+                label = det_spec.get("label") or det_spec["name"]
+                outcome = results.get(dataset_name, {}).get(label)
+                if not outcome:
+                    continue
+
+                params = det_spec.get("params") or {}
+                writer.writerow(
+                    [
+                        timestamp,
+                        dataset_name,
+                        dataset_key,
+                        det_spec["name"],
+                        label,
+                        json.dumps(params, sort_keys=True),
+                        "" if outcome["auc"] is None else outcome["auc"],
+                        outcome["error"] or "",
+                    ]
+                )
+
+
 def run_benchmarks(datasets=None, detectors=None, leaderboard=None, n_jobs=None):
     """Run benchmarks for the specified datasets and detectors.
 
@@ -261,17 +307,12 @@ def run_benchmarks(datasets=None, detectors=None, leaderboard=None, n_jobs=None)
         print()
 
     if leaderboard:
-        import csv
-
-        with open(leaderboard, "a", newline="", encoding="utf-8") as fh:
-            writer = csv.writer(fh)
-            for dataset_spec in datasets_to_run:
-                name = dataset_spec["name"]
-                for det_spec in detector_entries:
-                    label = det_spec.get("label") or det_spec["name"]
-                    outcome = results[name].get(label)
-                    if outcome and outcome["auc"] is not None:
-                        writer.writerow([name, label, outcome["auc"]])
+        _append_leaderboard_rows(
+            leaderboard,
+            datasets_to_run,
+            detector_entries,
+            results,
+        )
 
 
 def main():
