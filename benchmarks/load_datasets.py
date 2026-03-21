@@ -39,7 +39,7 @@ class MultiColumnLabelEncoder:
             for col in self.columns:
                 output[col] = LabelEncoder().fit_transform(output[col])
         else:
-            for colname, col in output.iteritems():
+            for colname, col in output.items():
                 output[colname] = LabelEncoder().fit_transform(col)
         return output
 
