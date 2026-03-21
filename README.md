@@ -1,5 +1,7 @@
 # Anomaly Detection
 
+[![CI](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/ci.yml) [![Branch Policy](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/branch-policy.yml/badge.svg?branch=develop)](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/branch-policy.yml) [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/) [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 This repository provides a collection of simple anomaly detection algorithms
 and utilities for benchmarking them on several standard datasets. A small
 command line interface is provided to run the included benchmarks.
