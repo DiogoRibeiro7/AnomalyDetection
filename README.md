@@ -126,12 +126,14 @@ python cli.py --plugins plugins.my_module --detectors my_custom_detector
 ```
 
 The module ``plugins.my_module`` should call
-``analytics.detectors.register_detector`` during import. Stratified
-cross-validation utilities are available in :mod:`analytics.hyperparam`:
+``analytics.detectors.register_detector`` during import.
 
 Detector keys are protected against accidental collisions by default. To
 intentionally replace an existing detector registration, pass
 ``allow_override=True`` to ``register_detector``.
+
+Stratified cross-validation utilities are available in
+:mod:`analytics.hyperparam`:
 
 ```python
 from analytics.hyperparam import grid_search
@@ -145,8 +147,12 @@ best_params, score = grid_search(
 Benchmark results can be appended to a CSV leaderboard:
 
 ```bash
-python cli.py --detectors isolation_forest --datasets iris --leaderboard results.csv
+python cli.py iris --detectors isolation_forest --leaderboard results.csv
 ```
+
+The leaderboard CSV uses a structured schema with these columns:
+`run_timestamp_utc`, `dataset_name`, `dataset_key`, `detector_name`,
+`detector_label`, `detector_params`, `auc`, and `error`.
 
 ## Contributing
 Contributions to expand the detector library are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on adding new algorithms.
