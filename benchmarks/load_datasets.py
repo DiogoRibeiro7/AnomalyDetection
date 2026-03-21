@@ -7,6 +7,10 @@ Written by Gilles Vandewiele in commission of IDLab - INTEC from University Ghen
 
 from collections import Counter
 
+from analytics.runtime import ensure_supported_python
+
+ensure_supported_python()
+
 from sklearn import datasets
 
 import pandas as pd

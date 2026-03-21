@@ -4,6 +4,11 @@ This repository provides a collection of simple anomaly detection algorithms
 and utilities for benchmarking them on several standard datasets. A small
 command line interface is provided to run the included benchmarks.
 
+## Python Support
+
+This project currently supports Python `3.12` (for example `3.12.x`).
+Python `3.13` is not supported yet.
+
 Install the required dependencies with Poetry and set up the pre‑commit hooks:
 
 ```bash
