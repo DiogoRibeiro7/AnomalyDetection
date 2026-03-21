@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import csv
 from pathlib import Path
 
 import numpy as np
@@ -17,6 +18,7 @@ def _mock_dataset() -> dict[str, object]:
     frame = pd.DataFrame({"feature": [0.1, 0.9], "label": [0, 1]})
     return {
         "name": "mock_dataset",
+        "key": "mock_dataset_key",
         "dataframe": frame,
         "feature_cols": ["feature"],
         "label_col": "label",
@@ -139,8 +141,17 @@ def test_cli_appends_leaderboard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     )
     cli.main()
 
-    rows = leaderboard_path.read_text(encoding="utf-8").strip().splitlines()
-    assert rows == ["mock_dataset,stub,1.0"]
+    with leaderboard_path.open("r", encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["dataset_name"] == "mock_dataset"
+    assert row["dataset_key"] == "mock_dataset_key"
+    assert row["detector_name"] == "stub"
+    assert row["detector_label"] == "stub"
+    assert row["auc"] == "1.0"
+    assert row["error"] == ""
 
 
 def test_cli_parallel_execution(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
@@ -189,6 +200,36 @@ def test_cli_parallel_execution(monkeypatch: pytest.MonkeyPatch, capsys: pytest.
     assert "parallel_b" in output
 
 
+def test_leaderboard_header_written_once_across_multiple_runs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    dataset = _mock_dataset()
+    _patch_dataset_loader(monkeypatch, dataset)
+    _install_stub_detector(monkeypatch)
+
+    leaderboard_path = tmp_path / "leaderboard.csv"
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "cli.py",
+            "mock_dataset",
+            "--detectors",
+            "stub",
+            "--leaderboard",
+            str(leaderboard_path),
+        ],
+    )
+    cli.main()
+    cli.main()
+
+    lines = leaderboard_path.read_text(encoding="utf-8").strip().splitlines()
+    header_count = sum(1 for line in lines if line.startswith("run_timestamp_utc,"))
+    assert header_count == 1
+    assert len(lines) == 3  # one header + two result rows
+
+
 def test_cli_registers_plugin(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
     """Plugins should integrate with the CLI when provided through --plugins."""
 
@@ -223,6 +264,45 @@ def test_cli_registers_plugin(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, c
     assert "plugin_stub" in shared_registry
     assert "plugin_stub" in output
     assert "AUC=1.000" in output
+
+
+def test_leaderboard_persists_detector_errors(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    dataset = _mock_dataset()
+    _patch_dataset_loader(monkeypatch, dataset)
+
+    class FailingDetector:
+        def detect_anomalies(self, values: pd.DataFrame) -> np.ndarray:
+            raise RuntimeError("intentional failure")
+
+    registry = {"failing_stub": "tests.test_integration:FailingDetector"}
+    monkeypatch.setattr(cli, "DETECTOR_REGISTRY", registry)
+    monkeypatch.setattr(cli, "get_detector_class", lambda name: FailingDetector)
+
+    leaderboard_path = tmp_path / "leaderboard.csv"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "cli.py",
+            "mock_dataset",
+            "--detectors",
+            "failing_stub",
+            "--leaderboard",
+            str(leaderboard_path),
+        ],
+    )
+    cli.main()
+
+    with leaderboard_path.open("r", encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["detector_name"] == "failing_stub"
+    assert row["auc"] == ""
+    assert "intentional failure" in row["error"]
 
 
 def test_config_supports_defaults_and_labels(
@@ -261,5 +341,12 @@ def test_config_supports_defaults_and_labels(
     assert "scaled_stub (scale=2.0)" in output
     assert recorded_scales == [2.0]
 
-    leaderboard_contents = leaderboard_path.read_text(encoding="utf-8").strip()
-    assert leaderboard_contents == "mock_dataset,scaled_stub,1.0"
+    with leaderboard_path.open("r", encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["dataset_name"] == "mock_dataset"
+    assert row["detector_label"] == "scaled_stub"
+    assert row["detector_params"] == "{\"scale\": 2.0}"
+    assert row["auc"] == "1.0"
