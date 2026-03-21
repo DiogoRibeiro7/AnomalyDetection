@@ -11,7 +11,7 @@ on:
       - develop
 
 jobs:
-  test:
+  test-core:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
@@ -38,3 +38,27 @@ jobs:
 
       - name: Run tests
         run: poetry run pytest -q
+
+  test-streaming-extra:
+    runs-on: ubuntu-latest
+    needs: test-core
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install dependencies with streaming extra
+        run: poetry install --no-interaction -E streaming
+
+      - name: Validate streaming extra import
+        run: poetry run python -c "import river; print('river-ok')"
+
+      - name: Streaming detector smoke test
+        run: poetry run python -c "import numpy as np; from analytics.detectors.streaming import OnlineIsolationForestDetector; d=OnlineIsolationForestDetector().fit(np.array([[0.0],[1.0],[2.0]])); s=d.score(np.array([[0.5],[1.5]])); assert len(s)==2"

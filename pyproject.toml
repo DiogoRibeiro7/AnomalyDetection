@@ -13,18 +13,24 @@ scikit-learn = "*"
 scikit-sos = "*"
 pyod = "*"
 combo = "*"
-torch = "*"
-tensorflow = "*"
 pyyaml = "*"
 networkx = "*"
-river = "*"
-statsmodels = "*"
-prophet = "*"
+torch = { version = "*", optional = true }
+tensorflow = { version = "*", optional = true }
+river = { version = "*", optional = true }
+statsmodels = { version = "*", optional = true }
+prophet = { version = "*", optional = true }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
 pre-commit = "*"
 hypothesis = "*"
+
+[tool.poetry.extras]
+deep = ["torch", "tensorflow"]
+streaming = ["river"]
+forecasting = ["statsmodels", "prophet"]
+all-detectors = ["torch", "tensorflow", "river", "statsmodels", "prophet"]
 
 [tool.poetry.scripts]
 benchmark-cli = "cli:main"
