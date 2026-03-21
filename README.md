@@ -19,6 +19,25 @@ Poetry manages the dependencies for this project. If you previously used a
 `requirements.txt` file, it has been removed in favour of the `pyproject.toml`
 configuration.
 
+### Optional detector extras
+
+The base install targets classical detectors and CLI workflows. Optional
+detector stacks can be enabled with Poetry extras:
+
+```bash
+# Deep learning detectors (PyTorch/TensorFlow)
+poetry install -E deep
+
+# Streaming detectors (River)
+poetry install -E streaming
+
+# Forecasting detectors (statsmodels/Prophet)
+poetry install -E forecasting
+
+# Enable all optional detector stacks
+poetry install -E all-detectors
+```
+
 ## Roadmap
 - Implement variable width binning for HBOS (completed).
 - Add caching to LOF calculations (completed).
