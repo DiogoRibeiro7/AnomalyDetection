@@ -32,6 +32,20 @@ def _ensure_series_matrix(data: ArrayLike) -> NDArray[np.floating[Any]]:
     return arr
 
 
+def _validate_series_count(
+    models: Sequence[Any],
+    series_matrix: NDArray[np.floating[Any]],
+    detector_name: str,
+) -> None:
+    expected = len(models)
+    actual = int(series_matrix.shape[0])
+    if expected != actual:
+        raise ValueError(
+            f"{detector_name} received {actual} series for scoring, "
+            f"but was fitted on {expected} series."
+        )
+
+
 class ARIMADetector(BaseDetector):
     """Detect anomalies using ARIMA forecast residuals."""
 
@@ -52,6 +66,7 @@ class ARIMADetector(BaseDetector):
 
     def score(self, data: ArrayLike) -> ScoreArray:
         X = _ensure_series_matrix(data)
+        _validate_series_count(self.models, X, self.get_name())
         scores = []
         for series, model in zip(X, self.models):
             pred = model.predict(start=0, end=len(series) - 1)
@@ -84,6 +99,7 @@ class ProphetDetector(BaseDetector):
 
     def score(self, data: ArrayLike) -> ScoreArray:
         X = _ensure_series_matrix(data)
+        _validate_series_count(self.models, X, self.get_name())
         scores = []
         for series, model in zip(X, self.models):
             df = pd.DataFrame(
