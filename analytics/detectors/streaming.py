@@ -33,6 +33,8 @@ def _to_dicts(data: ArrayLike) -> list[RowDict]:
 class HalfSpaceTreesDetector(BaseDetector):
     """Online anomaly detector backed by River's Half-Space Trees."""
 
+    score_orientation = "higher_is_more_anomalous"
+
     def get_name(self) -> str:
         return "Half-Space Trees"
 
@@ -61,6 +63,8 @@ class RandomCutForestDetector(BaseDetector):
     River does not currently expose ``anomaly.RandomCutForest``. The detector is
     retained so older configurations fail with an actionable message.
     """
+
+    score_orientation = "higher_is_more_anomalous"
 
     def get_name(self) -> str:
         return "Random Cut Forest"

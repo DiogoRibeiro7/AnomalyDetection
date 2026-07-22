@@ -49,6 +49,8 @@ def _validate_series_count(
 class ARIMADetector(BaseDetector):
     """Detect anomalies using ARIMA forecast residuals."""
 
+    score_orientation = "higher_is_more_anomalous"
+
     def get_name(self) -> str:
         return "ARIMA"
 
@@ -77,6 +79,8 @@ class ARIMADetector(BaseDetector):
 
 class ProphetDetector(BaseDetector):
     """Use Prophet forecasting to score time-series anomalies."""
+
+    score_orientation = "higher_is_more_anomalous"
 
     def get_name(self) -> str:
         return "Prophet"

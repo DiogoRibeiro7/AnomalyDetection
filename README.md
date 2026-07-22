@@ -104,6 +104,22 @@ Detector keys are protected against accidental collisions by default. To
 replace an existing detector intentionally, pass `allow_override=True` to
 `register_detector`.
 
+## Detector API
+
+All built-in detectors follow the same lifecycle:
+
+- `fit(data, **params)` trains the detector and marks it as fitted.
+- `score(data)` returns detector-specific anomaly scores and raises a
+  `RuntimeError` if called before `fit`.
+- `detect_anomalies(data, **params)` is the fit-and-score convenience path used
+  by benchmark workflows.
+
+Detectors expose an `is_fitted` property and a `score_orientation` value. Score
+orientation is one of `higher_is_more_anomalous`, `lower_is_more_anomalous`,
+`binary_anomaly`, or `estimator_defined`. Current score values are preserved for
+backwards compatibility; use `score_orientation` when comparing detectors that
+produce different score semantics.
+
 ## Hyperparameter Search
 
 Stratified cross-validation utilities are available in `analytics.hyperparam`:

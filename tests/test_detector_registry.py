@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from analytics.detectors import registry
+from analytics.base import BaseDetector
 
 
 class DummyDetector:
@@ -63,3 +64,20 @@ def test_get_detector_class_raises_for_missing_target_class() -> None:
     registry.register_detector("dummy", __name__ + ":DoesNotExist")
     with pytest.raises(ImportError):
         registry.get_detector_class("dummy")
+
+
+def test_registered_detectors_declare_supported_score_orientation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.undo()
+    supported = {
+        "higher_is_more_anomalous",
+        "lower_is_more_anomalous",
+        "binary_anomaly",
+        "estimator_defined",
+    }
+
+    for detector_name in registry.DETECTOR_REGISTRY:
+        detector_cls = registry.get_detector_class(detector_name)
+        assert issubclass(detector_cls, BaseDetector)
+        assert detector_cls.score_orientation in supported

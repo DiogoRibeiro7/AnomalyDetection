@@ -1,20 +1,119 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from collections.abc import Callable
+from functools import wraps
+from typing import TYPE_CHECKING, Any, Literal
+
+import numpy as np
+import pandas as pd
+from numpy.typing import NDArray
 
 if TYPE_CHECKING:  # pragma: no cover - optional dependency for typing only
     from analytics.preprocessing import PreprocessingPipeline
 
+ScoreOrientation = Literal[
+    "higher_is_more_anomalous",
+    "lower_is_more_anomalous",
+    "binary_anomaly",
+    "estimator_defined",
+]
+TabularArray = NDArray[np.floating[Any]]
+
+
+def coerce_tabular_2d(
+    data: pd.DataFrame | Any,
+    *,
+    detector_name: str = "Detector",
+    allow_empty: bool = False,
+) -> TabularArray:
+    """Return a dense 2-D floating-point array for tabular detectors."""
+
+    if isinstance(data, pd.DataFrame):
+        array = data.to_numpy(dtype=float, copy=False)
+    else:
+        array = np.asarray(data, dtype=float)
+
+    if array.ndim != 2:
+        raise ValueError(f"{detector_name} input must be a 2-D array.")
+    if not allow_empty and array.shape[0] == 0:
+        raise ValueError(f"{detector_name} input must contain at least one sample.")
+
+    return array
+
 
 class BaseDetector(ABC):
-    """Common interface for all anomaly detectors."""
+    """Common interface for all anomaly detectors.
+
+    Detector implementations expose a three-step lifecycle:
+
+    - ``fit(data, **params)`` trains the detector and marks it as fitted.
+    - ``score(data)`` returns detector-specific anomaly scores and requires a
+      successful prior fit.
+    - ``detect_anomalies(data, **params)`` is the fit-and-score convenience
+      path used by the benchmark CLI.
+    """
+
+    score_orientation: ScoreOrientation = "estimator_defined"
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        cls._wrap_lifecycle_method("fit", cls._wrap_fit)
+        cls._wrap_lifecycle_method("score", cls._wrap_score)
+
+    @classmethod
+    def _wrap_lifecycle_method(
+        cls,
+        method_name: str,
+        wrapper_factory: Callable[[Callable[..., Any]], Callable[..., Any]],
+    ) -> None:
+        method = cls.__dict__.get(method_name)
+        if method is None or getattr(method, "_detector_lifecycle_wrapped", False):
+            return
+        setattr(cls, method_name, wrapper_factory(method))
+
+    @staticmethod
+    def _wrap_fit(method: Callable[..., Any]) -> Callable[..., Any]:
+        @wraps(method)
+        def _wrapped(self: BaseDetector, *args: Any, **kwargs: Any) -> Any:
+            result = method(self, *args, **kwargs)
+            self._mark_fitted()
+            return result
+
+        _wrapped._detector_lifecycle_wrapped = True  # type: ignore[attr-defined]
+        return _wrapped
+
+    @staticmethod
+    def _wrap_score(method: Callable[..., Any]) -> Callable[..., Any]:
+        @wraps(method)
+        def _wrapped(self: BaseDetector, *args: Any, **kwargs: Any) -> Any:
+            self._require_fitted()
+            return method(self, *args, **kwargs)
+
+        _wrapped._detector_lifecycle_wrapped = True  # type: ignore[attr-defined]
+        return _wrapped
 
     def __init__(
         self, preprocessing_pipeline: PreprocessingPipeline | None = None
     ) -> None:
         self._preprocessing_pipeline = preprocessing_pipeline
         self._preprocessing_fitted = False
+        self._is_fitted = False
+
+    @property
+    def is_fitted(self) -> bool:
+        """Return whether the detector has completed a successful fit."""
+
+        return bool(getattr(self, "_is_fitted", False))
+
+    def _mark_fitted(self) -> None:
+        self._is_fitted = True
+
+    def _require_fitted(self) -> None:
+        if not self.is_fitted:
+            raise RuntimeError(
+                f"{self.get_name()} must be fitted before calling score()."
+            )
 
     @property
     def preprocessing_pipeline(self) -> PreprocessingPipeline | None:
