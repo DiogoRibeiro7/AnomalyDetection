@@ -121,6 +121,8 @@ def _split_train_val(
 class AutoencoderDetector(BaseDetector):
     """Shallow autoencoder using reconstruction error as anomaly score."""
 
+    score_orientation = "lower_is_more_anomalous"
+
     def get_name(self) -> str:
         return "Autoencoder"
 
@@ -142,6 +144,8 @@ class AutoencoderDetector(BaseDetector):
 
 class DenoisingAutoencoderDetector(BaseDetector):
     """Denoising autoencoder that reconstructs clean input."""
+
+    score_orientation = "lower_is_more_anomalous"
 
     def get_name(self) -> str:
         return "Denoising Autoencoder"
@@ -211,6 +215,8 @@ class VariationalAutoencoderDetector(BaseDetector):
     an anomaly score.  Training supports early stopping via a validation split
     and optional checkpoint persistence.
     """
+
+    score_orientation = "lower_is_more_anomalous"
 
     def get_name(self) -> str:
         return "Variational Autoencoder"
@@ -302,6 +308,8 @@ class VariationalAutoencoderDetector(BaseDetector):
 class LSTMAutoencoderDetector(BaseDetector):
     """LSTM autoencoder for sequence reconstruction."""
 
+    score_orientation = "lower_is_more_anomalous"
+
     def get_name(self) -> str:
         return "LSTM Autoencoder"
 
@@ -368,6 +376,8 @@ class LSTMAutoencoderDetector(BaseDetector):
 
 class TransformerDetector(BaseDetector):
     """Transformer-based autoencoder for anomaly detection."""
+
+    score_orientation = "lower_is_more_anomalous"
 
     def get_name(self) -> str:
         return "Transformer"
@@ -445,6 +455,8 @@ class AnoGANDetector(BaseDetector):
     sample-specific latent optimisation during scoring to approximate the
     original AnoGAN formulation.
     """
+
+    score_orientation = "lower_is_more_anomalous"
 
     def get_name(self) -> str:
         return "AnoGAN"
@@ -587,6 +599,8 @@ class AnoGANDetector(BaseDetector):
 
 class MADGANDetector(BaseDetector):
     """Lightweight MAD-GAN style detector using PyTorch."""
+
+    score_orientation = "higher_is_more_anomalous"
 
     def get_name(self) -> str:
         return "MAD-GAN"

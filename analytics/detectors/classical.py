@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from analytics.base import BaseDetector
+from analytics.base import BaseDetector, coerce_tabular_2d
 from analytics.lof import LOF
 
 from sklearn.covariance import EllipticEnvelope, EmpiricalCovariance
@@ -42,15 +42,7 @@ def _coerce_frame_or_array(data: FrameOrArray) -> ArrayLike:
     dimensional.
     """
 
-    if isinstance(data, pd.DataFrame):
-        array = data.to_numpy(dtype=float, copy=False)
-    else:
-        array = np.asarray(data, dtype=float)
-
-    if array.ndim != 2:
-        raise ValueError("Detector input must be a 2-D array.")
-
-    return array
+    return coerce_tabular_2d(data)
 
 
 def _compute_variable_width_edges(feature: ArrayLike, k: int) -> ArrayLike:
@@ -84,6 +76,8 @@ class IsolationForestDetector(BaseDetector):
         >>> scores.shape
         (len(X_test),)
     """
+
+    score_orientation = "lower_is_more_anomalous"
 
     def get_name(self) -> str:
         return "Isolation Forest"
@@ -137,6 +131,7 @@ class _PyODAdapter(BaseDetector):
 
     pyod_class_path: ClassVar[str]
     display_name: ClassVar[str]
+    score_orientation = "lower_is_more_anomalous"
 
     def get_name(self) -> str:
         return self.display_name
@@ -186,6 +181,8 @@ class LOFDetector(BaseDetector):
         >>> detector.score(X_test_df)[0]  # doctest: +SKIP
         -0.23
     """
+
+    score_orientation = "lower_is_more_anomalous"
 
     def get_name(self) -> str:
         return "Local Outlier Factor"
@@ -258,6 +255,8 @@ class SOSDetector(BaseDetector):
         >>> detector.score()[:3]  # doctest: +SKIP
         array([...])
     """
+
+    score_orientation = "lower_is_more_anomalous"
 
     def get_name(self) -> str:
         return "Stochastic Outlier Selection"
@@ -336,6 +335,8 @@ class EnsembleDetector(BaseDetector):
         array([...])
     """
 
+    score_orientation = "lower_is_more_anomalous"
+
     def get_name(self) -> str:
         return "Ensembled detector"
 
@@ -406,6 +407,8 @@ class HBOSDetector(BaseDetector):
         >>> detector.score(X_test)  # doctest: +SKIP
         array([...])
     """
+
+    score_orientation = "lower_is_more_anomalous"
 
     def get_name(self) -> str:
         return "Histogram-Based Outlier Score"
@@ -493,6 +496,8 @@ class KNNDetector(BaseDetector):
         array([...])
     """
 
+    score_orientation = "lower_is_more_anomalous"
+
     def get_name(self) -> str:
         return "K-Nearest Neighbors"
 
@@ -560,6 +565,8 @@ class OneClassSVMDetector(BaseDetector):
         array([...])
     """
 
+    score_orientation = "lower_is_more_anomalous"
+
     def get_name(self) -> str:
         return "One-Class SVM"
 
@@ -625,6 +632,8 @@ class DBSCANDetector(BaseDetector):
         >>> detector.score(X_test)  # doctest: +SKIP
         array([...])
     """
+
+    score_orientation = "binary_anomaly"
 
     def get_name(self) -> str:
         return "DBSCAN"
@@ -694,6 +703,8 @@ class EllipticEnvelopeDetector(BaseDetector):
         array([...])
     """
 
+    score_orientation = "lower_is_more_anomalous"
+
     def get_name(self) -> str:
         return "Elliptic Envelope"
 
@@ -759,6 +770,8 @@ class GaussianMixtureDetector(BaseDetector):
         >>> detector.score(X_test)  # doctest: +SKIP
         array([...])
     """
+
+    score_orientation = "higher_is_more_anomalous"
 
     def get_name(self) -> str:
         return "Gaussian Mixture"
@@ -827,6 +840,8 @@ class SklearnLOFDetector(BaseDetector):
         array([...])
     """
 
+    score_orientation = "lower_is_more_anomalous"
+
     def get_name(self) -> str:
         return "Sklearn LOF"
 
@@ -893,6 +908,8 @@ class KMeansDetector(BaseDetector):
         >>> detector.score(X_test)  # doctest: +SKIP
         array([...])
     """
+
+    score_orientation = "lower_is_more_anomalous"
 
     def get_name(self) -> str:
         return "KMeans"
@@ -961,6 +978,8 @@ class PCAReconstructionDetector(BaseDetector):
         >>> detector.score(X_test)  # doctest: +SKIP
         array([...])
     """
+
+    score_orientation = "lower_is_more_anomalous"
 
     def get_name(self) -> str:
         return "PCA Reconstruction"
@@ -1031,6 +1050,8 @@ class MahalanobisDetector(BaseDetector):
         array([...])
     """
 
+    score_orientation = "lower_is_more_anomalous"
+
     def get_name(self) -> str:
         return "Mahalanobis"
 
@@ -1096,6 +1117,8 @@ class KDEDetector(BaseDetector):
         >>> detector.score(X_test)  # doctest: +SKIP
         array([...])
     """
+
+    score_orientation = "lower_is_more_anomalous"
 
     def get_name(self) -> str:
         return "Kernel Density"

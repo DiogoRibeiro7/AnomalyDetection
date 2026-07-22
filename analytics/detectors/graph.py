@@ -19,6 +19,8 @@ ScoreArray = NDArray[np.floating[Any]]
 class DegreeCentralityDetector(BaseDetector):
     """Flag nodes with unusual degree centrality in a graph."""
 
+    score_orientation = "higher_is_more_anomalous"
+
     def get_name(self) -> str:
         return "Degree Centrality"
 
@@ -43,6 +45,8 @@ class DegreeCentralityDetector(BaseDetector):
 
 class GraphIsolationForestDetector(BaseDetector):
     """Apply Isolation Forest on basic graph structural features."""
+
+    score_orientation = "lower_is_more_anomalous"
 
     def get_name(self) -> str:
         return "Graph Isolation Forest"
