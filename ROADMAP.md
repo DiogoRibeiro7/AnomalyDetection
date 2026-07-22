@@ -6,9 +6,10 @@ and to keep releases scoped enough to validate properly.
 
 The project is currently in the `0.x` series. Minor versions may still adjust
 APIs when needed, but each release should preserve documented workflows or
-provide a migration note. The roadmap was expanded on 2026-07-22 to include
-newer anomaly detection families, stronger benchmark requirements, and clearer
-acceptance criteria.
+provide a migration note. The roadmap was reviewed on 2026-07-22 against the
+current PyOD capability catalogue and expanded to include newer anomaly
+detection families, stronger benchmark requirements, explicit implementation
+provenance, and clearer acceptance criteria.
 
 ## Planning Principles
 
@@ -25,13 +26,24 @@ acceptance criteria.
 - Prefer adapters to established libraries when they are maintained and expose
   compatible semantics, for example PyOD, DeepOD, PyGOD, River, and
   time-series foundation-model packages.
+- Classify every method as `native`, `adapter`, `baseline`, `experimental`,
+  `benchmark-only`, or `watchlist`; do not present an existing upstream method
+  as a new native implementation target.
+- Review upstream capability snapshots before each minor release so roadmap
+  targets do not drift behind maintained libraries.
+- Do not make visual, multimodal, diffusion, causal, log, or hosted-LLM tracks
+  hard blockers for a stable core `v1.0.0` release.
 
 ## Method Intake Criteria
 
 Every new detector or benchmark integration should include:
 
-- A canonical registry key, display label, score orientation, and supported
-  modalities.
+- A canonical registry key, display label, score orientation, supported
+  modalities, and implementation provenance.
+- A method status of `native`, `adapter`, `baseline`, `experimental`,
+  `benchmark-only`, or `watchlist`.
+- For adapters and baselines: upstream provider, tested provider version range,
+  upstream module or registry key, and compatibility notes.
 - Dependency placement: base, `deep`, `streaming`, `forecasting`, `graph`,
   `vision`, `multimodal`, `foundation`, `diffusion`, `log`, or another
   explicit extra.
@@ -45,6 +57,32 @@ Every new detector or benchmark integration should include:
   citation or upstream implementation link.
 - Benchmark entry: at least one small configuration that can run in CI or a
   documented reason why CI coverage is not feasible.
+
+## Upstream Capability Tracking
+
+Maintain a versioned capability snapshot at
+`benchmarks/catalogues/upstream_capabilities.yml`. The snapshot should record:
+
+- Provider name and tested version range.
+- Upstream detector key or module.
+- Modality, supervision level, task level, and batch or streaming protocol.
+- Project treatment: `adapter`, `baseline`, `benchmark-only`, or unsupported.
+- Known semantic differences in score orientation, thresholding, input shape,
+  fitted-state behavior, and persistence.
+
+The snapshot is not a lockfile. It is a reviewed catalogue used to distinguish
+new project work from maintained upstream coverage. At the 2026-07-22 review,
+important PyOD reference baselines included:
+
+- Tabular: DIF, DeepSVDD, and DevNet.
+- Time series: Matrix Profile, Spectral Residual, KShape, SAND, LSTMAD, and
+  Anomaly Transformer.
+- Graph node anomalies: DOMINANT, CoLA, CONAD, AnomalyDAE, GUIDE, Radar,
+  ANOMALOUS, and SCAN; these are primarily transductive reference methods.
+
+A provider update must not silently change benchmark meaning. Changes to an
+adapter's upstream implementation, defaults, or score semantics require a
+manifest update, compatibility test, and migration note when user-visible.
 
 ## v0.1.x - Foundation And Release Hygiene
 
@@ -185,64 +223,90 @@ Acceptance criteria:
 
 ## v0.5.0 - Modern Tabular Detector Pack
 
-Status: implemented; pending release.
+Status: implemented; pending release. Scope is frozen.
 
 Goal: add contemporary tabular anomaly detection methods without making the
 base install depend on heavy deep learning stacks.
 
-Candidate methods:
+Milestone closure policy:
 
-- Deep Isolation Forest or DeepIF-style representation-plus-isolation scoring.
-- Deep SVDD and one-class neural representation baselines.
-- DevNet or deviation-network style weakly supervised detection, gated behind
-  clearly labeled supervision requirements.
-- GOAD or geometric-transformation self-supervised tabular anomaly detection.
-- NeuTraL AD style contrastive/self-supervised tabular detector.
-- Retrieval-augmented reconstruction for tabular data, inspired by 2024
-  retrieval-augmented deep anomaly detection work.
-- PyOD 2 or DeepOD adapters for maintained implementations where license,
-  dependency, and API behavior are compatible.
+- Do not reopen or replace completed `v0.5.0` implementation work because an
+  equivalent or adjacent upstream method now exists.
+- The detector registry, tests, and release notes are authoritative for the
+  exact methods delivered by this milestone.
+- Record every delivered method as `native`, `adapter`, or `baseline`, including
+  its dependency extra and tested upstream version where applicable.
+- Treat PyOD DIF, DeepSVDD, and DevNet as upstream reference baselines or
+  adapters in future benchmarks rather than as new implementation targets.
+- Move unfinished ideas from the original candidate list to the research
+  watchlist or a later release instead of extending `v0.5.0`.
 
-Implementation plan:
+Historical target families:
 
-- Create a `deep-tabular` or `deep` extra split if dependency pressure requires
-  it.
-- Add a common PyTorch training utility for deterministic seeds, CPU-friendly
-  epochs, early stopping, validation split, and checkpoint handling.
-- Add parameter presets for `smoke`, `balanced`, and `research` modes.
-- Support fit-time contamination only where the underlying method uses it
-  explicitly.
-- Add score-orientation and score-normalization tests for each method.
+- Deep isolation and one-class neural representation methods.
+- Weakly supervised deviation-network methods with explicit supervision
+  requirements.
+- Geometric-transformation and contrastive/self-supervised tabular methods.
+- Retrieval-augmented reconstruction for tabular data.
+- Maintained PyOD or DeepOD adapters where licensing, dependencies, and public
+  detector semantics are compatible.
 
-Deliverables:
+Completed implementation requirements:
 
-- At least two modern tabular detectors with CPU-friendly smoke tests.
-- One benchmark config comparing classical and modern tabular detectors.
-- Documentation explaining when modern tabular methods are expected to help and
-  when classical methods remain preferable.
+- Deep dependencies remain outside the base installation.
+- Shared PyTorch training utilities provide deterministic seeds, CPU-friendly
+  smoke configurations, early stopping, validation splits, and checkpoint
+  handling where applicable.
+- Parameter presets distinguish `smoke`, `balanced`, and `research` modes.
+- Fit-time contamination is exposed only where the underlying method uses it.
+- Score orientation and normalization behavior are covered by tests.
 
-Acceptance criteria:
+Release verification:
 
+- At least two modern tabular detectors have CPU-friendly smoke tests.
+- A benchmark configuration compares classical and modern tabular detectors.
+- Documentation explains when modern tabular methods may help and when
+  classical methods remain preferable.
 - No GPU is required for the default tabular smoke suite.
 - Missing deep dependencies fail with actionable `ImportError` messages.
 - Runtime and randomness are captured in the v0.3 report manifest.
 
+Post-release watchlist:
+
+- DAGMM as an unsupervised deep mixture-model detector.
+- DeepSAD as a semi-supervised extension of Deep SVDD.
+- PReNet, FEAWAD, and REPEN for labelled or weakly supervised settings.
+- GOAD and NeuTraL AD only when they were not already delivered in `v0.5.0`.
+
 ## v0.6.0 - Modern Time-Series Detector Pack
 
-Goal: add current multivariate and contextual time-series anomaly detection
-methods with explicit windowing, metrics, and reproducibility controls.
+Status: planned.
 
-Candidate methods:
+Goal: add current multivariate and contextual time-series anomaly detection
+methods with explicit windowing, metrics, and reproducibility controls, while
+using maintained PyOD implementations as reference baselines.
+
+Upstream reference baselines:
+
+- PyOD Matrix Profile, Spectral Residual, KShape, SAND, and LSTMAD.
+- PyOD Anomaly Transformer with association discrepancy.
+- These methods remain benchmark baselines or adapters; they are not the
+  milestone's primary native implementation targets.
+
+Priority implementation or adapter targets:
 
 - TranAD-style transformer reconstruction and adversarial self-conditioning.
-- Anomaly Transformer with association discrepancy.
-- TimesNet-style temporal 2D-variation backbone where an upstream dependency or
-  compact implementation is maintainable.
+- USAD as a lighter adversarial autoencoder baseline.
+- OmniAnomaly for stochastic recurrent latent-variable detection.
 - DCdetector-style dual-attention contrastive representation learning.
-- AnomalyBERT-style masked/self-supervised transformer detector.
+- AnomalyBERT-style masked or self-supervised transformer detection.
+- Series2Graph for graph-based subsequence anomaly detection.
+- TimesNet-style temporal 2D-variation backbones where an upstream dependency
+  or compact implementation is maintainable.
 - Lightweight TCN encoder-decoder baseline for CPU-friendly comparison.
-- Optional adapters for time-series foundation models such as MOMENT or Chronos
-  when they can run in constrained inference mode.
+- M2N2 or FITS as research candidates after the core pair is stable.
+- Foundation-model adapters such as MOMENT or Chronos remain optional and may
+  move to the experimental foundation-model milestone.
 
 Implementation plan:
 
@@ -255,14 +319,18 @@ Implementation plan:
 - Split deep time-series dependencies from other deep extras if PyTorch,
   TensorFlow, and foundation-model dependencies conflict.
 - Add deterministic data-loader and training seeds.
+- Record whether a detector is a project-native implementation, an upstream
+  adapter, or a benchmark-only baseline.
 
 Deliverables:
 
 - Time-series detector API guide.
-- At least one transformer-style detector and one non-transformer neural
-  baseline.
-- Time-series benchmark config with JSON report examples.
-- Report fields for windowing and aggregation parameters.
+- At least one transformer-style target not already provided natively by PyOD.
+- At least one non-transformer neural target, with USAD or a TCN baseline as the
+  preferred CPU-friendly option.
+- Time-series benchmark config comparing project targets with PyOD baselines.
+- JSON report fields for windowing, aggregation, provenance, and upstream
+  provider version.
 
 Acceptance criteria:
 
@@ -270,23 +338,37 @@ Acceptance criteria:
 - Benchmark output records enough information to reproduce windowed scores.
 - Documentation warns against comparing point-adjusted metrics with
   non-adjusted metrics.
+- Baseline and native methods are visibly distinguished in reports.
+- An upstream PyOD update cannot silently change the benchmark configuration.
 
 ## v0.7.0 - Graph Anomaly Detection Pack
 
-Goal: make graph anomaly detection useful beyond degree centrality and simple
-graph-feature isolation forests.
+Status: planned.
 
-Candidate methods:
+Goal: extend graph anomaly detection beyond PyOD's existing transductive,
+node-level reference coverage and support explicit evaluation settings.
 
-- PyGOD adapters for maintained graph outlier detectors such as DOMINANT,
-  AnomalyDAE, DONE/AdONE, CoLA, CONAD, GUIDE, and related GNN-based methods.
+Upstream reference baselines:
+
+- PyOD DOMINANT, CoLA, CONAD, AnomalyDAE, GUIDE, Radar, ANOMALOUS, and SCAN.
+- PyGOD adapters may be used where they add maintained methods or capabilities
+  not exposed through the PyOD adapter surface.
+- Existing transductive node detectors are benchmark baselines, not the main
+  reason for this milestone.
+
+Priority targets:
+
+- Inductive node anomaly detection with clear train/test graph separation.
+- Edge, subgraph, and whole-graph anomaly detection protocols.
+- GAE, ONE, DONE, AdONE, GAAN, OCGNN, DMGD, GADNR, or CARD adapters where
+  maintained implementations expose compatible semantics.
 - Neighborhood-aggregation plus tree-ensemble baselines, motivated by GADBench
   findings that simple aggregated features can outperform specialized GNNs in
-  some supervised settings.
+  some settings.
 - Semi-supervised graph anomaly detection with normal-node labels, including
   GGAD-style pseudo-anomaly generation as an experimental target.
-- Dynamic graph anomaly detection as a research-track item after static graph
-  support is stable.
+- Dynamic, temporal, heterogeneous, and mini-batch graph detection after static
+  inductive support is stable.
 
 Implementation plan:
 
@@ -299,22 +381,28 @@ Implementation plan:
 - Add benchmark support for transductive, inductive, unsupervised,
   semi-supervised, and supervised graph settings.
 - Add graph feature extraction baselines before heavy GNN models.
+- Record graph split policy, message-passing access, label access, and whether
+  unseen nodes or unseen graphs are evaluated.
 
 Deliverables:
 
-- Graph detector API guide.
-- At least one PyGOD-backed detector and one non-GNN graph baseline.
+- Graph detector API guide covering task level and inference setting.
+- At least one inductive or non-node-level detector capability.
+- At least one non-GNN graph baseline.
 - Small attributed graph benchmark fixture.
-- Graph benchmark report fields for task level, training labels, and
-  transductive/inductive setting.
+- Graph benchmark report fields for task level, training labels, graph split,
+  message-passing access, and transductive or inductive setting.
 
 Acceptance criteria:
 
 - Graph extras install separately from base and time-series extras.
 - Graph smoke tests run without requiring a large GPU.
 - Reported graph metrics include the evaluation setting, not just the score.
+- Transductive results are not presented as evidence of inductive performance.
 
 ## v0.8.0 - Streaming, Drift, And Online Detection
+
+Status: planned.
 
 Goal: make online anomaly detection practical for incremental data, delayed
 labels, and concept drift.
@@ -324,7 +412,11 @@ Candidate methods:
 - River-backed Half-Space Trees and related online anomaly models.
 - xStream-style random projection streaming anomaly detection.
 - Robust Random Cut Forest when a maintained Python dependency is available.
-- ADWIN/Page-Hinkley drift detectors used as companion diagnostics.
+- KitNET for lightweight online ensemble reconstruction.
+- IForestASD and KNNCAD-style adaptive streaming detectors.
+- Incremental LODA where the update semantics are well defined.
+- ADWIN and Page-Hinkley as companion drift diagnostics, not as replacements
+  for anomaly detectors.
 - Online conformal anomaly scoring for calibrated alert thresholds.
 
 Implementation plan:
@@ -332,8 +424,14 @@ Implementation plan:
 - Add `partial_fit`, `score_one`, or a separate streaming detector protocol if
   forcing all online methods through batch `fit` becomes misleading.
 - Add stream replay utilities with deterministic event order and timestamps.
-- Add latency, throughput, memory, warm-up period, and drift-point metrics.
-- Add benchmark configs for warm-up, online scoring, and delayed labels.
+- Use prequential evaluation: score an event, record the prediction and
+  latency, reveal the label when available, update the detector, and update
+  online metrics.
+- Distinguish score-before-update from score-after-update behavior.
+- Add latency, throughput, peak memory, warm-up period, update frequency,
+  adaptation delay, and drift-point metrics.
+- Add benchmark configs for warm-up, online scoring, delayed labels, and
+  concept-drift recovery.
 
 Deliverables:
 
@@ -341,19 +439,27 @@ Deliverables:
 - Stream benchmark report schema extension.
 - CLI mode for replaying stream fixtures.
 - Tests for order stability and deterministic seeded streams.
+- A prequential benchmark example with delayed labels and at least one drift
+  segment.
 
 Acceptance criteria:
 
 - Batch and streaming detector protocols are clearly separated.
-- Streaming reports record warm-up policy and alert threshold policy.
+- Streaming reports record warm-up, update, delayed-label, and alert-threshold
+  policies.
+- Reports identify whether each score was produced before or after model update.
+- False-alarm rate and recovery delay are reported before and after drift.
 - Existing batch benchmarks remain unaffected.
 
 ## v0.9.0 - Foundation Models, LLM-Assisted Workflows, And Experimental Methods
 
-Goal: evaluate foundation-model and LLM-assisted anomaly detection without
-turning experimental research into default behavior.
+Status: planned and experimental.
 
-Candidate methods:
+Goal: evaluate foundation-model and LLM-assisted anomaly detection without
+turning experimental research into default behavior or duplicating existing
+upstream advisory interfaces.
+
+Candidate methods and studies:
 
 - Time-series foundation-model adapters for MOMENT, Chronos, TimesFM, or later
   maintained open models.
@@ -362,40 +468,60 @@ Candidate methods:
 - Conformal p-value scoring and adaptive conformal thresholds for calibrated
   false-alarm control.
 - Foundation-model residuals with conformal calibration for signal monitoring.
-- LLM-assisted detector recommendation inspired by PyOD 2-style model
-  selection, implemented as an optional advisory layer rather than as a hidden
-  automatic choice.
+- Comparative detector-selection evaluation across fixed heuristics,
+  benchmark-based routing, PyOD-style advisory systems, and LLM-assisted
+  recommendations.
 - Log anomaly detection adapters for structured and semi-structured logs:
   parser-plus-classifier baselines, transformer classifiers, and LogLLM-style
   semantic sequence classifiers.
 
+Detector-selection evaluation:
+
+- Treat recommendation as an evaluated decision system, not merely an LLM
+  interface.
+- Record the candidate detector set, dataset summary supplied to the selector,
+  prompt or policy, unavailable methods rejected, and final parameters.
+- Compare recommendations against an oracle chosen from the same benchmark
+  candidate set.
+- Report selection regret as
+  `metric(best benchmark detector) - metric(recommended detector)` for metrics
+  where larger values are better, with the sign adjusted for cost metrics.
+- Measure recommendation stability, latency, token or inference cost, and
+  failure to respect modality, supervision, or dependency constraints.
+
 Implementation plan:
 
 - Keep all model downloads opt-in and cache-controlled.
-- Record model name, revision, prompt/template, context window, decoding
-  parameters, and hardware in benchmark manifests.
+- Record model name, revision, prompt or template, context window, decoding
+  parameters, candidate detector catalogue, and hardware in manifests.
 - Add privacy and data-exfiltration warnings for hosted LLM providers.
-- Prefer local/open-weight adapters for reproducible research workflows.
+- Prefer local or open-weight adapters for reproducible research workflows.
 - Require deterministic fixtures for prompt serialization and result parsing.
-- Add conformal calibration set metadata: calibration split, target false alarm
+- Validate that a recommended detector exists, is installed, supports the
+  dataset modality, and matches the allowed supervision setting.
+- Add conformal calibration metadata: calibration split, target false-alarm
   rate, nonconformity score, update policy, and drift handling.
 - Add log parsing metadata: parser, template extraction settings, sequence
-  window length, sessionization key, and tokenizer/model revision.
+  window length, sessionization key, and tokenizer or model revision.
 
 Deliverables:
 
 - Experimental namespace or plugin examples for foundation-model detectors.
-- Manifest fields for model revisions and prompt/config fingerprints.
-- Manifest fields for conformal calibration and log parsing.
+- A detector-selection benchmark comparing at least one non-LLM policy and one
+  LLM-assisted or upstream advisory policy.
+- Manifest fields for model revisions, candidate sets, prompts or policy
+  fingerprints, conformal calibration, and log parsing.
 - Documentation on when these methods are exploratory and not production-ready.
-- A small synthetic log anomaly fixture or documented external public log loader
-  with licensing notes.
+- A small synthetic log anomaly fixture or documented external public log
+  loader with licensing notes.
 
 Acceptance criteria:
 
 - No network calls occur during default tests.
 - Hosted-model integrations are never enabled by default.
-- Reports make model revision and prompt/config hashes visible.
+- Reports make model revision, candidate catalogue, and prompt or policy hashes
+  visible.
+- Recommendation benchmarks report selection regret and invalid-selection rate.
 - Conformal outputs expose calibrated p-values or threshold decisions, not only
   raw anomaly scores.
 - Log adapters can run a parser-plus-classifier baseline without a hosted LLM.
@@ -409,6 +535,8 @@ Planned work:
 - Formalize plugin loading contracts for detectors, datasets, metrics, reports,
   and visualization hooks.
 - Add plugin metadata validation and collision reporting.
+- Require plugin detector provenance, upstream provider information, and tested
+  compatibility ranges.
 - Support external dataset loader registration with integrity metadata.
 - Add examples for a minimal detector plugin, dataset plugin, metric plugin,
   and report plugin.
@@ -458,7 +586,9 @@ Acceptance criteria:
 ## v0.12.0 - Visual And Multimodal Anomaly Detection
 
 Goal: add image, industrial inspection, and multimodal anomaly detection without
-making computer-vision dependencies part of the base install.
+making computer-vision dependencies part of the base install. Explicitly
+separate sample-level embedding detection from patch-level or pixel-level
+industrial anomaly localisation.
 
 Candidate methods:
 
@@ -479,8 +609,11 @@ Implementation plan:
 
 - Introduce an `vision` or `multimodal` optional extra with explicit CPU/GPU
   guidance.
-- Define an image detector input contract: image path, array/tensor, batch
-  loader, optional segmentation mask, and optional product/category metadata.
+- Define an image detector input contract: image path, array or tensor, batch
+  loader, optional segmentation mask, and optional product or category
+  metadata.
+- Record whether the method produces only one sample-level score or also emits
+  patch-level and pixel-level anomaly maps.
 - Add dataset metadata for image-level labels, pixel-level masks, product
   category, resolution, license, and download instructions.
 - Record feature extractor model, checkpoint revision, image preprocessing,
@@ -503,8 +636,12 @@ Acceptance criteria:
 
 - Default tests do not download pretrained weights.
 - Visual smoke tests can run without a large GPU.
-- Pixel-level metrics are reported separately from image-level metrics.
-- Reports include preprocessing and checkpoint fingerprints.
+- Image-level AUROC and average precision are reported separately from
+  pixel-level AUROC, pixel-level average precision, and AU-PRO or AUPRO.
+- Reports include localisation latency, memory-bank size where applicable,
+  inference throughput, preprocessing, and checkpoint fingerprints.
+- Embedding-level multimodal scoring is not presented as equivalent to defect
+  localisation.
 
 ## v0.13.0 - Diffusion Models And Anomaly Synthesis
 
@@ -605,8 +742,9 @@ Requirements:
 - Detector API is documented and covered by compatibility tests.
 - Batch, streaming, graph, and time-series contracts are stable or clearly
   marked experimental.
-- Visual, multimodal, diffusion, causal, log, and foundation-model tracks are
-  either stable with tests or explicitly marked experimental.
+- Visual, multimodal, diffusion, causal, log, and foundation-model tracks may
+  remain optional and explicitly experimental; they are not required to block a
+  stable core release.
 - CLI configuration schema is documented and versioned.
 - Leaderboard, manifest, and JSON report schemas are documented and versioned.
 - Plugin contracts are documented and covered by tests.
@@ -615,6 +753,8 @@ Requirements:
 - Zenodo citation metadata is current for the release.
 - At least one benchmark config exists for tabular, time-series, graph, and
   streaming workflows.
+- The upstream capability snapshot and implementation-provenance schema are
+  documented and covered by compatibility tests.
 
 Non-goals for `v1.0.0`:
 
@@ -632,20 +772,26 @@ method is committed to a release; it means the project should track it and
 evaluate dependency, license, and benchmark fit.
 
 - Time-series transformers and representation learning:
-  [Anomaly Transformer](https://arxiv.org/abs/2110.02642),
+  [Anomaly Transformer](https://arxiv.org/abs/2110.02642) as an upstream
+  reference baseline,
   [TranAD](https://arxiv.org/abs/2201.07284),
   [TimesNet](https://arxiv.org/abs/2210.02186),
-  [AnomalyBERT](https://arxiv.org/abs/2305.04468), and
-  [DCdetector](https://arxiv.org/abs/2306.10347).
+  [AnomalyBERT](https://arxiv.org/abs/2305.04468),
+  [DCdetector](https://arxiv.org/abs/2306.10347), USAD, OmniAnomaly,
+  Series2Graph, M2N2, and FITS.
 - Time-series foundation models and benchmark concerns:
   [MOMENT](https://arxiv.org/abs/2402.03885),
   [TimeSeriesBench](https://arxiv.org/html/2402.10802v1), and
   [Towards A Reliable Time-Series Anomaly Detection Benchmark](https://proceedings.neurips.cc/paper_files/paper/2024/hash/c3f3c690b7a99fba16d0efd35cb83b2c-Abstract-Datasets_and_Benchmarks_Track.html).
 - Tabular modern methods and tooling:
+  DAGMM, DeepSAD, PReNet, FEAWAD, REPEN,
   [Retrieval Augmented Deep Anomaly Detection for Tabular Data](https://arxiv.org/abs/2401.17052),
   [Anomaly Detection of Tabular Data Using LLMs](https://arxiv.org/abs/2406.16308),
   [PyOD 2](https://arxiv.org/abs/2412.12154), and
   [DeepOD](https://github.com/xuhongzuo/deepod).
+- Streaming and online detection: Half-Space Trees, xStream, Robust Random
+  Cut Forest, KitNET, IForestASD, KNNCAD, incremental LODA, prequential
+  evaluation, and delayed-label conformal calibration.
 - Graph anomaly detection:
   [PyGOD](https://www.jmlr.org/papers/v25/23-0963.html),
   [GADBench](https://arxiv.org/abs/2306.12251),
@@ -682,6 +828,8 @@ These items are useful but not yet assigned to a target version.
 - Add security guidance for benchmark datasets that may contain sensitive or
   operational telemetry.
 - Add dependency compatibility matrix for optional extras.
+- Automate a reviewed upstream capability diff without automatically changing
+  detector classifications or benchmark defaults.
 - Add benchmark budget controls for maximum runtime, memory, and GPU use.
 
 ## Contribution Guidance
@@ -695,6 +843,9 @@ When proposing roadmap work, include:
 - Documentation impact.
 - Migration risk, if any.
 - Citation or upstream implementation link for new research methods.
+- Implementation classification: `native`, `adapter`, `baseline`,
+  `experimental`, `benchmark-only`, or `watchlist`.
+- Upstream provider and tested compatibility range for adapters and baselines.
 - Benchmark configuration proving the method can run in the intended
   environment.
 
