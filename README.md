@@ -87,7 +87,7 @@ K-Nearest Neighbors, Histogram-Based Outlier Score, One-Class SVM, DBSCAN,
 Elliptic Envelope, Gaussian Mixture, Sklearn LOF, KMeans, PCA Reconstruction,
 Mahalanobis distance, Kernel Density, Autoencoder, Denoising Autoencoder,
 Variational Autoencoder, LSTM Autoencoder, Transformer, COPOD, Feature Bagging,
-LODA, ABOD, Online Isolation Forest, Random Cut Forest, AnoGAN, MAD-GAN, Degree
+LODA, ABOD, Half-Space Trees, Online Isolation Forest, AnoGAN, MAD-GAN, Degree
 Centrality, Graph Isolation Forest, ARIMA, and Prophet.
 
 ## Plugins
