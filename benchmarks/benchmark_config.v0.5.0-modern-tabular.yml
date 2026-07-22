@@ -15,6 +15,9 @@ metrics:
     - runtime
   positive_label: 0
 detectors:
+  - name: gaussian_mixture
+    params:
+      n_components: 2
   - name: ecod
   - name: random_feature_isolation_forest
     params:

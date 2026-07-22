@@ -43,6 +43,28 @@ class RandomNetworkDistillationDetector(BaseDetector):
     """
 
     score_orientation = "higher_is_more_anomalous"
+    method_status = "native"
+    implementation_provenance = "project-native"
+    dependency_extra = "base"
+    upstream_provider = None
+    upstream_version_range = None
+    preset_configs = {
+        "smoke": {
+            "representation_dim": 8,
+            "hidden_layer_sizes": (8,),
+            "max_iter": 1000,
+        },
+        "balanced": {
+            "representation_dim": 32,
+            "hidden_layer_sizes": (32,),
+            "max_iter": 1000,
+        },
+        "research": {
+            "representation_dim": 64,
+            "hidden_layer_sizes": (64, 32),
+            "max_iter": 2000,
+        },
+    }
 
     def get_name(self) -> str:
         return "Random Network Distillation"
@@ -104,6 +126,16 @@ class RandomFeatureIsolationForestDetector(BaseDetector):
     """Isolation Forest on random nonlinear tabular representations."""
 
     score_orientation = "higher_is_more_anomalous"
+    method_status = "native"
+    implementation_provenance = "project-native"
+    dependency_extra = "base"
+    upstream_provider = None
+    upstream_version_range = None
+    preset_configs = {
+        "smoke": {"representation_dim": 16, "n_estimators": 24},
+        "balanced": {"representation_dim": 64, "n_estimators": 100},
+        "research": {"representation_dim": 128, "n_estimators": 300},
+    }
 
     def get_name(self) -> str:
         return "Random Feature Isolation Forest"
@@ -136,9 +168,7 @@ class RandomFeatureIsolationForestDetector(BaseDetector):
             size=(n_features, target_dim),
         )
         self.target_bias = rng.normal(loc=0.0, scale=0.1, size=target_dim)
-        features = _random_feature_map(
-            X_scaled, self.target_weights, self.target_bias
-        )
+        features = _random_feature_map(X_scaled, self.target_weights, self.target_bias)
         self.model = IsolationForest(
             n_estimators=n_estimators,
             contamination=contamination,
@@ -158,6 +188,17 @@ class ECODDetector(BaseDetector):
     """Empirical-CDF Outlier Detection from PyOD."""
 
     score_orientation = "higher_is_more_anomalous"
+    method_status = "adapter"
+    implementation_provenance = "pyod-adapter"
+    dependency_extra = "base"
+    upstream_provider = "pyod"
+    upstream_module = "pyod.models.ecod.ECOD"
+    upstream_version_range = ">=2.0"
+    preset_configs = {
+        "smoke": {},
+        "balanced": {},
+        "research": {},
+    }
 
     def get_name(self) -> str:
         return "ECOD"

@@ -79,3 +79,23 @@ def test_random_network_distillation_rejects_invalid_representation_dim() -> Non
 def test_modern_tabular_detectors_reject_1d_input() -> None:
     with pytest.raises(ValueError, match="2-D"):
         ECODDetector().fit(np.zeros(5))
+
+
+@pytest.mark.parametrize(
+    "detector_cls",
+    [
+        ECODDetector,
+        RandomFeatureIsolationForestDetector,
+        RandomNetworkDistillationDetector,
+    ],
+)
+def test_modern_tabular_detectors_declare_provenance(detector_cls) -> None:
+    assert detector_cls.method_status in {"native", "adapter"}
+    assert detector_cls.dependency_extra == "base"
+    assert detector_cls.implementation_provenance
+    assert set(detector_cls.preset_configs) == {"smoke", "balanced", "research"}
+
+
+def test_ecod_declares_upstream_provider() -> None:
+    assert ECODDetector.upstream_provider == "pyod"
+    assert ECODDetector.upstream_module == "pyod.models.ecod.ECOD"
