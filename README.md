@@ -149,6 +149,9 @@ Citation metadata is available in [CITATION.cff](CITATION.cff) and
 [.zenodo.json](.zenodo.json). Zenodo will use `.zenodo.json` when archiving
 GitHub releases for DOI creation.
 
+To cite all versions of this software, use the Zenodo concept DOI:
+[10.5281/zenodo.21496904](https://doi.org/10.5281/zenodo.21496904).
+
 ## Project Roadmap
 
 - Implement variable width binning for HBOS. Completed.

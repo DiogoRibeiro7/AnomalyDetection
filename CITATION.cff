@@ -10,5 +10,6 @@ authors:
     orcid: "https://orcid.org/0009-0001-2022-7072"
     affiliation: "School of Media Arts and Design, Polytechnic Institute of Porto"
 repository-code: "https://github.com/DiogoRibeiro7/AnomalyDetection"
+doi: "10.5281/zenodo.21496904"
 license: "MIT"
 version: "0.1.0"
