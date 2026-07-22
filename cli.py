@@ -123,11 +123,12 @@ def _format_detector_display(entry: dict[str, object]) -> str:
 def _resolve_detector_entries(selection):
     if selection is None:
         return [
-            {"name": name, "params": {}, "label": name}
-            for name in DETECTOR_REGISTRY
+            {"name": name, "params": {}, "label": name} for name in DETECTOR_REGISTRY
         ]
 
-    if isinstance(selection, dict) and {"include", "exclude", "defaults"} & set(selection):
+    if isinstance(selection, dict) and {"include", "exclude", "defaults"} & set(
+        selection
+    ):
         defaults = selection.get("defaults", {})
         default_params = {}
         if isinstance(defaults, dict):
@@ -141,7 +142,11 @@ def _resolve_detector_entries(selection):
         else:
             include_entries = _resolve_detector_entries(include_spec)
         exclude_spec = selection.get("exclude")
-        excluded = {entry["name"] for entry in _resolve_detector_entries(exclude_spec)} if exclude_spec else set()
+        excluded = (
+            {entry["name"] for entry in _resolve_detector_entries(exclude_spec)}
+            if exclude_spec
+            else set()
+        )
         resolved: list[dict[str, object]] = []
         for entry in include_entries:
             name = entry["name"]
@@ -180,8 +185,12 @@ def _resolve_detector_entries(selection):
     return []
 
 
-def _append_leaderboard_rows(leaderboard_path, datasets_to_run, detector_entries, results):
-    write_header = not os.path.exists(leaderboard_path) or os.path.getsize(leaderboard_path) == 0
+def _append_leaderboard_rows(
+    leaderboard_path, datasets_to_run, detector_entries, results
+):
+    write_header = (
+        not os.path.exists(leaderboard_path) or os.path.getsize(leaderboard_path) == 0
+    )
     timestamp = datetime.now(timezone.utc).isoformat()
 
     with open(leaderboard_path, "a", newline="", encoding="utf-8") as fh:
@@ -236,8 +245,7 @@ def run_benchmarks(datasets=None, detectors=None, leaderboard=None, n_jobs=None)
     detector_entries = _resolve_detector_entries(detectors)
     if not detector_entries:
         detector_entries = [
-            {"name": name, "params": {}, "label": name}
-            for name in DETECTOR_REGISTRY
+            {"name": name, "params": {}, "label": name} for name in DETECTOR_REGISTRY
         ]
 
     resolved_datasets = resolve_dataset_names(datasets)

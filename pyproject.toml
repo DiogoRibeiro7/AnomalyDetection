@@ -1,39 +1,76 @@
-[tool.poetry]
+[project]
 name = "anomaly-detection"
 version = "0.1.0"
-description = "Simple anomaly detection algorithms and benchmarking utilities."
-authors = ["Diogo Ribeiro <diogo.debastos.ribeiro@gmail.com>"]
+description = "Anomaly detection algorithms and benchmarking utilities."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
 license = "MIT"
+authors = [
+  { name = "Diogo Ribeiro", email = "dfr@esmad.ipp.pt" },
+]
+keywords = [
+  "anomaly-detection",
+  "benchmarking",
+  "machine-learning",
+  "outlier-detection",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "combo",
+  "matplotlib",
+  "networkx",
+  "numpy",
+  "pandas",
+  "pyod",
+  "pyyaml",
+  "scikit-learn",
+  "scikit-sos",
+  "scipy",
+  "statsmodels",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.12,<3.13"
-matplotlib = "*"
-pandas = "*"
-scikit-learn = "*"
-scikit-sos = "*"
-pyod = "*"
-combo = "*"
-pyyaml = "*"
-networkx = "*"
-torch = { version = "*", optional = true }
-tensorflow = { version = "*", optional = true }
-river = { version = "*", optional = true }
-statsmodels = { version = "*", optional = true }
-prophet = { version = "*", optional = true }
+[project.optional-dependencies]
+deep = ["torch", "tensorflow"]
+streaming = ["river"]
+forecasting = ["prophet"]
+all-detectors = ["torch", "tensorflow", "river", "prophet"]
+
+[project.scripts]
+benchmark-cli = "cli:main"
+
+[tool.poetry]
+packages = [
+  { include = "analytics" },
+  { include = "benchmarks" },
+  { include = "industrialstats", from = "src" },
+  { include = "cli.py" },
+]
+include = [
+  "benchmarks/*.csv",
+  "benchmarks/*.data",
+  "benchmarks/*.dat",
+  "benchmarks/*.yml",
+]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
 pre-commit = "*"
 hypothesis = "*"
 
-[tool.poetry.extras]
-deep = ["torch", "tensorflow"]
-streaming = ["river"]
-forecasting = ["statsmodels", "prophet"]
-all-detectors = ["torch", "tensorflow", "river", "statsmodels", "prophet"]
+[tool.black]
+line-length = 88
+target-version = ["py312"]
 
-[tool.poetry.scripts]
-benchmark-cli = "cli:main"
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
 
 [build-system]
 requires = ["poetry-core"]

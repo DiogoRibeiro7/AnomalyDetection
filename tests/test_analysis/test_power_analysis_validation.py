@@ -137,7 +137,9 @@ def test_against_r_packages() -> None:
     ]
 
     report = generate_validation_report(r_reference, tolerance=TOLERANCE)
-    assert np.allclose(report["calculated_power"], report["reference_power"], atol=TOLERANCE)
+    assert np.allclose(
+        report["calculated_power"], report["reference_power"], atol=TOLERANCE
+    )
     assert report["difference"].max() <= TOLERANCE
 
 
@@ -155,7 +157,9 @@ def _simulate_t_test(
     mean2 = group2.mean(axis=1)
     var1 = group1.var(axis=1, ddof=1)
     var2 = group2.var(axis=1, ddof=1)
-    pooled = ((n_per_group - 1) * var1 + (n_per_group - 1) * var2) / (2 * n_per_group - 2)
+    pooled = ((n_per_group - 1) * var1 + (n_per_group - 1) * var2) / (
+        2 * n_per_group - 2
+    )
     se = np.sqrt(pooled * 2 / n_per_group)
     t_stat = (mean1 - mean2) / se
     df = 2 * n_per_group - 2
@@ -174,7 +178,9 @@ def _simulate_anova(
     rng: np.random.Generator,
 ) -> float:
     means = _anova_group_means(effect_size, n_groups)
-    data = rng.normal(loc=means[:, None, None], scale=1.0, size=(n_groups, simulations, n_per_group))
+    data = rng.normal(
+        loc=means[:, None, None], scale=1.0, size=(n_groups, simulations, n_per_group)
+    )
     group_means = data.mean(axis=2)
     overall_mean = group_means.mean(axis=0)
     ss_between = n_per_group * np.sum((group_means - overall_mean) ** 2, axis=0)
@@ -315,14 +321,21 @@ def test_power_curve_consistency(
     alphas = np.array([0.01, 0.05, 0.1])
 
     for n in sample_sizes:
-        curve = [anova_power(effect_size=e, n_per_group=n, n_groups=4, alpha=0.05) for e in effect_sizes]
+        curve = [
+            anova_power(effect_size=e, n_per_group=n, n_groups=4, alpha=0.05)
+            for e in effect_sizes
+        ]
         assert np.all(np.diff(curve) >= -1e-6)
 
     for e in effect_sizes:
-        curve = [anova_power(effect_size=e, n_per_group=n, n_groups=4, alpha=0.05) for n in sample_sizes]
+        curve = [
+            anova_power(effect_size=e, n_per_group=n, n_groups=4, alpha=0.05)
+            for n in sample_sizes
+        ]
         assert np.all(np.diff(curve) >= -1e-6)
 
     alpha_curve = [
-        factorial_power(effect_size=0.6, n_factors=3, n_per_cell=6, alpha=a) for a in alphas
+        factorial_power(effect_size=0.6, n_factors=3, n_per_cell=6, alpha=a)
+        for a in alphas
     ]
     assert np.all(np.diff(alpha_curve) >= -1e-6)

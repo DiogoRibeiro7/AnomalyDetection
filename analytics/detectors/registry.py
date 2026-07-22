@@ -15,8 +15,7 @@ def _validate_registration(name: str, path: str) -> None:
         raise ValueError("Detector path must be a non-empty string.")
     if ":" not in path:
         raise ValueError(
-            "Detector path must use 'module:ClassName' format "
-            f"(received: {path!r})."
+            "Detector path must use 'module:ClassName' format " f"(received: {path!r})."
         )
     module_path, class_name = path.split(":", 1)
     if not module_path or not class_name:

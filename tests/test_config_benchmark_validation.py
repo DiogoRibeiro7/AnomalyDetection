@@ -30,9 +30,7 @@ def test_invalid_plugins_type_fails_fast(tmp_path: Path) -> None:
 def test_invalid_detector_defaults_params_type_fails_fast(tmp_path: Path) -> None:
     path = _write_config(
         tmp_path,
-        "detectors:\n"
-        "  defaults:\n"
-        "    params: 7\n",
+        "detectors:\n" "  defaults:\n" "    params: 7\n",
     )
     with pytest.raises(
         config_benchmark.ConfigValidationError,

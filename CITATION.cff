@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+type: software
+title: "Anomaly Detection"
+abstract: "Anomaly detection algorithms, benchmark dataset loaders, and command line utilities for comparing detectors on standard datasets."
+authors:
+  - family-names: "Ribeiro"
+    given-names: "Diogo"
+    email: "dfr@esmad.ipp.pt"
+    orcid: "https://orcid.org/0009-0001-2022-7072"
+    affiliation: "School of Media Arts and Design, Polytechnic Institute of Porto"
+repository-code: "https://github.com/DiogoRibeiro7/AnomalyDetection"
+license: "MIT"
+version: "0.1.0"

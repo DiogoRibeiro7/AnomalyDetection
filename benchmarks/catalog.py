@@ -148,9 +148,7 @@ def resolve_dataset_names(selectors: Any) -> List[str] | None:
 
 def _expand_tag(tag: str, available: Iterable[str]) -> List[str]:
     matches = [
-        name
-        for name, meta in load_catalog().items()
-        if tag in (meta.get("tags") or [])
+        name for name, meta in load_catalog().items() if tag in (meta.get("tags") or [])
     ]
     return [name for name in matches if name in available]
 

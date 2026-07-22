@@ -1,6 +1,10 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+.mypy_cache/
+.pytest_cache/
+.benchmarks/
+.hypothesis/
 
 # C extensions
 *.so
@@ -30,6 +34,17 @@ pip-delete-this-directory.txt
 .cache
 nosetests.xml
 coverage.xml
+htmlcov/
+
+# Local environments
+.env
+.env.*
+.venv/
+venv/
+
+# Benchmark outputs
+leaderboard*.csv
+results*.csv
 
 # Translations
 *.mo

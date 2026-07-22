@@ -143,7 +143,10 @@ def run_from_config(
     _validate_config(config)
     global _load_plugins, _run_benchmarks
     if _load_plugins is None or _run_benchmarks is None:
-        from cli import load_plugins as _cli_load_plugins, run_benchmarks as _cli_run_benchmarks
+        from cli import (
+            load_plugins as _cli_load_plugins,
+            run_benchmarks as _cli_run_benchmarks,
+        )
 
         _load_plugins = _cli_load_plugins
         _run_benchmarks = _cli_run_benchmarks

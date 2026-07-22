@@ -25,7 +25,9 @@ def _mock_dataset() -> dict[str, object]:
     }
 
 
-def _patch_dataset_loader(monkeypatch: pytest.MonkeyPatch, dataset: dict[str, object]) -> None:
+def _patch_dataset_loader(
+    monkeypatch: pytest.MonkeyPatch, dataset: dict[str, object]
+) -> None:
     """Patch :func:`cli.load_all_datasets` to return *dataset*."""
 
     def _fake_loader(selected: list[str] | None = None):
@@ -42,11 +44,7 @@ def _patch_dataset_loader(monkeypatch: pytest.MonkeyPatch, dataset: dict[str, ob
                 return [dataset["name"]]
             return _fake_resolver(include)
         if isinstance(selectors, (list, tuple)):
-            return [
-                dataset["name"]
-                for entry in selectors
-                if entry == dataset["name"]
-            ]
+            return [dataset["name"] for entry in selectors if entry == dataset["name"]]
         if selectors == dataset["name"]:
             return [dataset["name"]]
         return []
@@ -74,7 +72,9 @@ def _install_stub_detector(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(cli, "get_detector_class", _get_detector)
 
 
-def _install_param_detector(monkeypatch: pytest.MonkeyPatch, scales: list[float]) -> None:
+def _install_param_detector(
+    monkeypatch: pytest.MonkeyPatch, scales: list[float]
+) -> None:
     """Register a detector that records the initialization scale."""
 
     class ParamDetector:
@@ -95,7 +95,9 @@ def _install_param_detector(monkeypatch: pytest.MonkeyPatch, scales: list[float]
     monkeypatch.setattr(cli, "get_detector_class", _get_detector)
 
 
-def test_cli_runs_from_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+def test_cli_runs_from_config(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     """The CLI should execute the benchmark pipeline when driven by a YAML config."""
 
     dataset = _mock_dataset()
@@ -104,9 +106,7 @@ def test_cli_runs_from_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, c
 
     config_path = tmp_path / "config.yaml"
     config_path.write_text(
-        "n_jobs: 2\n"
-        "datasets:\n  - mock_dataset\n"
-        "detectors:\n  - stub\n",
+        "n_jobs: 2\n" "datasets:\n  - mock_dataset\n" "detectors:\n  - stub\n",
         encoding="utf-8",
     )
 
@@ -118,7 +118,9 @@ def test_cli_runs_from_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, c
     assert "stub: AUC=1.000" in output
 
 
-def test_cli_appends_leaderboard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cli_appends_leaderboard(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Running the CLI with --leaderboard should append benchmark results."""
 
     dataset = _mock_dataset()
@@ -154,7 +156,9 @@ def test_cli_appends_leaderboard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert row["error"] == ""
 
 
-def test_cli_parallel_execution(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+def test_cli_parallel_execution(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     """The CLI should distribute detector evaluation across worker threads."""
 
     dataset = _mock_dataset()
@@ -230,7 +234,9 @@ def test_leaderboard_header_written_once_across_multiple_runs(
     assert len(lines) == 3  # one header + two result rows
 
 
-def test_cli_registers_plugin(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+def test_cli_registers_plugin(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     """Plugins should integrate with the CLI when provided through --plugins."""
 
     dataset = _mock_dataset()
@@ -239,7 +245,9 @@ def test_cli_registers_plugin(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, c
     shared_registry: dict[str, str] = {}
     monkeypatch.setattr(cli, "DETECTOR_REGISTRY", shared_registry)
     monkeypatch.setattr("analytics.detectors.DETECTOR_REGISTRY", shared_registry)
-    monkeypatch.setattr("analytics.detectors.registry.DETECTOR_REGISTRY", shared_registry)
+    monkeypatch.setattr(
+        "analytics.detectors.registry.DETECTOR_REGISTRY", shared_registry
+    )
 
     plugin_pkg = tmp_path / "plugins"
     plugin_pkg.mkdir()
@@ -252,12 +260,14 @@ def test_cli_registers_plugin(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, c
         "    def detect_anomalies(self, values):\n"
         "        return values.iloc[:, 0].to_numpy(dtype=float)\n"
         "\n"
-        "register_detector(\"plugin_stub\", __name__ + \":PluginDetector\")\n",
+        'register_detector("plugin_stub", __name__ + ":PluginDetector")\n',
         encoding="utf-8",
     )
 
     monkeypatch.syspath_prepend(str(tmp_path))
-    monkeypatch.setattr(sys, "argv", ["cli.py", "--plugins", "plugins.integration_plugin"])
+    monkeypatch.setattr(
+        sys, "argv", ["cli.py", "--plugins", "plugins.integration_plugin"]
+    )
     cli.main()
 
     output = capsys.readouterr().out
@@ -348,5 +358,5 @@ def test_config_supports_defaults_and_labels(
     row = rows[0]
     assert row["dataset_name"] == "mock_dataset"
     assert row["detector_label"] == "scaled_stub"
-    assert row["detector_params"] == "{\"scale\": 2.0}"
+    assert row["detector_params"] == '{"scale": 2.0}'
     assert row["auc"] == "1.0"

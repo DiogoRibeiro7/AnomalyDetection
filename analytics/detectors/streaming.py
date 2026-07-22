@@ -45,8 +45,7 @@ class OnlineIsolationForestDetector(BaseDetector):
         else:
             arr = np.asarray(data, dtype=float)
         return [
-            {int(idx): float(value) for idx, value in enumerate(row)}
-            for row in arr
+            {int(idx): float(value) for idx, value in enumerate(row)} for row in arr
         ]
 
 
@@ -80,8 +79,7 @@ class RandomCutForestDetector(BaseDetector):
         else:
             arr = np.asarray(data, dtype=float)
         return [
-            {int(idx): float(value) for idx, value in enumerate(row)}
-            for row in arr
+            {int(idx): float(value) for idx, value in enumerate(row)} for row in arr
         ]
 
 

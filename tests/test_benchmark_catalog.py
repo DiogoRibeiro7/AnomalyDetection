@@ -69,7 +69,9 @@ def test_build_alias_map_does_not_invoke_dataset_loaders(monkeypatch) -> None:
     def _loader_should_not_run():
         raise AssertionError("Loader must not be called while building aliases")
 
-    monkeypatch.setattr(catalog, "get_dataset_functions", lambda: {"demo": _loader_should_not_run})
+    monkeypatch.setattr(
+        catalog, "get_dataset_functions", lambda: {"demo": _loader_should_not_run}
+    )
     monkeypatch.setattr(
         catalog,
         "load_catalog",
