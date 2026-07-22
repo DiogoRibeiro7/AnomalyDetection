@@ -21,10 +21,10 @@ ensure_supported_python()
 
 import pandas as pd
 import networkx as nx
-from sklearn.metrics import roc_auc_score
 
 from benchmarks.catalog import resolve_dataset_names
 from benchmarks.load_all_datasets import load_all_datasets
+from benchmarks.metrics import MetricConfig, evaluate_metrics, resolve_metric_config
 from benchmarks.reproducibility import (
     apply_seed_to_detector_entries,
     benchmark_config_hash,
@@ -52,9 +52,11 @@ LEADERBOARD_HEADER = [
     "detector_name",
     "detector_label",
     "detector_params",
+    "score_orientation",
     "random_seed",
     "runtime_seconds",
     "failure_category",
+    "metrics",
     "auc",
     "error",
 ]
@@ -96,6 +98,12 @@ def summarize_datasets(datasets=None):
         task = metadata.get("task")
         if task:
             print(f"  task: {task}")
+        modality = metadata.get("modality")
+        if modality:
+            print(f"  modality: {modality}")
+        label_type = metadata.get("label_type")
+        if label_type:
+            print(f"  label type: {label_type}")
         print()
 
 
@@ -135,6 +143,46 @@ def _format_detector_display(entry: dict[str, object]) -> str:
         return str(label)
     param_bits = ", ".join(f"{key}={value}" for key, value in sorted(params.items()))
     return f"{label} ({param_bits})"
+
+
+def _format_metric_values(metrics: dict[str, float | None]) -> str:
+    if not metrics:
+        return "metrics unavailable"
+    bits: list[str] = []
+    for name, value in metrics.items():
+        display_name = "AUC" if name == "roc_auc" else name
+        if value is None:
+            bits.append(f"{display_name}=n/a")
+        else:
+            bits.append(f"{display_name}={value:.3f}")
+    return ", ".join(bits)
+
+
+def _metric_args_from_cli(args):
+    if (
+        args.metrics is None
+        and args.metric_k is None
+        and args.metric_threshold is None
+        and args.positive_label is None
+    ):
+        return None
+    metric_config: dict[str, object] = {}
+    if args.metrics is not None:
+        metric_config["include"] = args.metrics or ["roc_auc"]
+    if args.metric_k is not None:
+        metric_config["k"] = args.metric_k
+    if args.metric_threshold is not None:
+        metric_config["threshold"] = args.metric_threshold
+    if args.positive_label is not None:
+        metric_config["positive_label"] = _parse_label_value(args.positive_label)
+    return metric_config
+
+
+def _parse_label_value(value: str):
+    try:
+        return int(value)
+    except ValueError:
+        return value
 
 
 def _resolve_detector_entries(selection):
@@ -220,6 +268,7 @@ def _result_rows(
     run_id: str,
     config_hash: str,
     random_seed: int | None,
+    metric_config: MetricConfig,
     datasets_to_run,
     detector_entries,
     results,
@@ -244,14 +293,35 @@ def _result_rows(
                     "detector_name": det_spec["name"],
                     "detector_label": label,
                     "detector_params": params,
+                    "score_orientation": outcome["score_orientation"],
                     "random_seed": random_seed,
                     "runtime_seconds": outcome["runtime_seconds"],
                     "failure_category": outcome["failure_category"],
+                    "metrics": outcome["metrics"],
                     "auc": outcome["auc"],
                     "error": outcome["error"] or "",
                 }
             )
     return rows
+
+
+def _manifest_dataset_metadata(datasets_to_run) -> list[dict[str, object]]:
+    metadata_records: list[dict[str, object]] = []
+    for dataset_spec in datasets_to_run:
+        metadata = dict(dataset_spec.get("metadata") or {})
+        metadata_records.append(
+            {
+                "dataset_key": dataset_spec.get("key") or dataset_spec["name"],
+                "dataset_name": dataset_spec["name"],
+                "modality": metadata.get("modality"),
+                "task": metadata.get("task"),
+                "label_type": metadata.get("label_type"),
+                "positive_label": metadata.get("positive_label"),
+                "label_semantics": metadata.get("label_semantics"),
+                "tags": metadata.get("tags") or [],
+            }
+        )
+    return metadata_records
 
 
 def _append_leaderboard_rows(leaderboard_path, rows):
@@ -272,6 +342,7 @@ def _append_leaderboard_rows(leaderboard_path, rows):
             csv_row["detector_params"] = json.dumps(
                 csv_row["detector_params"], sort_keys=True
             )
+            csv_row["metrics"] = json.dumps(csv_row["metrics"], sort_keys=True)
             csv_row["random_seed"] = (
                 "" if csv_row["random_seed"] is None else csv_row["random_seed"]
             )
@@ -288,6 +359,7 @@ def run_benchmarks(
     json_report=None,
     run_id=None,
     random_seed=None,
+    metrics=None,
 ):
     """Run benchmarks for the specified datasets and detectors.
 
@@ -316,7 +388,11 @@ def run_benchmarks(
         Optional deterministic run identifier.
     random_seed: int | None
         Optional random seed applied to supported detectors and common RNGs.
+    metrics: Any
+        Optional metric selector. Supports a string, list of strings, or mapping
+        with ``include``, ``positive_label``, ``k``, and ``threshold`` keys.
     """
+    metric_config = resolve_metric_config(metrics)
     detector_entries = _resolve_detector_entries(detectors)
     if not detector_entries:
         detector_entries = [
@@ -342,6 +418,7 @@ def run_benchmarks(
         detector_entries,
         random_seed,
         n_jobs,
+        metric_config.as_dict(),
     )
     timestamp = utc_timestamp()
     effective_run_id = normalize_run_id(run_id, timestamp, config_hash)
@@ -357,6 +434,9 @@ def run_benchmarks(
         features = dataset_spec["feature_cols"]
         labels = dataset_spec["label_col"]
         detector_cls = get_detector_class(det_spec["name"])
+        score_orientation = getattr(
+            detector_cls, "score_orientation", "estimator_defined"
+        )
         params = dict(det_spec.get("params") or {})
         fit_params: dict[str, object] = {}
         try:
@@ -372,18 +452,35 @@ def run_benchmarks(
             else:
                 scores = detector.detect_anomalies(df, **fit_params)
                 y_true = [data[labels] for _, data in df.nodes(data=True)]
-            auc = float(roc_auc_score(y_true, scores))
             runtime_seconds = round(time.perf_counter() - started, 6)
-            return name, det_spec, auc, None, "", runtime_seconds
+            metric_values = evaluate_metrics(
+                y_true,
+                scores,
+                runtime_seconds=runtime_seconds,
+                config=metric_config,
+            )
+            auc = metric_values.get("roc_auc")
+            return (
+                name,
+                det_spec,
+                auc,
+                metric_values,
+                None,
+                "",
+                runtime_seconds,
+                score_orientation,
+            )
         except Exception as exc:  # pragma: no cover - benchmarking utility
             runtime_seconds = round(time.perf_counter() - started, 6)
             return (
                 name,
                 det_spec,
                 None,
+                {},
                 str(exc),
                 _classify_failure(exc),
                 runtime_seconds,
+                score_orientation,
             )
 
     with ThreadPoolExecutor(max_workers=worker_count) as executor:
@@ -397,16 +494,20 @@ def run_benchmarks(
                 dataset_name,
                 det_spec,
                 auc,
+                metric_values,
                 error,
                 failure_category,
                 runtime_seconds,
+                score_orientation,
             ) = future.result()
             key = det_spec.get("label") or det_spec["name"]
             results[dataset_name][key] = {
                 "auc": auc,
+                "metrics": metric_values,
                 "error": error,
                 "failure_category": failure_category,
                 "runtime_seconds": runtime_seconds,
+                "score_orientation": score_orientation,
                 "detector": det_spec,
             }
 
@@ -422,7 +523,8 @@ def run_benchmarks(
                 continue
             if outcome["error"] is None:
                 display = _format_detector_display(det_spec)
-                print(f"  {display}: AUC={outcome['auc']:.3f}")
+                metric_bits = _format_metric_values(outcome["metrics"])
+                print(f"  {display}: {metric_bits}")
             else:
                 print(f"  {label}: skipped ({outcome['error']})")
         print()
@@ -432,6 +534,7 @@ def run_benchmarks(
         run_id=effective_run_id,
         config_hash=config_hash,
         random_seed=random_seed,
+        metric_config=metric_config,
         datasets_to_run=datasets_to_run,
         detector_entries=detector_entries,
         results=results,
@@ -446,6 +549,8 @@ def run_benchmarks(
         n_jobs=n_jobs,
         output_directory=str(output_dir) if output_dir else None,
         dataset_integrity=dataset_integrity,
+        metric_config=metric_config.as_dict(),
+        dataset_metadata=_manifest_dataset_metadata(datasets_to_run),
     )
     report = build_report(manifest, rows)
 
@@ -512,6 +617,30 @@ def main():
         help="Seed supported detectors and common Python/NumPy RNGs",
     )
     parser.add_argument(
+        "--metrics",
+        nargs="*",
+        help=(
+            "Metrics to compute. Supported values include roc_auc, "
+            "average_precision, precision_at_k, recall_at_k, "
+            "f1_at_threshold, best_f1, and runtime."
+        ),
+    )
+    parser.add_argument(
+        "--metric-k",
+        type=int,
+        help="Top-k value for precision_at_k and recall_at_k metrics",
+    )
+    parser.add_argument(
+        "--metric-threshold",
+        type=float,
+        help="Score threshold for f1_at_threshold",
+    )
+    parser.add_argument(
+        "--positive-label",
+        default=None,
+        help="Label value treated as positive when computing metrics",
+    )
+    parser.add_argument(
         "--n-jobs",
         type=int,
         default=None,
@@ -534,6 +663,7 @@ def main():
             json_report=args.json_report,
             run_id=args.run_id,
             random_seed=args.random_seed,
+            metrics=_metric_args_from_cli(args),
         )
     elif args.summary:
         summarize_datasets(args.datasets)
@@ -547,6 +677,7 @@ def main():
             json_report=args.json_report,
             run_id=args.run_id,
             random_seed=args.random_seed,
+            metrics=_metric_args_from_cli(args),
         )
 
 

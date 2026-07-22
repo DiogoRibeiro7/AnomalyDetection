@@ -25,15 +25,20 @@ def test_reproducibility_hash_is_stable() -> None:
         {"name": "isolation_forest", "label": "iforest", "params": {"seed": 7}}
     ]
 
-    first = benchmark_config_hash(["iris"], detectors, random_seed=7, n_jobs=1)
-    second = benchmark_config_hash(["iris"], detectors, random_seed=7, n_jobs=1)
+    metric_config = {"names": ["roc_auc"], "positive_label": 1}
+    first = benchmark_config_hash(
+        ["iris"], detectors, random_seed=7, n_jobs=1, metric_config=metric_config
+    )
+    second = benchmark_config_hash(
+        ["iris"], detectors, random_seed=7, n_jobs=1, metric_config=metric_config
+    )
 
     assert first == second
     assert len(first) == 16
 
 
 def test_package_version_comes_from_source_metadata() -> None:
-    assert package_version() == "0.3.0"
+    assert package_version() == "0.4.0"
 
 
 def test_seed_is_added_only_for_supported_detectors() -> None:
@@ -68,6 +73,12 @@ def test_run_benchmarks_writes_manifest_report_and_enriched_leaderboard(
         "dataframe": pd.DataFrame({"feature": [0.1, 0.9], "label": [0, 1]}),
         "feature_cols": ["feature"],
         "label_col": "label",
+        "metadata": {
+            "modality": "tabular",
+            "task": "classification",
+            "label_type": "binary_class",
+            "positive_label": 1,
+        },
     }
 
     class StubDetector:
@@ -93,6 +104,7 @@ def test_run_benchmarks_writes_manifest_report_and_enriched_leaderboard(
         run_id="fixture-run",
         random_seed=123,
         n_jobs=1,
+        metrics=["roc_auc", "average_precision", "runtime"],
     )
 
     manifest_path = output_dir / "fixture-run-manifest.json"
@@ -105,6 +117,8 @@ def test_run_benchmarks_writes_manifest_report_and_enriched_leaderboard(
     assert manifest["schema_version"] == MANIFEST_SCHEMA_VERSION
     assert manifest["run_id"] == "fixture-run"
     assert manifest["dataset_keys"] == ["mock_dataset_key"]
+    assert manifest["dataset_metadata"][0]["modality"] == "tabular"
+    assert manifest["dataset_metadata"][0]["label_type"] == "binary_class"
     assert persisted_report["schema_version"] == REPORT_SCHEMA_VERSION
     assert persisted_report["manifest"]["config_hash"] == manifest["config_hash"]
 
@@ -114,7 +128,16 @@ def test_run_benchmarks_writes_manifest_report_and_enriched_leaderboard(
     assert result_row["random_seed"] == 123
     assert result_row["runtime_seconds"] >= 0
     assert result_row["failure_category"] == ""
+    assert result_row["score_orientation"] == "estimator_defined"
+    assert result_row["metrics"]["roc_auc"] == 1.0
+    assert result_row["metrics"]["average_precision"] == 1.0
+    assert result_row["metrics"]["runtime"] >= 0
     assert result_row["auc"] == 1.0
+    assert persisted_report["manifest"]["metrics"]["names"] == [
+        "roc_auc",
+        "average_precision",
+        "runtime",
+    ]
 
     with leaderboard_path.open("r", encoding="utf-8", newline="") as fh:
         csv_rows = list(csv.DictReader(fh))
@@ -123,3 +146,5 @@ def test_run_benchmarks_writes_manifest_report_and_enriched_leaderboard(
     assert csv_rows[0]["config_hash"] == manifest["config_hash"]
     assert csv_rows[0]["random_seed"] == "123"
     assert csv_rows[0]["failure_category"] == ""
+    assert csv_rows[0]["score_orientation"] == "estimator_defined"
+    assert '"average_precision": 1.0' in csv_rows[0]["metrics"]

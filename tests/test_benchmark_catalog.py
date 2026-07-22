@@ -34,6 +34,18 @@ def test_resolve_dataset_names_with_limit_and_exclude() -> None:
     assert len(names) == 3
 
 
+def test_resolve_dataset_names_with_metadata_filters() -> None:
+    tabular_names = catalog.resolve_dataset_names(
+        {"modality": "tabular", "task": "classification", "limit": 5}
+    )
+    assert tabular_names
+    assert "karate_club_graph" not in tabular_names
+    assert all(
+        catalog.get_dataset_metadata(name).get("modality") == "tabular"
+        for name in tabular_names
+    )
+
+
 def test_resolve_dataset_names_preserves_unknown() -> None:
     names = catalog.resolve_dataset_names("custom_dataset")
     assert names == ["custom_dataset"]

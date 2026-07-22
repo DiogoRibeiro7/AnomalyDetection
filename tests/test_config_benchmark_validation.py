@@ -54,6 +54,12 @@ def test_invalid_random_seed_type_fails_fast(tmp_path: Path) -> None:
         config_benchmark.run_from_config(path)
 
 
+def test_invalid_metrics_type_fails_fast(tmp_path: Path) -> None:
+    path = _write_config(tmp_path, "metrics:\n  include: 7\n")
+    with pytest.raises(config_benchmark.ConfigValidationError, match="metrics"):
+        config_benchmark.run_from_config(path)
+
+
 def test_valid_config_calls_plugins_and_runner(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -73,6 +79,12 @@ def test_valid_config_calls_plugins_and_runner(
         "json_report: benchmark-results/report.json\n"
         "run_id: config-run\n"
         "random_seed: 42\n"
+        "metrics:\n"
+        "  include:\n"
+        "    - roc_auc\n"
+        "    - average_precision\n"
+        "  positive_label: 1\n"
+        "  k: 5\n"
         "n_jobs: 2\n",
     )
 
@@ -90,6 +102,7 @@ def test_valid_config_calls_plugins_and_runner(
         json_report=None,
         run_id=None,
         random_seed=None,
+        metrics=None,
     ):
         captured["datasets"] = datasets
         captured["detectors"] = detectors
@@ -99,6 +112,7 @@ def test_valid_config_calls_plugins_and_runner(
         captured["json_report"] = json_report
         captured["run_id"] = run_id
         captured["random_seed"] = random_seed
+        captured["metrics"] = metrics
 
     monkeypatch.setattr(config_benchmark, "_load_plugins", _fake_load_plugins)
     monkeypatch.setattr(config_benchmark, "_run_benchmarks", _fake_run_benchmarks)
@@ -113,3 +127,8 @@ def test_valid_config_calls_plugins_and_runner(
     assert captured["json_report"] == "benchmark-results/report.json"
     assert captured["run_id"] == "config-run"
     assert captured["random_seed"] == 42
+    assert captured["metrics"] == {
+        "include": ["roc_auc", "average_precision"],
+        "positive_label": 1,
+        "k": 5,
+    }
