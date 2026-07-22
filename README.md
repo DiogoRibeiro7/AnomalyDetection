@@ -85,6 +85,12 @@ Run a multi-metric benchmark using dataset metadata selectors:
 poetry run benchmark-cli --config benchmarks/benchmark_config.v0.4.0-metrics.yml
 ```
 
+Run a modern tabular detector smoke benchmark:
+
+```bash
+poetry run benchmark-cli --config benchmarks/benchmark_config.v0.5.0-modern-tabular.yml
+```
+
 Show dataset summaries:
 
 ```bash
@@ -101,7 +107,8 @@ Elliptic Envelope, Gaussian Mixture, Sklearn LOF, KMeans, PCA Reconstruction,
 Mahalanobis distance, Kernel Density, Autoencoder, Denoising Autoencoder,
 Variational Autoencoder, LSTM Autoencoder, Transformer, COPOD, Feature Bagging,
 LODA, ABOD, Half-Space Trees, Online Isolation Forest, AnoGAN, MAD-GAN, Degree
-Centrality, Graph Isolation Forest, ARIMA, and Prophet.
+Centrality, Graph Isolation Forest, ECOD, Random Feature Isolation Forest,
+Random Network Distillation, ARIMA, and Prophet.
 
 ## Plugins
 

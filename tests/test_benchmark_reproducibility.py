@@ -38,19 +38,23 @@ def test_reproducibility_hash_is_stable() -> None:
 
 
 def test_package_version_comes_from_source_metadata() -> None:
-    assert package_version() == "0.4.0"
+    assert package_version() == "0.5.0"
 
 
 def test_seed_is_added_only_for_supported_detectors() -> None:
     entries = [
         {"name": "isolation_forest", "params": {}, "label": "iforest"},
+        {"name": "random_feature_isolation_forest", "params": {}, "label": "rfif"},
+        {"name": "random_network_distillation", "params": {}, "label": "rnd"},
         {"name": "knn", "params": {}, "label": "knn"},
     ]
 
     seeded = apply_seed_to_detector_entries(entries, seed=42)
 
     assert seeded[0]["params"] == {"random_state": 42}
-    assert seeded[1]["params"] == {}
+    assert seeded[1]["params"] == {"random_state": 42}
+    assert seeded[2]["params"] == {"random_state": 42}
+    assert seeded[3]["params"] == {}
 
 
 def test_dataset_integrity_collects_bundled_file_hashes() -> None:

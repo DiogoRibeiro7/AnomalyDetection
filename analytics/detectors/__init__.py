@@ -36,6 +36,15 @@ register_detector(
 )
 register_detector("loda", "analytics.detectors.classical:LODADetector")
 register_detector("abod", "analytics.detectors.classical:ABODDetector")
+register_detector("ecod", "analytics.detectors.modern_tabular:ECODDetector")
+register_detector(
+    "random_network_distillation",
+    "analytics.detectors.modern_tabular:RandomNetworkDistillationDetector",
+)
+register_detector(
+    "random_feature_isolation_forest",
+    "analytics.detectors.modern_tabular:RandomFeatureIsolationForestDetector",
+)
 
 # Streaming detectors
 register_detector(

@@ -136,6 +136,8 @@ Non-goals:
 
 ## v0.4.0 - Metrics, Datasets, And Evaluation Protocols
 
+Status: implemented; pending release.
+
 Goal: broaden evaluation coverage and make metric choice explicit before adding
 many modern detectors.
 
@@ -182,6 +184,8 @@ Acceptance criteria:
 - Benchmark reports record metric configuration and threshold policy.
 
 ## v0.5.0 - Modern Tabular Detector Pack
+
+Status: implemented; pending release.
 
 Goal: add contemporary tabular anomaly detection methods without making the
 base install depend on heavy deep learning stacks.
