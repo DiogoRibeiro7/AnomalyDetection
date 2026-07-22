@@ -15,42 +15,52 @@ ArrayLike = Union[pd.DataFrame, Sequence[Sequence[float]], NDArray[np.floating[A
 RowDict = dict[str | int, float]
 
 
-class OnlineIsolationForestDetector(BaseDetector):
-    """Streaming Isolation Forest using River's incremental implementation."""
+def _to_dicts(data: ArrayLike) -> list[RowDict]:
+    if isinstance(data, pd.DataFrame):
+        records = data.to_dict(orient="records")
+        return [
+            {key: float(value) for key, value in record.items()} for record in records
+        ]
+
+    if isinstance(data, np.ndarray):
+        arr = data.astype(float, copy=False)
+    else:
+        arr = np.asarray(data, dtype=float)
+    arr = np.atleast_2d(arr)
+    return [{int(idx): float(value) for idx, value in enumerate(row)} for row in arr]
+
+
+class HalfSpaceTreesDetector(BaseDetector):
+    """Online anomaly detector backed by River's Half-Space Trees."""
 
     def get_name(self) -> str:
-        return "Online Isolation Forest"
+        return "Half-Space Trees"
 
-    def fit(self, data: ArrayLike, **params: Any) -> OnlineIsolationForestDetector:
+    def fit(self, data: ArrayLike, **params: Any) -> HalfSpaceTreesDetector:
         from river import anomaly  # lazy import
 
-        self.model = anomaly.IsolationForest(**params)
-        for row in self._to_dicts(data):
+        self.model = anomaly.HalfSpaceTrees(**params)
+        for row in _to_dicts(data):
             self.model.learn_one(row)
         return self
 
     def score(self, data: ArrayLike) -> list[float]:
-        return [float(self.model.score_one(row)) for row in self._to_dicts(data)]
+        return [float(self.model.score_one(row)) for row in _to_dicts(data)]
 
-    def _to_dicts(self, data: ArrayLike) -> list[RowDict]:
-        if isinstance(data, pd.DataFrame):
-            records = data.to_dict(orient="records")
-            return [
-                {key: float(value) for key, value in record.items()}
-                for record in records
-            ]
-        arr: NDArray[np.floating[Any]]
-        if isinstance(data, np.ndarray):
-            arr = data.astype(float, copy=False)
-        else:
-            arr = np.asarray(data, dtype=float)
-        return [
-            {int(idx): float(value) for idx, value in enumerate(row)} for row in arr
-        ]
+
+class OnlineIsolationForestDetector(HalfSpaceTreesDetector):
+    """Backward-compatible alias for River's online isolation-style detector."""
+
+    def get_name(self) -> str:
+        return "Online Isolation Forest"
 
 
 class RandomCutForestDetector(BaseDetector):
-    """Random Cut Forest for streaming anomaly detection."""
+    """Random Cut Forest for streaming anomaly detection.
+
+    River does not currently expose ``anomaly.RandomCutForest``. The detector is
+    retained so older configurations fail with an actionable message.
+    """
 
     def get_name(self) -> str:
         return "Random Cut Forest"
@@ -58,32 +68,23 @@ class RandomCutForestDetector(BaseDetector):
     def fit(self, data: ArrayLike, **params: Any) -> RandomCutForestDetector:
         from river import anomaly  # lazy import
 
+        if not hasattr(anomaly, "RandomCutForest"):
+            raise ImportError(
+                "river.anomaly.RandomCutForest is not available in the installed "
+                "River version. Use 'half_space_trees' or 'online_isolation_forest' "
+                "for River-backed streaming anomaly detection."
+            )
         self.model = anomaly.RandomCutForest(**params)
-        for row in self._to_dicts(data):
+        for row in _to_dicts(data):
             self.model.learn_one(row)
         return self
 
     def score(self, data: ArrayLike) -> list[float]:
-        return [float(self.model.score_one(row)) for row in self._to_dicts(data)]
-
-    def _to_dicts(self, data: ArrayLike) -> list[RowDict]:
-        if isinstance(data, pd.DataFrame):
-            records = data.to_dict(orient="records")
-            return [
-                {key: float(value) for key, value in record.items()}
-                for record in records
-            ]
-        arr: NDArray[np.floating[Any]]
-        if isinstance(data, np.ndarray):
-            arr = data.astype(float, copy=False)
-        else:
-            arr = np.asarray(data, dtype=float)
-        return [
-            {int(idx): float(value) for idx, value in enumerate(row)} for row in arr
-        ]
+        return [float(self.model.score_one(row)) for row in _to_dicts(data)]
 
 
 __all__ = [
+    "HalfSpaceTreesDetector",
     "OnlineIsolationForestDetector",
     "RandomCutForestDetector",
 ]

@@ -39,6 +39,10 @@ register_detector("abod", "analytics.detectors.classical:ABODDetector")
 
 # Streaming detectors
 register_detector(
+    "half_space_trees",
+    "analytics.detectors.streaming:HalfSpaceTreesDetector",
+)
+register_detector(
     "online_isolation_forest",
     "analytics.detectors.streaming:OnlineIsolationForestDetector",
 )
