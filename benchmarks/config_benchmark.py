@@ -97,7 +97,17 @@ def _validate_config(config: Any) -> None:
     if not isinstance(config, dict):
         _fail("root", "a mapping", config)
 
-    allowed_keys = {"datasets", "detectors", "n_jobs", "leaderboard", "plugins"}
+    allowed_keys = {
+        "datasets",
+        "detectors",
+        "n_jobs",
+        "leaderboard",
+        "plugins",
+        "output_dir",
+        "json_report",
+        "run_id",
+        "random_seed",
+    }
     unknown = set(config) - allowed_keys
     if unknown:
         unknown_keys = ", ".join(sorted(unknown))
@@ -116,6 +126,22 @@ def _validate_config(config: Any) -> None:
     if leaderboard is not None and not isinstance(leaderboard, str):
         _fail("leaderboard", "a string", leaderboard)
 
+    output_dir = config.get("output_dir")
+    if output_dir is not None and not isinstance(output_dir, str):
+        _fail("output_dir", "a string", output_dir)
+
+    json_report = config.get("json_report")
+    if json_report is not None and not isinstance(json_report, str):
+        _fail("json_report", "a string", json_report)
+
+    run_id = config.get("run_id")
+    if run_id is not None and not isinstance(run_id, str):
+        _fail("run_id", "a string", run_id)
+
+    random_seed = config.get("random_seed")
+    if random_seed is not None and not isinstance(random_seed, int):
+        _fail("random_seed", "an integer", random_seed)
+
     plugins = config.get("plugins")
     if plugins is not None:
         if not isinstance(plugins, (list, tuple)):
@@ -129,6 +155,10 @@ def run_from_config(
     path: str | Path,
     leaderboard: str | None = None,
     n_jobs: int | None = None,
+    output_dir: str | None = None,
+    json_report: str | None = None,
+    run_id: str | None = None,
+    random_seed: int | None = None,
 ) -> None:
     """Execute benchmarks defined in a YAML configuration file.
 
@@ -159,6 +189,16 @@ def run_from_config(
     effective_leaderboard = (
         leaderboard if leaderboard is not None else configured_leaderboard
     )
+    effective_output_dir = (
+        output_dir if output_dir is not None else config.get("output_dir")
+    )
+    effective_json_report = (
+        json_report if json_report is not None else config.get("json_report")
+    )
+    effective_run_id = run_id if run_id is not None else config.get("run_id")
+    effective_random_seed = (
+        random_seed if random_seed is not None else config.get("random_seed")
+    )
 
     config_plugins = config.get("plugins")
     if config_plugins:
@@ -169,4 +209,8 @@ def run_from_config(
         detectors,
         leaderboard=effective_leaderboard,
         n_jobs=effective_jobs,
+        output_dir=effective_output_dir,
+        json_report=effective_json_report,
+        run_id=effective_run_id,
+        random_seed=effective_random_seed,
     )

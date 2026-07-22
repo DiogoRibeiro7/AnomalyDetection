@@ -72,6 +72,13 @@ Run from a YAML configuration:
 poetry run benchmark-cli --config benchmarks/benchmark_config.yml
 ```
 
+Run a reproducible smoke benchmark with a manifest, JSON report, and enriched
+leaderboard:
+
+```bash
+poetry run benchmark-cli --config benchmarks/benchmark_config.v0.3.0-smoke.yml
+```
+
 Show dataset summaries:
 
 ```bash
@@ -145,8 +152,26 @@ poetry run benchmark-cli iris --detectors isolation_forest --leaderboard results
 ```
 
 The leaderboard CSV uses a structured schema with these columns:
-`run_timestamp_utc`, `dataset_name`, `dataset_key`, `detector_name`,
-`detector_label`, `detector_params`, `auc`, and `error`.
+`run_timestamp_utc`, `run_id`, `config_hash`, `dataset_name`, `dataset_key`,
+`detector_name`, `detector_label`, `detector_params`, `random_seed`,
+`runtime_seconds`, `failure_category`, `auc`, and `error`.
+
+For reproducible runs, provide a stable run identifier, seed, and output path:
+
+```bash
+poetry run benchmark-cli iris \
+  --detectors isolation_forest \
+  --random-seed 42 \
+  --run-id paper-table-1 \
+  --output-dir benchmark-results \
+  --json-report benchmark-results/paper-table-1.json
+```
+
+The JSON report embeds a benchmark manifest with the package version, Python
+version, selected dataset keys, detector keys and parameters, random seed,
+configuration hash, timestamp, and bundled dataset file integrity hashes.
+Bundled dataset metadata in `benchmarks/datasets.yml` records source URLs,
+license notes, task type, and local files used for integrity checks.
 
 ## Quality Checks
 

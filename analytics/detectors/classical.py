@@ -930,8 +930,9 @@ class KMeansDetector(BaseDetector):
             >>> detector.fit(X_train, n_clusters=3)
             KMeansDetector(...)
         """
+        params = dict(params)
         self.n_clusters = params.pop("n_clusters", 8)
-        self.kmeans = KMeans(n_clusters=self.n_clusters)
+        self.kmeans = KMeans(n_clusters=self.n_clusters, **params)
         X = data.values if isinstance(data, pd.DataFrame) else data
         self.kmeans.fit(X)
         return self
