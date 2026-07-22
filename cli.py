@@ -9,10 +9,11 @@ import csv
 import json
 import logging
 import os
+import time
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
 from importlib import import_module
+from pathlib import Path
 
 from analytics.runtime import ensure_supported_python
 
@@ -24,6 +25,17 @@ from sklearn.metrics import roc_auc_score
 
 from benchmarks.catalog import resolve_dataset_names
 from benchmarks.load_all_datasets import load_all_datasets
+from benchmarks.reproducibility import (
+    apply_seed_to_detector_entries,
+    benchmark_config_hash,
+    build_manifest,
+    build_report,
+    collect_dataset_integrity,
+    normalize_run_id,
+    seed_runtime,
+    utc_timestamp,
+    write_json,
+)
 from analytics.detectors import (
     DETECTOR_REGISTRY,
     get_detector_class,
@@ -33,11 +45,16 @@ from analytics.detectors import (
 logger = logging.getLogger(__name__)
 LEADERBOARD_HEADER = [
     "run_timestamp_utc",
+    "run_id",
+    "config_hash",
     "dataset_name",
     "dataset_key",
     "detector_name",
     "detector_label",
     "detector_params",
+    "random_seed",
+    "runtime_seconds",
+    "failure_category",
     "auc",
     "error",
 ]
@@ -185,44 +202,93 @@ def _resolve_detector_entries(selection):
     return []
 
 
-def _append_leaderboard_rows(
-    leaderboard_path, datasets_to_run, detector_entries, results
-):
+def _classify_failure(exc: Exception | None) -> str:
+    if exc is None:
+        return ""
+    if isinstance(exc, (ImportError, ModuleNotFoundError)):
+        return "missing_dependency"
+    if isinstance(exc, ValueError):
+        return "invalid_input_or_parameter"
+    if isinstance(exc, RuntimeError):
+        return "runtime_error"
+    return "detector_error"
+
+
+def _result_rows(
+    *,
+    timestamp: str,
+    run_id: str,
+    config_hash: str,
+    random_seed: int | None,
+    datasets_to_run,
+    detector_entries,
+    results,
+) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for dataset_spec in datasets_to_run:
+        dataset_name = dataset_spec["name"]
+        dataset_key = dataset_spec.get("key") or dataset_name
+        for det_spec in detector_entries:
+            label = det_spec.get("label") or det_spec["name"]
+            outcome = results.get(dataset_name, {}).get(label)
+            if not outcome:
+                continue
+            params = det_spec.get("params") or {}
+            rows.append(
+                {
+                    "run_timestamp_utc": timestamp,
+                    "run_id": run_id,
+                    "config_hash": config_hash,
+                    "dataset_name": dataset_name,
+                    "dataset_key": dataset_key,
+                    "detector_name": det_spec["name"],
+                    "detector_label": label,
+                    "detector_params": params,
+                    "random_seed": random_seed,
+                    "runtime_seconds": outcome["runtime_seconds"],
+                    "failure_category": outcome["failure_category"],
+                    "auc": outcome["auc"],
+                    "error": outcome["error"] or "",
+                }
+            )
+    return rows
+
+
+def _append_leaderboard_rows(leaderboard_path, rows):
+    leaderboard_parent = os.path.dirname(os.fspath(leaderboard_path))
+    if leaderboard_parent:
+        os.makedirs(leaderboard_parent, exist_ok=True)
     write_header = (
         not os.path.exists(leaderboard_path) or os.path.getsize(leaderboard_path) == 0
     )
-    timestamp = datetime.now(timezone.utc).isoformat()
 
     with open(leaderboard_path, "a", newline="", encoding="utf-8") as fh:
-        writer = csv.writer(fh)
+        writer = csv.DictWriter(fh, fieldnames=LEADERBOARD_HEADER)
         if write_header:
-            writer.writerow(LEADERBOARD_HEADER)
+            writer.writeheader()
 
-        for dataset_spec in datasets_to_run:
-            dataset_name = dataset_spec["name"]
-            dataset_key = dataset_spec.get("key") or dataset_name
-            for det_spec in detector_entries:
-                label = det_spec.get("label") or det_spec["name"]
-                outcome = results.get(dataset_name, {}).get(label)
-                if not outcome:
-                    continue
-
-                params = det_spec.get("params") or {}
-                writer.writerow(
-                    [
-                        timestamp,
-                        dataset_name,
-                        dataset_key,
-                        det_spec["name"],
-                        label,
-                        json.dumps(params, sort_keys=True),
-                        "" if outcome["auc"] is None else outcome["auc"],
-                        outcome["error"] or "",
-                    ]
-                )
+        for row in rows:
+            csv_row = dict(row)
+            csv_row["detector_params"] = json.dumps(
+                csv_row["detector_params"], sort_keys=True
+            )
+            csv_row["random_seed"] = (
+                "" if csv_row["random_seed"] is None else csv_row["random_seed"]
+            )
+            csv_row["auc"] = "" if csv_row["auc"] is None else csv_row["auc"]
+            writer.writerow(csv_row)
 
 
-def run_benchmarks(datasets=None, detectors=None, leaderboard=None, n_jobs=None):
+def run_benchmarks(
+    datasets=None,
+    detectors=None,
+    leaderboard=None,
+    n_jobs=None,
+    output_dir=None,
+    json_report=None,
+    run_id=None,
+    random_seed=None,
+):
     """Run benchmarks for the specified datasets and detectors.
 
     Parameters
@@ -241,14 +307,25 @@ def run_benchmarks(datasets=None, detectors=None, leaderboard=None, n_jobs=None)
     n_jobs: int | None
         Number of worker threads to use. ``None`` or ``1`` runs sequentially.
         Non-positive values use the available CPU count.
+    output_dir: str | None
+        Optional directory where manifest and default report JSON files are
+        written.
+    json_report: str | None
+        Optional explicit path for the JSON benchmark report.
+    run_id: str | None
+        Optional deterministic run identifier.
+    random_seed: int | None
+        Optional random seed applied to supported detectors and common RNGs.
     """
     detector_entries = _resolve_detector_entries(detectors)
     if not detector_entries:
         detector_entries = [
             {"name": name, "params": {}, "label": name} for name in DETECTOR_REGISTRY
         ]
+    detector_entries = apply_seed_to_detector_entries(detector_entries, random_seed)
 
     resolved_datasets = resolve_dataset_names(datasets)
+    dataset_integrity = collect_dataset_integrity(resolved_datasets)
     try:
         datasets_to_run = list(load_all_datasets(resolved_datasets))
     except KeyError as exc:
@@ -257,6 +334,17 @@ def run_benchmarks(datasets=None, detectors=None, leaderboard=None, n_jobs=None)
 
     if not datasets_to_run:
         return
+
+    seed_runtime(random_seed)
+    dataset_keys = [str(ds.get("key") or ds["name"]) for ds in datasets_to_run]
+    config_hash = benchmark_config_hash(
+        dataset_keys,
+        detector_entries,
+        random_seed,
+        n_jobs,
+    )
+    timestamp = utc_timestamp()
+    effective_run_id = normalize_run_id(run_id, timestamp, config_hash)
 
     total_tasks = len(datasets_to_run) * len(detector_entries)
     worker_count = _resolve_worker_count(total_tasks, n_jobs)
@@ -269,18 +357,34 @@ def run_benchmarks(datasets=None, detectors=None, leaderboard=None, n_jobs=None)
         features = dataset_spec["feature_cols"]
         labels = dataset_spec["label_col"]
         detector_cls = get_detector_class(det_spec["name"])
-        detector = detector_cls(**(det_spec.get("params") or {}))
+        params = dict(det_spec.get("params") or {})
+        fit_params: dict[str, object] = {}
+        try:
+            detector = detector_cls(**params)
+        except TypeError:
+            detector = detector_cls()
+            fit_params = params
+        started = time.perf_counter()
         try:
             if isinstance(df, pd.DataFrame):
-                scores = detector.detect_anomalies(df[features])
+                scores = detector.detect_anomalies(df[features], **fit_params)
                 y_true = df[labels]
             else:
-                scores = detector.detect_anomalies(df)
+                scores = detector.detect_anomalies(df, **fit_params)
                 y_true = [data[labels] for _, data in df.nodes(data=True)]
             auc = float(roc_auc_score(y_true, scores))
-            return name, det_spec, auc, None
+            runtime_seconds = round(time.perf_counter() - started, 6)
+            return name, det_spec, auc, None, "", runtime_seconds
         except Exception as exc:  # pragma: no cover - benchmarking utility
-            return name, det_spec, None, str(exc)
+            runtime_seconds = round(time.perf_counter() - started, 6)
+            return (
+                name,
+                det_spec,
+                None,
+                str(exc),
+                _classify_failure(exc),
+                runtime_seconds,
+            )
 
     with ThreadPoolExecutor(max_workers=worker_count) as executor:
         futures = [
@@ -289,11 +393,20 @@ def run_benchmarks(datasets=None, detectors=None, leaderboard=None, n_jobs=None)
             for det_spec in detector_entries
         ]
         for future in as_completed(futures):
-            dataset_name, det_spec, auc, error = future.result()
+            (
+                dataset_name,
+                det_spec,
+                auc,
+                error,
+                failure_category,
+                runtime_seconds,
+            ) = future.result()
             key = det_spec.get("label") or det_spec["name"]
             results[dataset_name][key] = {
                 "auc": auc,
                 "error": error,
+                "failure_category": failure_category,
+                "runtime_seconds": runtime_seconds,
                 "detector": det_spec,
             }
 
@@ -314,13 +427,41 @@ def run_benchmarks(datasets=None, detectors=None, leaderboard=None, n_jobs=None)
                 print(f"  {label}: skipped ({outcome['error']})")
         print()
 
+    rows = _result_rows(
+        timestamp=timestamp,
+        run_id=effective_run_id,
+        config_hash=config_hash,
+        random_seed=random_seed,
+        datasets_to_run=datasets_to_run,
+        detector_entries=detector_entries,
+        results=results,
+    )
+    manifest = build_manifest(
+        run_id=effective_run_id,
+        timestamp=timestamp,
+        config_hash=config_hash,
+        dataset_keys=dataset_keys,
+        detector_entries=detector_entries,
+        random_seed=random_seed,
+        n_jobs=n_jobs,
+        output_directory=str(output_dir) if output_dir else None,
+        dataset_integrity=dataset_integrity,
+    )
+    report = build_report(manifest, rows)
+
     if leaderboard:
-        _append_leaderboard_rows(
-            leaderboard,
-            datasets_to_run,
-            detector_entries,
-            results,
-        )
+        _append_leaderboard_rows(leaderboard, rows)
+
+    output_path = Path(output_dir) if output_dir else None
+    if output_path:
+        output_path.mkdir(parents=True, exist_ok=True)
+        write_json(output_path / f"{effective_run_id}-manifest.json", manifest)
+    if json_report:
+        write_json(json_report, report)
+    elif output_path:
+        write_json(output_path / f"{effective_run_id}-report.json", report)
+
+    return report
 
 
 def main():
@@ -354,6 +495,23 @@ def main():
         help="CSV file path to append benchmark results",
     )
     parser.add_argument(
+        "--output-dir",
+        help="Directory for reproducibility manifest and default JSON report files",
+    )
+    parser.add_argument(
+        "--json-report",
+        help="Path to write a versioned JSON benchmark report",
+    )
+    parser.add_argument(
+        "--run-id",
+        help="Stable identifier to store in manifests, reports, and leaderboards",
+    )
+    parser.add_argument(
+        "--random-seed",
+        type=int,
+        help="Seed supported detectors and common Python/NumPy RNGs",
+    )
+    parser.add_argument(
         "--n-jobs",
         type=int,
         default=None,
@@ -372,6 +530,10 @@ def main():
             args.config,
             leaderboard=args.leaderboard,
             n_jobs=args.n_jobs,
+            output_dir=args.output_dir,
+            json_report=args.json_report,
+            run_id=args.run_id,
+            random_seed=args.random_seed,
         )
     elif args.summary:
         summarize_datasets(args.datasets)
@@ -381,6 +543,10 @@ def main():
             args.detectors,
             leaderboard=args.leaderboard,
             n_jobs=args.n_jobs,
+            output_dir=args.output_dir,
+            json_report=args.json_report,
+            run_id=args.run_id,
+            random_seed=args.random_seed,
         )
 
 

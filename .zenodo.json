@@ -1,6 +1,6 @@
 {
   "title": "Anomaly Detection",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "upload_type": "software",
   "description": "Anomaly detection algorithms, benchmark dataset loaders, and command line utilities for comparing detectors on standard datasets.",
   "creators": [
