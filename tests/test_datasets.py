@@ -3,8 +3,10 @@ import pytest
 pytest.importorskip("networkx")
 
 from benchmarks.load_datasets import (
+    load_cardio,
     load_iris,
     load_digits,
+    load_lympho,
     load_karate_club_graph,
 )
 
@@ -31,3 +33,31 @@ def test_graph_loader():
     assert name == "karateClubGraph"
     assert label == "label"
     assert G.number_of_nodes() > 0
+
+
+def test_cardio_loader_feature_columns_are_deterministic_and_label_free():
+    df1, features1, label1, name1 = load_cardio()
+    df2, features2, label2, name2 = load_cardio()
+
+    assert name1 == "cardio"
+    assert label1 == "Class"
+    assert name2 == "cardio"
+    assert label2 == "Class"
+    assert "Class" not in features1
+    assert "Class" not in features2
+    assert features1 == features2
+    assert features1 == [column for column in df1.columns if column != "Class"]
+
+
+def test_lympho_loader_feature_columns_are_deterministic_and_label_free():
+    df1, features1, label1, name1 = load_lympho()
+    df2, features2, label2, name2 = load_lympho()
+
+    assert name1 == "lympho"
+    assert label1 == "Class"
+    assert name2 == "lympho"
+    assert label2 == "Class"
+    assert "Class" not in features1
+    assert "Class" not in features2
+    assert features1 == features2
+    assert features1 == [column for column in df1.columns if column != "Class"]

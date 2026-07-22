@@ -148,9 +148,7 @@ def resolve_dataset_names(selectors: Any) -> List[str] | None:
 
 def _expand_tag(tag: str, available: Iterable[str]) -> List[str]:
     matches = [
-        name
-        for name, meta in load_catalog().items()
-        if tag in (meta.get("tags") or [])
+        name for name, meta in load_catalog().items() if tag in (meta.get("tags") or [])
     ]
     return [name for name in matches if name in available]
 
@@ -180,6 +178,7 @@ def _build_alias_map() -> Dict[str, str]:
         if isinstance(display_name, str) and display_name:
             alias_map.setdefault(display_name, canonical)
             alias_map.setdefault(display_name.lower(), canonical)
+            alias_map.setdefault(display_name.replace(" ", "_").lower(), canonical)
         aliases = meta.get("aliases") or []
         if isinstance(aliases, Iterable):
             for alias in aliases:
@@ -187,16 +186,6 @@ def _build_alias_map() -> Dict[str, str]:
                     continue
                 alias_map.setdefault(alias, canonical)
                 alias_map.setdefault(alias.lower(), canonical)
-
-    for canonical, loader in get_dataset_functions().items():
-        try:
-            _, _, _, display_name = loader()
-        except Exception:  # pragma: no cover - loader failure handled elsewhere
-            continue
-        if display_name:
-            alias_map.setdefault(display_name, canonical)
-            alias_map.setdefault(display_name.lower(), canonical)
-            alias_map.setdefault(display_name.replace(" ", "_").lower(), canonical)
     return alias_map
 
 

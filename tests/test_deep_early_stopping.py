@@ -16,7 +16,9 @@ from analytics.detectors import deep
 
 def test_early_stopping_restores_best_weights(tmp_path: Path) -> None:
     model = torch.nn.Linear(4, 2)
-    stopper = deep._EarlyStopping(torch, patience=2, checkpoint_path=tmp_path / "ckpt.pt")
+    stopper = deep._EarlyStopping(
+        torch, patience=2, checkpoint_path=tmp_path / "ckpt.pt"
+    )
 
     # Initial improvement should save weights.
     stopper.update(1.0, model)

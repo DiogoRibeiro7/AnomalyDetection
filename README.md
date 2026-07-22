@@ -1,122 +1,164 @@
 # Anomaly Detection
 
-This repository provides a collection of simple anomaly detection algorithms
-and utilities for benchmarking them on several standard datasets. A small
-command line interface is provided to run the included benchmarks.
+[![CI](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/ci.yml) [![Branch Policy](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/branch-policy.yml/badge.svg?branch=develop)](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/branch-policy.yml) [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/) [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-Install the required dependencies with Poetry and set up the pre‑commit hooks:
+Anomaly Detection provides anomaly detection algorithms, benchmark dataset
+loaders, and a command line interface for comparing detectors on standard
+datasets.
+
+## Python Support
+
+This project supports Python `3.12` only. Python `3.13` is intentionally blocked
+until the project runtime and dependency stack are validated there.
+
+Install the project and development tooling with Poetry:
 
 ```bash
 poetry install
-pre-commit install
+poetry run pre-commit install
 ```
-Poetry manages the dependencies for this project. If you previously used a
-`requirements.txt` file, it has been removed in favour of the `pyproject.toml`
-configuration.
 
-## Roadmap
-- Implement variable width binning for HBOS (completed).
-- Add caching to LOF calculations (completed).
-- Provide a small CLI for running benchmarks on the included datasets (completed).
-- Add a dataset summary option to the CLI (completed).
-- Expand the detector library with additional algorithms and deep
-  learning approaches (see `ROADMAP.md`).
+Poetry manages dependencies through `pyproject.toml`.
+
+## Optional Extras
+
+The base install supports classical detectors, ARIMA forecasting, graph
+detectors, the CLI, and benchmark workflows. Optional detector stacks can be
+enabled with Poetry extras:
+
+```bash
+# Deep learning detectors: PyTorch and TensorFlow
+poetry install -E deep
+
+# Streaming detectors: River
+poetry install -E streaming
+
+# Prophet detector support
+poetry install -E forecasting
+
+# Enable all optional detector stacks
+poetry install -E all-detectors
+```
 
 ## Usage
+
 Run all benchmarks:
 
 ```bash
-python cli.py
+poetry run benchmark-cli
 ```
 
 Select specific datasets by name:
 
 ```bash
-python cli.py wisconsin_breast_cancer cardio
+poetry run benchmark-cli wisconsin_breast_cancer cardio
 ```
 
-The suite now includes tabular, image, time-series, and graph datasets.
-For example, run benchmarks on the Iris (tabular), Digits (image),
-synthetic_timeseries (time-series), nab_machine_temperature (industrial
-time-series), and karate_club_graph (graph) sets:
+The suite includes tabular, image, time-series, and graph datasets:
 
 ```bash
-python cli.py iris digits fashion_mnist_sample nab_art_daily_small_noise nab_machine_temperature synthetic_timeseries karate_club_graph
+poetry run benchmark-cli iris digits fashion_mnist_sample nab_art_daily_small_noise nab_machine_temperature synthetic_timeseries karate_club_graph
 ```
 
-Legacy display names (for example, ``wisconsinBreast``) remain supported for
-backwards compatibility, but the CLI now documents canonical loader keys such as
-``wisconsin_breast_cancer`` to make configuration files and tags easier to
-reason about. Newly added lightweight datasets like ``fashion_mnist_sample`` and
-``nab_art_daily_small_noise`` and ``nab_machine_temperature`` broaden image and
-time-series coverage without incurring large download requirements.
-
-Run only particular detectors:
+Run selected detectors:
 
 ```bash
-python cli.py --detectors knn hbos
+poetry run benchmark-cli --detectors knn hbos
 ```
 
-Benchmarks can also be driven by a YAML configuration file that lists the
-datasets and detectors to evaluate. An example configuration is provided in
-`benchmarks/benchmark_config.yml`:
-
-```yaml
-datasets:
-  - iris
-  - digits
-detectors:
-  - isolation_forest
-  - copod
-```
-
-Run benchmarks based on such a configuration with:
+Run from a YAML configuration:
 
 ```bash
-python cli.py --config benchmarks/benchmark_config.yml
+poetry run benchmark-cli --config benchmarks/benchmark_config.yml
 ```
 
-Show dataset summaries instead of running benchmarks:
+Show dataset summaries:
 
 ```bash
-python cli.py --summary
+poetry run benchmark-cli --summary
 ```
+
+Legacy display names such as `wisconsinBreast` remain supported, but canonical
+loader keys such as `wisconsin_breast_cancer` should be preferred for scripts
+and configuration files.
 
 Available detectors include Isolation Forest, Stochastic Outlier Selection,
-K‑Nearest Neighbors, Histogram‑Based Outlier Score, One‑Class SVM, DBSCAN,
-Elliptic Envelope, Gaussian Mixture, Sklearn LOF, KMeans,
-PCA Reconstruction, Mahalanobis distance, Kernel Density, Autoencoder,
- Denoising Autoencoder, Variational Autoencoder, LSTM Autoencoder, Transformer,
- COPOD, Feature Bagging, LODA, ABOD, Online Isolation Forest, Random Cut Forest,
- AnoGAN, MAD-GAN, Degree Centrality, Graph Isolation Forest, ARIMA, and Prophet.
+K-Nearest Neighbors, Histogram-Based Outlier Score, One-Class SVM, DBSCAN,
+Elliptic Envelope, Gaussian Mixture, Sklearn LOF, KMeans, PCA Reconstruction,
+Mahalanobis distance, Kernel Density, Autoencoder, Denoising Autoencoder,
+Variational Autoencoder, LSTM Autoencoder, Transformer, COPOD, Feature Bagging,
+LODA, ABOD, Online Isolation Forest, Random Cut Forest, AnoGAN, MAD-GAN, Degree
+Centrality, Graph Isolation Forest, ARIMA, and Prophet.
 
-### Plugins and hyperparameter search
+## Plugins
 
-External detector packages can register themselves via the plugin interface.
-Plugins must reside in modules whose names start with ``plugins.``:
+External detector packages can register themselves through plugin modules whose
+names start with `plugins.`:
 
 ```bash
-python cli.py --plugins plugins.my_module --detectors my_custom_detector
+poetry run benchmark-cli --plugins plugins.my_module --detectors my_custom_detector
 ```
 
-The module ``plugins.my_module`` should call
-``analytics.detectors.register_detector`` during import. Stratified
-cross-validation utilities are available in :mod:`analytics.hyperparam`:
+The module should call `analytics.detectors.register_detector` during import.
+Detector keys are protected against accidental collisions by default. To
+replace an existing detector intentionally, pass `allow_override=True` to
+`register_detector`.
+
+## Hyperparameter Search
+
+Stratified cross-validation utilities are available in `analytics.hyperparam`:
 
 ```python
 from analytics.hyperparam import grid_search
+
 best_params, score = grid_search(
-    "isolation_forest", {"n_estimators": [50, 100]}, X, y, cv=5
+    "isolation_forest",
+    {"n_estimators": [50, 100]},
+    X,
+    y,
+    cv=5,
 )
 ```
 
-### Leaderboard output
+## Leaderboards
 
 Benchmark results can be appended to a CSV leaderboard:
 
 ```bash
-python cli.py --detectors isolation_forest --datasets iris --leaderboard results.csv
+poetry run benchmark-cli iris --detectors isolation_forest --leaderboard results.csv
 ```
 
+The leaderboard CSV uses a structured schema with these columns:
+`run_timestamp_utc`, `dataset_name`, `dataset_key`, `detector_name`,
+`detector_label`, `detector_params`, `auc`, and `error`.
+
+## Quality Checks
+
+Run the same core checks used by CI before opening a pull request:
+
+```bash
+poetry check
+poetry build -f wheel
+poetry run python -m pytest -q
+poetry run pre-commit run --all-files
+```
+
+## Citation
+
+Citation metadata is available in [CITATION.cff](CITATION.cff) and
+[.zenodo.json](.zenodo.json). Zenodo will use `.zenodo.json` when archiving
+GitHub releases for DOI creation.
+
+## Project Roadmap
+
+- Implement variable width binning for HBOS. Completed.
+- Add caching to LOF calculations. Completed.
+- Provide a CLI for running included benchmarks. Completed.
+- Add dataset summary output to the CLI. Completed.
+- Expand the detector library with additional algorithms and deep learning
+  approaches. See [ROADMAP.md](ROADMAP.md).
+
 ## Contributing
-Contributions to expand the detector library are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on adding new algorithms.
+
+Contributions to expand the detector library are welcome. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.

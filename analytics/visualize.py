@@ -249,4 +249,3 @@ __all__ = [
     "plot_confusion_matrix",
     "visualize_embedding",
 ]
-

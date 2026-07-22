@@ -115,7 +115,9 @@ def test_one_class_svm_detector_comprehensive() -> None:
     assert scores.shape == (10,)
     assert np.isfinite(scores).all()
 
-    single_scores = OneClassSVMDetector().fit(train_df.iloc[:1]).score(train_df.iloc[:1])
+    single_scores = (
+        OneClassSVMDetector().fit(train_df.iloc[:1]).score(train_df.iloc[:1])
+    )
     assert single_scores.shape == (1,)
 
     with pytest.raises(ValueError):
@@ -157,7 +159,9 @@ def test_pca_reconstruction_detector_comprehensive() -> None:
         PCAReconstructionDetector().fit(nan_training, n_components=2)
 
     with pytest.raises(ValueError):
-        PCAReconstructionDetector().fit(train_array, n_components=train_array.shape[1] + 1)
+        PCAReconstructionDetector().fit(
+            train_array, n_components=train_array.shape[1] + 1
+        )
 
 
 @pytest.mark.parametrize(

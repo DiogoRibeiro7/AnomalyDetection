@@ -63,3 +63,29 @@ def test_load_all_datasets_raises_on_unknown() -> None:
         assert "Unknown dataset selector" in str(exc)
     else:  # pragma: no cover - defensive fallback
         raise AssertionError("Expected KeyError for unknown dataset selector")
+
+
+def test_build_alias_map_does_not_invoke_dataset_loaders(monkeypatch) -> None:
+    def _loader_should_not_run():
+        raise AssertionError("Loader must not be called while building aliases")
+
+    monkeypatch.setattr(
+        catalog, "get_dataset_functions", lambda: {"demo": _loader_should_not_run}
+    )
+    monkeypatch.setattr(
+        catalog,
+        "load_catalog",
+        lambda: {
+            "demo": {
+                "display_name": "Demo Dataset",
+                "aliases": ["demoAlias"],
+            }
+        },
+    )
+    catalog._build_alias_map.cache_clear()
+    alias_map = catalog._build_alias_map()
+    assert alias_map["demo"] == "demo"
+    assert alias_map["demo dataset"] == "demo"
+    assert alias_map["demo_dataset"] == "demo"
+    assert alias_map["demoAlias"] == "demo"
+    catalog._build_alias_map.cache_clear()

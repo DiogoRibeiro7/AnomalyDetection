@@ -91,4 +91,3 @@ def test_visualize_embedding_umap_branch(monkeypatch: pytest.MonkeyPatch) -> Non
     else:
         with pytest.raises(ImportError):
             visualize.visualize_embedding(data, scores, method="umap")
-

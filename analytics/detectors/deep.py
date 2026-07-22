@@ -251,7 +251,9 @@ class VariationalAutoencoderDetector(BaseDetector):
                     nn.Linear(hidden, in_dim),
                 )
 
-            def forward(self, x: "torch.Tensor") -> tuple["torch.Tensor", "torch.Tensor", "torch.Tensor"]:
+            def forward(
+                self, x: "torch.Tensor"
+            ) -> tuple["torch.Tensor", "torch.Tensor", "torch.Tensor"]:
                 h = self.encoder(x)
                 mu = self.z_mu(h)
                 logvar = self.z_logvar(h)
@@ -485,7 +487,9 @@ class AnoGANDetector(BaseDetector):
         )
 
         class _AnoGANContainer(nn.Module):
-            def __init__(self, generator: "nn.Module", discriminator: "nn.Module") -> None:
+            def __init__(
+                self, generator: "nn.Module", discriminator: "nn.Module"
+            ) -> None:
                 super().__init__()
                 self.generator = generator
                 self.discriminator = discriminator
@@ -520,9 +524,7 @@ class AnoGANDetector(BaseDetector):
                 g_opt.zero_grad()
                 noise = torch.randn(batch_size_actual, latent_dim)
                 fake = self.generator(noise)
-                g_loss = bce(
-                    self.discriminator(fake), torch.ones(batch_size_actual, 1)
-                )
+                g_loss = bce(self.discriminator(fake), torch.ones(batch_size_actual, 1))
                 g_loss.backward()
                 g_opt.step()
 
@@ -618,6 +620,7 @@ class MADGANDetector(BaseDetector):
             nn.Linear(64, 1),
             nn.Sigmoid(),
         )
+
         class _GANContainer(nn.Module):
             def __init__(
                 self,
