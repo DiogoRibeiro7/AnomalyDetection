@@ -66,6 +66,18 @@ changing benchmark orchestration behavior.
 - Document new public functions and classes.
 - Keep changes focused on the behavior being added or fixed.
 
+## Branch Naming
+
+Use descriptive branch names with one of these prefixes:
+
+- `feature/` for new functionality.
+- `fix/` for bug fixes.
+- `docs/` for documentation-only changes.
+- `ci/` for workflow and automation changes.
+- `release/` for release preparation.
+
+Avoid tool- or author-specific prefixes in shared repository branches.
+
 ## Submitting Changes
 
 Before opening a pull request, run:
