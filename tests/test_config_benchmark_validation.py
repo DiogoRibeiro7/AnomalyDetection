@@ -48,6 +48,12 @@ def test_unknown_top_level_key_fails_fast(tmp_path: Path) -> None:
         config_benchmark.run_from_config(path)
 
 
+def test_invalid_random_seed_type_fails_fast(tmp_path: Path) -> None:
+    path = _write_config(tmp_path, "random_seed: fixed\n")
+    with pytest.raises(config_benchmark.ConfigValidationError, match="random_seed"):
+        config_benchmark.run_from_config(path)
+
+
 def test_valid_config_calls_plugins_and_runner(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -63,6 +69,10 @@ def test_valid_config_calls_plugins_and_runner(
         "plugins:\n"
         "  - plugins.example\n"
         "leaderboard: results.csv\n"
+        "output_dir: benchmark-results\n"
+        "json_report: benchmark-results/report.json\n"
+        "run_id: config-run\n"
+        "random_seed: 42\n"
         "n_jobs: 2\n",
     )
 
@@ -71,11 +81,24 @@ def test_valid_config_calls_plugins_and_runner(
     def _fake_load_plugins(modules):
         captured["plugins"] = list(modules)
 
-    def _fake_run_benchmarks(datasets, detectors, leaderboard=None, n_jobs=None):
+    def _fake_run_benchmarks(
+        datasets,
+        detectors,
+        leaderboard=None,
+        n_jobs=None,
+        output_dir=None,
+        json_report=None,
+        run_id=None,
+        random_seed=None,
+    ):
         captured["datasets"] = datasets
         captured["detectors"] = detectors
         captured["leaderboard"] = leaderboard
         captured["n_jobs"] = n_jobs
+        captured["output_dir"] = output_dir
+        captured["json_report"] = json_report
+        captured["run_id"] = run_id
+        captured["random_seed"] = random_seed
 
     monkeypatch.setattr(config_benchmark, "_load_plugins", _fake_load_plugins)
     monkeypatch.setattr(config_benchmark, "_run_benchmarks", _fake_run_benchmarks)
@@ -86,3 +109,7 @@ def test_valid_config_calls_plugins_and_runner(
     assert captured["datasets"] == ["iris"]
     assert captured["leaderboard"] == "results.csv"
     assert captured["n_jobs"] == 2
+    assert captured["output_dir"] == "benchmark-results"
+    assert captured["json_report"] == "benchmark-results/report.json"
+    assert captured["run_id"] == "config-run"
+    assert captured["random_seed"] == 42

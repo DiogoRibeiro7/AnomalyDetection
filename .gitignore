@@ -43,6 +43,7 @@ htmlcov/
 venv/
 
 # Benchmark outputs
+benchmark-results/
 leaderboard*.csv
 results*.csv
 
