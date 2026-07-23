@@ -30,6 +30,8 @@ SEED_PARAMETER_BY_DETECTOR = {
     "gaussian_mixture": "random_state",
     "kmeans": "random_state",
     "graph_isolation_forest": "random_state",
+    "random_network_distillation": "random_state",
+    "random_feature_isolation_forest": "random_state",
     "half_space_trees": "seed",
     "online_isolation_forest": "seed",
 }

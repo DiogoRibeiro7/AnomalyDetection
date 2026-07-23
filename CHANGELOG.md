@@ -4,7 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format follows Keep a Changelog, and this project uses semantic versioning.
 
-## v0.4.0 - Unreleased
+## v0.5.0 - Unreleased
+
+- Added modern tabular detectors: ECOD, Random Feature Isolation Forest, and
+  Random Network Distillation.
+- Added seed support for modern tabular detectors in benchmark manifests and
+  CLI runs.
+- Added a versioned `v0.5.0` modern tabular smoke benchmark configuration.
+- Added lifecycle and deterministic-behavior tests for modern tabular
+  detectors.
+
+## v0.4.0 - 2026-07-22
 
 - Added configurable benchmark metrics, including ROC AUC, average precision,
   precision at k, recall at k, F1 at threshold, best F1, and runtime.
