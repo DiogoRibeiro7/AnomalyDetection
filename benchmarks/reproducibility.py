@@ -113,6 +113,7 @@ def benchmark_config_hash(
     detector_entries: list[dict[str, Any]],
     random_seed: int | None,
     n_jobs: int | None,
+    metric_config: dict[str, Any] | None = None,
 ) -> str:
     """Return the stable hash for the effective benchmark configuration."""
 
@@ -122,6 +123,7 @@ def benchmark_config_hash(
             "detectors": detector_entries,
             "random_seed": random_seed,
             "n_jobs": n_jobs,
+            "metrics": metric_config,
         }
     )
 
@@ -137,6 +139,8 @@ def build_manifest(
     n_jobs: int | None,
     output_directory: str | None,
     dataset_integrity: list[dict[str, Any]],
+    metric_config: dict[str, Any] | None = None,
+    dataset_metadata: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Build the reproducibility manifest for a benchmark run."""
 
@@ -155,6 +159,8 @@ def build_manifest(
         "config_hash": config_hash,
         "output_directory": output_directory,
         "dataset_integrity": dataset_integrity,
+        "dataset_metadata": dataset_metadata or [],
+        "metrics": metric_config or {},
     }
 
 
