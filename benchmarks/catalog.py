@@ -93,8 +93,9 @@ def resolve_dataset_names(selectors: Any) -> List[str] | None:
     """Resolve *selectors* into canonical dataset names.
 
     The *selectors* argument accepts strings (dataset names or ``tag:<name>``),
-    dictionaries with ``include``/``exclude``/``limit`` keys, or iterables of
-    those forms. ``None`` returns ``None`` to signal "all datasets".
+    dictionaries with ``include``/``exclude``/``limit`` keys, metadata filters,
+    or iterables of those forms. ``None`` returns ``None`` to signal "all
+    datasets".
     """
 
     available = list_available_datasets()
@@ -113,7 +114,7 @@ def resolve_dataset_names(selectors: Any) -> List[str] | None:
 
     if isinstance(selectors, Mapping):
         keys = set(selectors)
-        if {"include", "exclude", "limit"} & keys:
+        if {"include", "exclude", "limit", "modality", "task", "label_type"} & keys:
             include_spec = selectors.get("include")
             if include_spec is None:
                 included = available.copy()
@@ -122,6 +123,7 @@ def resolve_dataset_names(selectors: Any) -> List[str] | None:
             exclude_spec = selectors.get("exclude")
             excluded = set(resolve_dataset_names(exclude_spec) or [])
             resolved = [name for name in included if name not in excluded]
+            resolved = _filter_by_metadata(resolved, selectors)
             limit = selectors.get("limit")
             if isinstance(limit, int) and limit > 0:
                 resolved = resolved[:limit]
@@ -161,6 +163,25 @@ def _dedupe(items: Iterable[str]) -> List[str]:
             ordered.append(item)
             seen.add(item)
     return ordered
+
+
+def _filter_by_metadata(names: list[str], selectors: Mapping[str, Any]) -> list[str]:
+    filtered = names
+    for key in ("modality", "task", "label_type"):
+        expected = selectors.get(key)
+        if expected is None:
+            continue
+        expected_values = (
+            {str(value) for value in expected}
+            if isinstance(expected, Sequence) and not isinstance(expected, (str, bytes))
+            else {str(expected)}
+        )
+        filtered = [
+            name
+            for name in filtered
+            if str(get_dataset_metadata(name).get(key)) in expected_values
+        ]
+    return filtered
 
 
 @lru_cache(maxsize=1)

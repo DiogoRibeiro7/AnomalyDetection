@@ -4,7 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format follows Keep a Changelog, and this project uses semantic versioning.
 
-## v0.3.0 - Unreleased
+## v0.4.0 - Unreleased
+
+- Added configurable benchmark metrics, including ROC AUC, average precision,
+  precision at k, recall at k, F1 at threshold, best F1, and runtime.
+- Added metric configuration to benchmark manifests, JSON reports, and
+  leaderboard rows.
+- Added metadata-based dataset selectors for modality, task, and label type.
+- Expanded dataset metadata with modality, label type, positive label, and
+  label semantics fields.
+- Added a versioned `v0.4.0` metrics smoke benchmark configuration.
+
+## v0.3.0 - 2026-07-22
 
 - Added reproducible benchmark manifests and versioned JSON reports.
 - Added CLI and YAML config options for output directories, JSON reports,

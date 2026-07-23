@@ -79,6 +79,12 @@ leaderboard:
 poetry run benchmark-cli --config benchmarks/benchmark_config.v0.3.0-smoke.yml
 ```
 
+Run a multi-metric benchmark using dataset metadata selectors:
+
+```bash
+poetry run benchmark-cli --config benchmarks/benchmark_config.v0.4.0-metrics.yml
+```
+
 Show dataset summaries:
 
 ```bash
@@ -161,6 +167,9 @@ For reproducible runs, provide a stable run identifier, seed, and output path:
 ```bash
 poetry run benchmark-cli iris \
   --detectors isolation_forest \
+  --metrics roc_auc average_precision precision_at_k runtime \
+  --metric-k 10 \
+  --positive-label 1 \
   --random-seed 42 \
   --run-id paper-table-1 \
   --output-dir benchmark-results \
@@ -169,9 +178,16 @@ poetry run benchmark-cli iris \
 
 The JSON report embeds a benchmark manifest with the package version, Python
 version, selected dataset keys, detector keys and parameters, random seed,
-configuration hash, timestamp, and bundled dataset file integrity hashes.
+metric configuration, configuration hash, timestamp, and bundled dataset file
+integrity hashes.
 Bundled dataset metadata in `benchmarks/datasets.yml` records source URLs,
-license notes, task type, and local files used for integrity checks.
+license notes, modality, task type, label semantics, and local files used for
+integrity checks.
+
+Supported benchmark metrics are `roc_auc`, `average_precision`,
+`precision_at_k`, `recall_at_k`, `f1_at_threshold`, `best_f1`, and `runtime`.
+YAML configurations can select datasets by metadata fields such as `modality`,
+`task`, and `label_type`.
 
 ## Quality Checks
 
