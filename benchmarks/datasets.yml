@@ -3,6 +3,10 @@ datasets:
     display_name: Arrhythmia
     aliases: [arrhythmia]
     tags: [tabular, medical, high_dimensional]
+    modality: tabular
+    label_type: binary_class
+    positive_label: 1
+    label_semantics: "1 represents the benchmark positive class used for existing metric compatibility."
     source: https://archive.ics.uci.edu/ml/datasets/Arrhythmia
     files: [arrhythmia.data]
     license_note: "Redistributed benchmark extract; verify upstream UCI terms before external redistribution."
@@ -11,6 +15,10 @@ datasets:
     display_name: cardio
     aliases: [Cardio]
     tags: [tabular, medical, time_series]
+    modality: tabular
+    label_type: binary_class
+    positive_label: 1
+    label_semantics: "1 represents the benchmark positive class used for existing metric compatibility."
     source: https://archive.ics.uci.edu/ml/datasets/Cardiotocography
     files: [ctg.csv]
     license_note: "Redistributed benchmark extract; verify upstream UCI terms before external redistribution."
@@ -19,6 +27,10 @@ datasets:
     display_name: digits
     aliases: [Digits]
     tags: [tabular, image, toy]
+    modality: tabular
+    label_type: binary_class
+    positive_label: 1
+    label_semantics: "1 represents the benchmark positive class used for existing metric compatibility."
     source: https://scikit-learn.org/stable/auto_examples/datasets/plot_digits_last_image.html
     license_note: "Loaded from scikit-learn at runtime."
     task: classification
@@ -26,6 +38,10 @@ datasets:
     display_name: fashionMNISTSample
     aliases: [fashionMNIST, fashion_mnist]
     tags: [image, tabular, toy]
+    modality: tabular
+    label_type: binary_class
+    positive_label: 1
+    label_semantics: "1 represents the benchmark positive class used for existing metric compatibility."
     source: https://github.com/zalandoresearch/fashion-mnist
     files: [fashion_mnist_sample.csv]
     license_note: "Compact sample derived from Fashion-MNIST; verify upstream terms before external redistribution."
@@ -34,6 +50,10 @@ datasets:
     display_name: iris
     aliases: [Iris]
     tags: [tabular, botanical, toy]
+    modality: tabular
+    label_type: binary_class
+    positive_label: 1
+    label_semantics: "1 represents the benchmark positive class used for existing metric compatibility."
     source: https://archive.ics.uci.edu/ml/datasets/iris
     license_note: "Loaded from scikit-learn at runtime."
     task: classification
@@ -41,6 +61,10 @@ datasets:
     display_name: karateClubGraph
     aliases: [karateClub, karate_club]
     tags: [graph, social, toy]
+    modality: graph
+    label_type: binary_node_class
+    positive_label: 1
+    label_semantics: "1 represents the benchmark positive node class used for existing metric compatibility."
     source: https://networkrepository.com/karate.php
     license_note: "Loaded from NetworkX at runtime."
     task: community_detection
@@ -48,6 +72,10 @@ datasets:
     display_name: kddcupSample
     aliases: [kddcup99_sample, kddcupSample]
     tags: [tabular, network, security]
+    modality: tabular
+    label_type: binary_class
+    positive_label: 1
+    label_semantics: "1 represents the benchmark positive class used for existing metric compatibility."
     source: https://kdd.ics.uci.edu/databases/kddcup99/kddcup99.html
     files: [kddcup_sample.csv]
     license_note: "Compact benchmark sample; verify upstream KDD Cup terms before external redistribution."
@@ -56,6 +84,10 @@ datasets:
     display_name: lympho
     aliases: [Lympho]
     tags: [tabular, medical]
+    modality: tabular
+    label_type: binary_class
+    positive_label: 1
+    label_semantics: "1 represents the benchmark positive class used for existing metric compatibility."
     source: https://archive.ics.uci.edu/ml/datasets/Lymphography
     files: [lymphography.dat]
     license_note: "Redistributed benchmark extract; verify upstream UCI terms before external redistribution."
@@ -64,6 +96,10 @@ datasets:
     display_name: nabArtDaily
     aliases: [nab_art_daily, art_daily_small_noise]
     tags: [time_series, real_world]
+    modality: time_series
+    label_type: binary_point_class
+    positive_label: 1
+    label_semantics: "1 represents the benchmark positive class used for existing metric compatibility."
     source: https://github.com/numenta/NAB/blob/master/data/realKnownCause/art_daily_small_noise.csv
     files: [nab_art_daily_small_noise.csv]
     license_note: "Compact NAB-derived example; verify upstream NAB terms before external redistribution."
@@ -72,6 +108,10 @@ datasets:
     display_name: nabMachineTemperature
     aliases: [machine_temperature, nabMachineTemp]
     tags: [time_series, industrial, real_world]
+    modality: time_series
+    label_type: binary_point_class
+    positive_label: 1
+    label_semantics: "1 represents the benchmark positive class used for existing metric compatibility."
     source: https://github.com/numenta/NAB
     files: [nab_machine_temperature.csv]
     license_note: "Compact NAB-derived example; verify upstream NAB terms before external redistribution."
@@ -80,6 +120,10 @@ datasets:
     display_name: syntheticTS
     aliases: [syntheticTS]
     tags: [time_series, synthetic]
+    modality: time_series
+    label_type: binary_series_class
+    positive_label: 1
+    label_semantics: "1 represents the benchmark positive class used for existing metric compatibility."
     source: "Generated locally by benchmarks.load_datasets.load_synthetic_timeseries"
     license_note: "Generated by project code under the repository license."
     task: anomaly_detection
@@ -87,6 +131,10 @@ datasets:
     display_name: thyroid
     aliases: [Thyroid]
     tags: [tabular, medical]
+    modality: tabular
+    label_type: binary_class
+    positive_label: 1
+    label_semantics: "1 represents the benchmark positive class used for existing metric compatibility."
     source: https://archive.ics.uci.edu/ml/datasets/Thyroid+Disease
     files: [thyroid.csv]
     license_note: "Redistributed benchmark extract; verify upstream UCI terms before external redistribution."
@@ -95,6 +143,10 @@ datasets:
     display_name: wisconsinBreast
     aliases: [wisconsinBreast, breast_cancer_wisconsin]
     tags: [tabular, medical]
+    modality: tabular
+    label_type: binary_class
+    positive_label: 1
+    label_semantics: "1 represents the benchmark positive class used for existing metric compatibility."
     source: https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Original)
     files: [breast-cancer-wisconsin.data]
     license_note: "Redistributed benchmark extract; verify upstream UCI terms before external redistribution."
