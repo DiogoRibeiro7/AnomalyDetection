@@ -176,7 +176,9 @@ def _validate_metric_names(names: list[Any]) -> list[str]:
     return normalized or DEFAULT_METRICS.copy()
 
 
-def _positive_mask(labels: NDArray[Any], positive_label: int | str) -> NDArray[np.bool_]:
+def _positive_mask(
+    labels: NDArray[Any], positive_label: int | str
+) -> NDArray[np.bool_]:
     return np.asarray(labels == positive_label, dtype=bool)
 
 
@@ -201,4 +203,3 @@ def _top_k_mask(scores: NDArray[np.floating[Any]], k: int) -> NDArray[np.bool_]:
     ranked = np.argsort(scores)[::-1][:k]
     selected[ranked] = True
     return selected
-

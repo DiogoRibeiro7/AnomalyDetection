@@ -57,4 +57,3 @@ def test_top_k_metrics_default_k_to_number_of_positives() -> None:
 def test_invalid_metric_name_fails_fast() -> None:
     with pytest.raises(ValueError, match="Unsupported benchmark metric"):
         resolve_metric_config(["not_a_metric"])
-

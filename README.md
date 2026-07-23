@@ -85,6 +85,12 @@ Run a multi-metric benchmark using dataset metadata selectors:
 poetry run benchmark-cli --config benchmarks/benchmark_config.v0.4.0-metrics.yml
 ```
 
+Run a modern tabular detector smoke benchmark:
+
+```bash
+poetry run benchmark-cli --config benchmarks/benchmark_config.v0.5.0-modern-tabular.yml
+```
+
 Show dataset summaries:
 
 ```bash
@@ -101,7 +107,8 @@ Elliptic Envelope, Gaussian Mixture, Sklearn LOF, KMeans, PCA Reconstruction,
 Mahalanobis distance, Kernel Density, Autoencoder, Denoising Autoencoder,
 Variational Autoencoder, LSTM Autoencoder, Transformer, COPOD, Feature Bagging,
 LODA, ABOD, Half-Space Trees, Online Isolation Forest, AnoGAN, MAD-GAN, Degree
-Centrality, Graph Isolation Forest, ARIMA, and Prophet.
+Centrality, Graph Isolation Forest, ECOD, Random Feature Isolation Forest,
+Random Network Distillation, ARIMA, and Prophet.
 
 ## Plugins
 
@@ -132,6 +139,23 @@ orientation is one of `higher_is_more_anomalous`, `lower_is_more_anomalous`,
 `binary_anomaly`, or `estimator_defined`. Current score values are preserved for
 backwards compatibility; use `score_orientation` when comparing detectors that
 produce different score semantics.
+
+## Modern Tabular Detectors
+
+The `v0.5.0` detector pack adds CPU-friendly modern tabular methods:
+
+- `ecod` wraps PyOD's empirical-CDF detector as an adapter.
+- `random_feature_isolation_forest` applies Isolation Forest to random
+  nonlinear feature representations.
+- `random_network_distillation` trains a compact predictor against a fixed
+  random representation and scores prediction error.
+
+These methods are useful when classical distance, density, or covariance
+baselines are too rigid for nonlinear feature interactions. Classical methods
+remain preferable for small datasets, tight latency budgets, easy
+interpretability, or when their score semantics are already validated for a
+workflow. Benchmark reports include each detector's score orientation and
+runtime so modern and classical methods can be compared explicitly.
 
 ## Hyperparameter Search
 

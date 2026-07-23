@@ -1,0 +1,30 @@
+run_id: v0.5.0-modern-tabular-smoke
+random_seed: 42
+output_dir: benchmark-results
+json_report: benchmark-results/v0.5.0-modern-tabular-report.json
+leaderboard: benchmark-results/v0.5.0-modern-tabular-leaderboard.csv
+n_jobs: 1
+datasets:
+  modality: tabular
+  task: classification
+  limit: 1
+metrics:
+  include:
+    - roc_auc
+    - average_precision
+    - runtime
+  positive_label: 0
+detectors:
+  - name: gaussian_mixture
+    params:
+      n_components: 2
+  - name: ecod
+  - name: random_feature_isolation_forest
+    params:
+      representation_dim: 16
+      n_estimators: 24
+  - name: random_network_distillation
+    params:
+      representation_dim: 8
+      hidden_layer_sizes: [8]
+      max_iter: 1000
