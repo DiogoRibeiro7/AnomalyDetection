@@ -68,7 +68,9 @@ def coerce_sequence_batch(
     array = _as_float_array(data)
     if array.ndim == 3:
         if array.shape[0] == 0 or array.shape[1] < 2 or array.shape[2] == 0:
-            raise ValueError("Sequence input must contain non-empty sequences of length >= 2")
+            raise ValueError(
+                "Sequence input must contain non-empty sequences of length >= 2"
+            )
         return array
 
     if array.ndim != 2:

@@ -14,7 +14,6 @@ from analytics.time_series import WindowSpec, coerce_sequence_batch
 
 if TYPE_CHECKING:
     import torch
-    from torch import nn
 
 ScoreArray = NDArray[np.floating[Any]]
 
@@ -85,7 +84,7 @@ class LSTMAutoencoderDetector(_TemporalDetector):
                 self.encoder = nn.LSTM(input_dim, hidden_dim, batch_first=True)
                 self.decoder = nn.LSTM(hidden_dim, input_dim, batch_first=True)
 
-            def forward(self, x: "torch.Tensor") -> "torch.Tensor":
+            def forward(self, x: torch.Tensor) -> torch.Tensor:
                 _, (hidden, _) = self.encoder(x)
                 decoder_input = hidden.transpose(0, 1).repeat(1, x.size(1), 1)
                 reconstructed, _ = self.decoder(decoder_input)
@@ -180,7 +179,7 @@ class TransformerDetector(_TemporalDetector):
                 self.decoder = nn.TransformerDecoder(decoder_layer, num_layers=1)
                 self.output = nn.Linear(model_dim, input_dim)
 
-            def forward(self, x: "torch.Tensor") -> "torch.Tensor":
+            def forward(self, x: torch.Tensor) -> torch.Tensor:
                 embedded = self.input(x)
                 memory = self.encoder(embedded)
                 decoded = self.decoder(memory, memory)
