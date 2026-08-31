@@ -58,11 +58,6 @@ def test_registry_uses_sequence_aware_temporal_detectors() -> None:
     assert transformer.__module__ == "analytics.detectors.temporal"
 
 
-torch = pytest.importorskip(
-    "torch", reason="PyTorch is required for temporal detector shape tests"
-)
-
-
 @pytest.mark.parametrize(
     "detector_key, fit_kwargs",
     [
@@ -74,6 +69,7 @@ def test_temporal_detectors_never_collapse_sequence_axis(
     detector_key: str,
     fit_kwargs: dict[str, int],
 ) -> None:
+    pytest.importorskip("torch", reason="PyTorch is required for temporal models")
     rng = np.random.default_rng(7)
     rows_are_series = rng.normal(size=(8, 6)).astype(np.float32)
     detector_cls = get_detector_class(detector_key)
