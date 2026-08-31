@@ -140,8 +140,125 @@ class LSTMAutoencoderDetector(_TemporalDetector):
             window_spec=getattr(self, "window_spec", None),
         )
         tensor = torch_module.tensor(sequences, dtype=torch_module.float32)
+        self.model.eval()
         with torch_module.no_grad():
             reconstructed = self.model(tensor).numpy()
+        errors = np.linalg.norm(sequences - reconstructed, axis=(1, 2))
+        return self._attach_window_alignment(-errors, data)
+
+
+class TCNAutoencoderDetector(_TemporalDetector):
+    """Dilated temporal-convolution reconstruction baseline."""
+
+    def get_name(self) -> str:
+        return "TCN Autoencoder"
+
+    def fit(
+        self,
+        data: Any,
+        epochs: int = 10,
+        hidden_channels: int = 16,
+        kernel_size: int = 3,
+        lr: float = 1e-3,
+        patience: int = 3,
+        validation_split: float = 0.1,
+        checkpoint_path: str | Path | None = None,
+        window_length: int | None = None,
+        stride: int = 1,
+        horizon: int = 0,
+        **params: Any,
+    ) -> TCNAutoencoderDetector:
+        torch_module, nn_module, optim_module = _import_torch()
+        del params
+        if hidden_channels < 1:
+            raise ValueError("hidden_channels must be greater than zero")
+        if kernel_size < 2 or kernel_size % 2 == 0:
+            raise ValueError("kernel_size must be an odd integer greater than one")
+
+        self.window_spec = self._window_spec(
+            window_length=window_length,
+            stride=stride,
+            horizon=horizon,
+        )
+        sequences = self._prepare_sequences(data, window_spec=self.window_spec)
+        tensor = torch_module.tensor(sequences, dtype=torch_module.float32)
+        train_seq, val_seq = _split_train_val(torch_module, tensor, validation_split)
+        train_seq = train_seq.transpose(1, 2)
+        val_seq = val_seq.transpose(1, 2)
+
+        module_base: Any = nn_module.Module
+
+        class TCNAE(module_base):
+            def __init__(
+                self,
+                input_dim: int,
+                hidden_dim: int,
+                conv_kernel: int,
+            ) -> None:
+                super().__init__()
+                dilations = (1, 2, 4)
+                layers: list[Any] = []
+                in_channels = input_dim
+                for dilation in dilations:
+                    padding = dilation * (conv_kernel - 1) // 2
+                    layers.extend(
+                        [
+                            nn_module.Conv1d(
+                                in_channels,
+                                hidden_dim,
+                                kernel_size=conv_kernel,
+                                dilation=dilation,
+                                padding=padding,
+                            ),
+                            nn_module.ReLU(),
+                        ]
+                    )
+                    in_channels = hidden_dim
+                self.encoder = nn_module.Sequential(*layers)
+                self.decoder = nn_module.Sequential(
+                    nn_module.Conv1d(hidden_dim, hidden_dim, kernel_size=1),
+                    nn_module.ReLU(),
+                    nn_module.Conv1d(hidden_dim, input_dim, kernel_size=1),
+                )
+
+            def forward(self, x: torch.Tensor) -> torch.Tensor:
+                return self.decoder(self.encoder(x))
+
+        self.sequence_length = int(tensor.size(1))
+        self.input_dim = int(tensor.size(2))
+        self.model = TCNAE(self.input_dim, hidden_channels, kernel_size)
+        optimizer = optim_module.Adam(self.model.parameters(), lr=lr)
+        loss_fn = nn_module.MSELoss()
+        stopper = _EarlyStopping(torch_module, patience, checkpoint_path)
+
+        for _ in range(epochs):
+            optimizer.zero_grad()
+            output = self.model(train_seq)
+            loss = loss_fn(output, train_seq)
+            loss.backward()
+            optimizer.step()
+
+            self.model.eval()
+            with torch_module.no_grad():
+                val_output = self.model(val_seq)
+                val_loss = loss_fn(val_output, val_seq).item()
+            self.model.train()
+            if stopper.update(val_loss, self.model):
+                break
+        stopper.restore(self.model)
+        return self
+
+    def score(self, data: Any) -> ScoreArray:
+        torch_module, _, _ = _import_torch()
+        sequences = self._prepare_sequences(
+            data,
+            window_spec=getattr(self, "window_spec", None),
+        )
+        tensor = torch_module.tensor(sequences, dtype=torch_module.float32)
+        tensor = tensor.transpose(1, 2)
+        self.model.eval()
+        with torch_module.no_grad():
+            reconstructed = self.model(tensor).transpose(1, 2).numpy()
         errors = np.linalg.norm(sequences - reconstructed, axis=(1, 2))
         return self._attach_window_alignment(-errors, data)
 
@@ -237,6 +354,7 @@ class TransformerDetector(_TemporalDetector):
             window_spec=getattr(self, "window_spec", None),
         )
         tensor = torch_module.tensor(sequences, dtype=torch_module.float32)
+        self.model.eval()
         with torch_module.no_grad():
             reconstructed = self.model(tensor).numpy()
         errors = np.linalg.norm(sequences - reconstructed, axis=(1, 2))
