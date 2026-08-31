@@ -15,9 +15,7 @@ register_detector("sos", "analytics.detectors.classical:SOSDetector")
 register_detector("knn", "analytics.detectors.classical:KNNDetector")
 register_detector("hbos", "analytics.detectors.classical:HBOSDetector")
 register_detector("ocsvm", "analytics.detectors.classical:OneClassSVMDetector")
-register_detector(
-    "dbscan", "analytics.detectors.correctness:InductiveDBSCANDetector"
-)
+register_detector("dbscan", "analytics.detectors.correctness:InductiveDBSCANDetector")
 register_detector(
     "elliptic_envelope", "analytics.detectors.classical:EllipticEnvelopeDetector"
 )
@@ -86,6 +84,9 @@ register_detector(
 # Forecasting detectors
 register_detector("arima", "analytics.detectors.forecasting:ARIMADetector")
 register_detector("prophet", "analytics.detectors.forecasting:ProphetDetector")
+
+# User-facing selection is strict after all built-ins have been registered.
+DETECTOR_REGISTRY.freeze()
 
 __all__ = [
     "DETECTOR_REGISTRY",
