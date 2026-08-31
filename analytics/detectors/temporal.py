@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -11,9 +11,6 @@ from numpy.typing import NDArray
 from analytics.base import BaseDetector
 from analytics.detectors.deep import _EarlyStopping, _import_torch, _split_train_val
 from analytics.time_series import WindowSpec, coerce_sequence_batch
-
-if TYPE_CHECKING:
-    import torch
 
 ScoreArray = NDArray[np.floating[Any]]
 
@@ -67,6 +64,9 @@ class LSTMAutoencoderDetector(_TemporalDetector):
         horizon: int = 0,
         **params: Any,
     ) -> LSTMAutoencoderDetector:
+        torch: Any
+        nn: Any
+        optim: Any
         torch, nn, optim = _import_torch()
         del params
         self.window_spec = self._window_spec(
@@ -84,7 +84,7 @@ class LSTMAutoencoderDetector(_TemporalDetector):
                 self.encoder = nn.LSTM(input_dim, hidden_dim, batch_first=True)
                 self.decoder = nn.LSTM(hidden_dim, input_dim, batch_first=True)
 
-            def forward(self, x: torch.Tensor) -> torch.Tensor:
+            def forward(self, x: Any) -> Any:
                 _, (hidden, _) = self.encoder(x)
                 decoder_input = hidden.transpose(0, 1).repeat(1, x.size(1), 1)
                 reconstructed, _ = self.decoder(decoder_input)
@@ -148,6 +148,9 @@ class TransformerDetector(_TemporalDetector):
         horizon: int = 0,
         **params: Any,
     ) -> TransformerDetector:
+        torch: Any
+        nn: Any
+        optim: Any
         torch, nn, optim = _import_torch()
         del params
         if d_model % nhead != 0:
@@ -179,7 +182,7 @@ class TransformerDetector(_TemporalDetector):
                 self.decoder = nn.TransformerDecoder(decoder_layer, num_layers=1)
                 self.output = nn.Linear(model_dim, input_dim)
 
-            def forward(self, x: torch.Tensor) -> torch.Tensor:
+            def forward(self, x: Any) -> Any:
                 embedded = self.input(x)
                 memory = self.encoder(embedded)
                 decoded = self.decoder(memory, memory)
