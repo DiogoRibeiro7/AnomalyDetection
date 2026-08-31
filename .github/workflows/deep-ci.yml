@@ -1,0 +1,22 @@
+name: Deep CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  deep-cpu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install poetry
+      - run: poetry install --no-interaction
+      - name: Install PyTorch CPU dependency
+        run: poetry run pip install torch
+      - name: Run deep detector tests
+        run: poetry run pytest -q tests/test_deep_detectors.py tests/test_deep_early_stopping.py
