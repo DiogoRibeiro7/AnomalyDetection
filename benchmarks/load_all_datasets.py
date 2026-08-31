@@ -6,6 +6,9 @@ import logging
 from collections.abc import Sequence
 from typing import List
 
+import networkx as nx
+import pandas as pd
+
 from benchmarks.catalog import (
     DatasetSpec,
     get_dataset_functions,
@@ -15,14 +18,72 @@ from benchmarks.catalog import (
 logger = logging.getLogger(__name__)
 
 
+def _canonicalize_anomaly_label(
+    data: object,
+    *,
+    label_col: str,
+    source_anomaly_label: object,
+) -> object:
+    """Return data whose anomaly class is encoded canonically as ``1``.
+
+    Dataset loaders retain their historical/raw label semantics. The benchmark
+    boundary normalizes those labels so every metric sees the same contract:
+    ``1 = anomaly`` and ``0 = inlier``.
+    """
+
+    if isinstance(data, pd.DataFrame):
+        if label_col not in data.columns:
+            raise KeyError(f"Dataset label column '{label_col}' is missing.")
+        labels = set(data[label_col].dropna().unique())
+        if not labels:
+            raise ValueError("Dataset label column must contain at least one value.")
+        if source_anomaly_label not in labels:
+            raise ValueError(
+                f"Declared source anomaly label {source_anomaly_label!r} is not "
+                f"present in dataset labels {sorted(labels, key=str)!r}."
+            )
+        canonical = data.copy()
+        canonical[label_col] = (canonical[label_col] == source_anomaly_label).astype(int)
+        return canonical
+
+    if isinstance(data, nx.Graph):
+        labels = nx.get_node_attributes(data, label_col)
+        if not labels:
+            raise ValueError(
+                f"Graph dataset must expose node attribute '{label_col}' for labels."
+            )
+        observed = set(labels.values())
+        if source_anomaly_label not in observed:
+            raise ValueError(
+                f"Declared source anomaly label {source_anomaly_label!r} is not "
+                f"present in graph labels {sorted(observed, key=str)!r}."
+            )
+        canonical = data.copy()
+        nx.set_node_attributes(
+            canonical,
+            {node: int(value == source_anomaly_label) for node, value in labels.items()},
+            label_col,
+        )
+        return canonical
+
+    raise TypeError(
+        "Benchmark datasets must be pandas DataFrames or NetworkX graphs before "
+        "label canonicalization."
+    )
+
+
 def load_all_datasets(names: Sequence[str] | None = None) -> List[DatasetSpec]:
-    """Load benchmark datasets by their canonical names.
+    """Load benchmark datasets by canonical name.
+
+    Raw loaders may use historical label conventions. Dataset metadata declares
+    ``source_anomaly_label`` and this function converts every loaded benchmark
+    to the public evaluation contract ``1 = anomaly`` before returning it.
 
     Parameters
     ----------
-    names: Sequence[str] | None
-        Optional sequence of canonical dataset identifiers (e.g. ``"iris"``).
-        ``None`` loads every dataset available in :mod:`benchmarks.load_datasets`.
+    names:
+        Optional sequence of canonical dataset identifiers (for example,
+        ``"iris"``). ``None`` loads every available dataset.
     """
 
     functions = get_dataset_functions()
@@ -46,15 +107,26 @@ def load_all_datasets(names: Sequence[str] | None = None) -> List[DatasetSpec]:
 
     datasets: List[DatasetSpec] = []
     for key, func in selected:
-        df, feature_cols, label_col, display_name = func()
+        data, feature_cols, label_col, display_name = func()
+        metadata = get_dataset_metadata(key)
+        if "source_anomaly_label" not in metadata:
+            raise ValueError(
+                f"Dataset '{key}' must declare source_anomaly_label in datasets.yml."
+            )
+        source_anomaly_label = metadata["source_anomaly_label"]
+        canonical_data = _canonicalize_anomaly_label(
+            data,
+            label_col=label_col,
+            source_anomaly_label=source_anomaly_label,
+        )
         datasets.append(
             {
-                "dataframe": df,
+                "dataframe": canonical_data,
                 "feature_cols": feature_cols,
                 "label_col": label_col,
                 "name": display_name,
                 "key": key,
-                "metadata": get_dataset_metadata(key),
+                "metadata": metadata,
             }
         )
 

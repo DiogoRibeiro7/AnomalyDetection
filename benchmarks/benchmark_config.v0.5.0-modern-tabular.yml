@@ -13,7 +13,7 @@ metrics:
     - roc_auc
     - average_precision
     - runtime
-  positive_label: 0
+  positive_label: 1
 detectors:
   - name: gaussian_mixture
     params:
