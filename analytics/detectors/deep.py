@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from torch import nn
 
 
-ArrayLike = pd.DataFrame | NDArray[np.floating[Any]]
+type ArrayLike = pd.DataFrame | NDArray[np.floating[Any]]
 ScoreArray = NDArray[np.floating[Any]]
 
 
@@ -165,7 +165,9 @@ class DenoisingAutoencoderDetector(BaseDetector):
         torch_module, nn_module, optim_module = _import_torch()
         X = _ensure_numpy(data)
         tensor = torch_module.tensor(X, dtype=torch_module.float32)
-        train_tensor, val_tensor = _split_train_val(torch, tensor, validation_split)
+        train_tensor, val_tensor = _split_train_val(
+            torch_module, tensor, validation_split
+        )
 
         module_base: Any = nn_module.Module
 
@@ -181,7 +183,7 @@ class DenoisingAutoencoderDetector(BaseDetector):
         self.model = AE(tensor.size(-1))
         opt = optim_module.Adam(self.model.parameters(), lr=lr)
         loss_fn = nn_module.MSELoss()
-        stopper = _EarlyStopping(torch, patience, checkpoint_path)
+        stopper = _EarlyStopping(torch_module, patience, checkpoint_path)
         for _ in range(epochs):
             opt.zero_grad()
             noisy_train = train_tensor + noise * torch_module.randn_like(train_tensor)
@@ -241,7 +243,9 @@ class VariationalAutoencoderDetector(BaseDetector):
 
         X = _ensure_numpy(data)
         tensor = torch_module.tensor(X, dtype=torch_module.float32)
-        train_tensor, val_tensor = _split_train_val(torch, tensor, validation_split)
+        train_tensor, val_tensor = _split_train_val(
+            torch_module, tensor, validation_split
+        )
 
         input_dim = tensor.size(-1)
 
@@ -277,7 +281,7 @@ class VariationalAutoencoderDetector(BaseDetector):
         self.model = VAE(input_dim, hidden_dim, latent_dim)
         opt = optim_module.Adam(self.model.parameters(), lr=lr)
         mse = nn_module.MSELoss(reduction="sum")
-        stopper = _EarlyStopping(torch, patience, checkpoint_path)
+        stopper = _EarlyStopping(torch_module, patience, checkpoint_path)
 
         def _loss_fn(batch: torch.Tensor) -> torch.Tensor:
             recon, mu, logvar = self.model(batch)
@@ -332,7 +336,9 @@ class LSTMAutoencoderDetector(BaseDetector):
         torch_module, nn_module, optim_module = _import_torch()
         X = _ensure_numpy(data)
         tensor = torch_module.tensor(X, dtype=torch_module.float32)
-        train_tensor, val_tensor = _split_train_val(torch, tensor, validation_split)
+        train_tensor, val_tensor = _split_train_val(
+            torch_module, tensor, validation_split
+        )
         train_seq = train_tensor.unsqueeze(1)
         val_seq = val_tensor.unsqueeze(1)
 
@@ -353,7 +359,7 @@ class LSTMAutoencoderDetector(BaseDetector):
         self.model = LSTMAE(tensor.size(-1), hidden_size)
         opt = optim_module.Adam(self.model.parameters(), lr=lr)
         loss_fn = nn_module.MSELoss()
-        stopper = _EarlyStopping(torch, patience, checkpoint_path)
+        stopper = _EarlyStopping(torch_module, patience, checkpoint_path)
         for _ in range(epochs):
             opt.zero_grad()
             output = self.model(train_seq)
@@ -404,7 +410,9 @@ class TransformerDetector(BaseDetector):
         torch_module, nn_module, optim_module = _import_torch()
         X = _ensure_numpy(data)
         tensor = torch_module.tensor(X, dtype=torch_module.float32)
-        train_tensor, val_tensor = _split_train_val(torch, tensor, validation_split)
+        train_tensor, val_tensor = _split_train_val(
+            torch_module, tensor, validation_split
+        )
         train_seq = train_tensor.unsqueeze(1)
         val_seq = val_tensor.unsqueeze(1)
 
@@ -433,7 +441,7 @@ class TransformerDetector(BaseDetector):
         self.model = TransAE(tensor.size(-1), d_model, nhead)
         opt = optim_module.Adam(self.model.parameters(), lr=lr)
         loss_fn = nn_module.MSELoss()
-        stopper = _EarlyStopping(torch, patience, checkpoint_path)
+        stopper = _EarlyStopping(torch_module, patience, checkpoint_path)
         for _ in range(epochs):
             opt.zero_grad()
             output = self.model(train_seq)
@@ -493,7 +501,9 @@ class AnoGANDetector(BaseDetector):
 
         X = _ensure_numpy(data)
         tensor = torch_module.tensor(X, dtype=torch_module.float32)
-        train_tensor, val_tensor = _split_train_val(torch, tensor, validation_split)
+        train_tensor, val_tensor = _split_train_val(
+            torch_module, tensor, validation_split
+        )
         input_dim = tensor.size(1)
         self._latent_dim = latent_dim
         self._optimisation_steps = optimisation_steps
@@ -528,7 +538,7 @@ class AnoGANDetector(BaseDetector):
         )
         bce = nn_module.BCELoss()
         n = train_tensor.size(0)
-        stopper = _EarlyStopping(torch, patience, checkpoint_path)
+        stopper = _EarlyStopping(torch_module, patience, checkpoint_path)
 
         for _ in range(epochs):
             indices = torch_module.randperm(n)
@@ -613,7 +623,7 @@ class AnoGANDetector(BaseDetector):
         scores = []
         for row in tensor:
             sample = row.unsqueeze(0)
-            score = self._latent_optimisation(torch, sample)
+            score = self._latent_optimisation(torch_module, sample)
             scores.append(score.item())
         return -np.asarray(scores)
 
@@ -641,7 +651,9 @@ class MADGANDetector(BaseDetector):
         torch_module, nn_module, optim_module = _import_torch()
         X = _ensure_numpy(data)
         tensor = torch_module.tensor(X, dtype=torch_module.float32)
-        train_tensor, val_tensor = _split_train_val(torch, tensor, validation_split)
+        train_tensor, val_tensor = _split_train_val(
+            torch_module, tensor, validation_split
+        )
         input_dim = tensor.size(1)
 
         self.generator = nn_module.Sequential(
@@ -673,7 +685,7 @@ class MADGANDetector(BaseDetector):
         d_opt = optim_module.Adam(self.discriminator.parameters(), lr=lr)
         bce = nn_module.BCELoss()
         n = train_tensor.size(0)
-        stopper = _EarlyStopping(torch, patience, checkpoint_path)
+        stopper = _EarlyStopping(torch_module, patience, checkpoint_path)
         for _ in range(epochs):
             idx = torch_module.randperm(n)
             for i in range(0, n, batch_size):
