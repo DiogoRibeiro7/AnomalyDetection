@@ -19,4 +19,4 @@ jobs:
       - name: Install PyTorch CPU dependency
         run: poetry run pip install torch
       - name: Run deep detector tests
-        run: poetry run pytest -q tests/test_deep_detectors.py tests/test_deep_early_stopping.py
+        run: poetry run pytest -q tests/test_deep_detectors.py tests/test_deep_early_stopping.py tests/test_time_series_contract.py
