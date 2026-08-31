@@ -16,7 +16,6 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-
 DEFAULT_METRICS = ["roc_auc"]
 SUPPORTED_METRICS = {
     "roc_auc",
