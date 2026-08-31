@@ -13,6 +13,14 @@ The format follows Keep a Changelog, and this project uses semantic versioning.
 - Added a versioned `v0.5.0` modern tabular smoke benchmark configuration.
 - Added lifecycle and deterministic-behavior tests for modern tabular
   detectors.
+- Expanded Zenodo archival metadata with a structured description, related
+  identifiers, references, and a broader keyword set.
+- Synchronized `CITATION.cff` with `.zenodo.json` and added keywords, a
+  repository URL, and the concept DOI identifier.
+- Added citation metadata tests and a release workflow check that fail when
+  `.zenodo.json`, `CITATION.cff`, and the project version drift apart.
+- Documented concept and version DOI usage, added a BibTeX entry, and added a
+  DOI badge to the README.
 
 ## v0.4.0 - 2026-07-22
 
