@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from inspect import signature
-from typing import Any, Iterable
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -134,7 +135,7 @@ class PreprocessingPipeline:
             return clipped.to_numpy(dtype=float)
         transformed = self._transformer.transform(clipped)
         if hasattr(transformed, "toarray") and not self.one_hot_sparse:
-            transformed = transformed.toarray()  # type: ignore[assignment]
+            transformed = transformed.toarray()
         return np.asarray(transformed, dtype=float)
 
     def fit_transform(self, data: pd.DataFrame | ArrayLike) -> NDArray[np.float64]:

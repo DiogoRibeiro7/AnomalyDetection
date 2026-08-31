@@ -3,18 +3,18 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from functools import lru_cache
 from inspect import getmembers, isfunction
 from pathlib import Path
-from typing import Any, Callable, Dict, List, TypeAlias, TypedDict
+from typing import Any, TypedDict
 
 import yaml
 
-logger = logging.getLogger(__name__)
-
 import benchmarks.load_datasets
 from benchmarks.corrected_loaders import load_cardio_corrected
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "DatasetLoader",
@@ -29,8 +29,8 @@ __all__ = [
 
 _CATALOG_PATH = Path(__file__).with_name("datasets.yml")
 
-DatasetLoader: TypeAlias = Callable[[], tuple[Any, list[str] | None, str, str]]
-DatasetRegistry: TypeAlias = dict[str, DatasetLoader]
+type DatasetLoader = Callable[[], tuple[Any, list[str] | None, str, str]]
+type DatasetRegistry = dict[str, DatasetLoader]
 
 
 class DatasetSpec(TypedDict):
@@ -53,7 +53,7 @@ def get_dataset_functions() -> DatasetRegistry:
         if not func_name.startswith("load_"):
             continue
         key = func_name.replace("load_", "")
-        functions[key] = func  # type: ignore[assignment]
+        functions[key] = func
 
     # The legacy Cardiotocography loader accidentally discarded pathological
     # observations. Override that single registry entry with the corrected,
@@ -89,13 +89,13 @@ def get_dataset_metadata(name: str) -> dict[str, object]:
     return load_catalog().get(name, {})
 
 
-def list_available_datasets() -> List[str]:
+def list_available_datasets() -> list[str]:
     """Return the canonical dataset names discovered in the loaders."""
 
     return list(get_dataset_functions().keys())
 
 
-def resolve_dataset_names(selectors: Any) -> List[str] | None:
+def resolve_dataset_names(selectors: Any) -> list[str] | None:
     """Resolve *selectors* into canonical dataset names.
 
     The *selectors* argument accepts strings (dataset names or ``tag:<name>``),
@@ -110,7 +110,7 @@ def resolve_dataset_names(selectors: Any) -> List[str] | None:
         return None
 
     if isinstance(selectors, Sequence) and not isinstance(selectors, (str, bytes)):
-        combined: List[str] = []
+        combined: list[str] = []
         for entry in selectors:
             names = resolve_dataset_names(entry)
             if names is None:
@@ -154,16 +154,18 @@ def resolve_dataset_names(selectors: Any) -> List[str] | None:
     return []
 
 
-def _expand_tag(tag: str, available: Iterable[str]) -> List[str]:
-    matches = [
-        name for name, meta in load_catalog().items() if tag in (meta.get("tags") or [])
-    ]
+def _expand_tag(tag: str, available: Iterable[str]) -> list[str]:
+    matches = []
+    for name, meta in load_catalog().items():
+        tags = meta.get("tags") or []
+        if isinstance(tags, (list, tuple)) and tag in tags:
+            matches.append(name)
     return [name for name in matches if name in available]
 
 
-def _dedupe(items: Iterable[str]) -> List[str]:
+def _dedupe(items: Iterable[str]) -> list[str]:
     seen: set[str] = set()
-    ordered: List[str] = []
+    ordered: list[str] = []
     for item in items:
         if item not in seen:
             ordered.append(item)
@@ -191,10 +193,10 @@ def _filter_by_metadata(names: list[str], selectors: Mapping[str, Any]) -> list[
 
 
 @lru_cache(maxsize=1)
-def _build_alias_map() -> Dict[str, str]:
+def _build_alias_map() -> dict[str, str]:
     """Return mapping of known dataset aliases to canonical loader keys."""
 
-    alias_map: Dict[str, str] = {}
+    alias_map: dict[str, str] = {}
     for canonical in list_available_datasets():
         alias_map[canonical] = canonical
         alias_map[canonical.lower()] = canonical
@@ -216,7 +218,7 @@ def _build_alias_map() -> Dict[str, str]:
     return alias_map
 
 
-def _lookup_alias(name: str, alias_map: Dict[str, str]) -> str | None:
+def _lookup_alias(name: str, alias_map: dict[str, str]) -> str | None:
     if not name:
         return None
     return alias_map.get(name) or alias_map.get(name.lower())
