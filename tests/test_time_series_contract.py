@@ -52,9 +52,11 @@ def test_window_contract_rejects_sequence_length_one() -> None:
 
 def test_registry_uses_sequence_aware_temporal_detectors() -> None:
     lstm = get_detector_class("lstm_autoencoder")
+    tcn = get_detector_class("tcn_autoencoder")
     transformer = get_detector_class("transformer")
 
     assert lstm.__module__ == "analytics.detectors.temporal"
+    assert tcn.__module__ == "analytics.detectors.temporal"
     assert transformer.__module__ == "analytics.detectors.temporal"
 
 
@@ -62,6 +64,7 @@ def test_registry_uses_sequence_aware_temporal_detectors() -> None:
     "detector_key, fit_kwargs",
     [
         ("lstm_autoencoder", {"epochs": 1, "hidden_size": 3}),
+        ("tcn_autoencoder", {"epochs": 1, "hidden_channels": 4}),
         ("transformer", {"epochs": 1, "d_model": 4, "nhead": 2}),
     ],
 )
@@ -89,23 +92,33 @@ def test_temporal_detectors_never_collapse_sequence_axis(
     assert np.isfinite(scores).all()
 
 
-def test_lstm_window_scores_expose_point_label_indices() -> None:
+@pytest.mark.parametrize(
+    "detector_key, fit_kwargs",
+    [
+        ("lstm_autoencoder", {"hidden_size": 3}),
+        ("tcn_autoencoder", {"hidden_channels": 4}),
+    ],
+)
+def test_window_scores_expose_point_label_indices(
+    detector_key: str,
+    fit_kwargs: dict[str, int],
+) -> None:
     pytest.importorskip("torch", reason="PyTorch is required for temporal models")
     rng = np.random.default_rng(11)
     point_stream = rng.normal(size=(12, 2)).astype(np.float32)
     spec = WindowSpec(window_length=4, stride=2, horizon=1)
-    detector_cls = get_detector_class("lstm_autoencoder")
+    detector_cls = get_detector_class(detector_key)
     detector = detector_cls()
 
     scores = detector.detect_anomalies(
         point_stream,
         epochs=1,
-        hidden_size=3,
         patience=1,
         validation_split=0.25,
         window_length=spec.window_length,
         stride=spec.stride,
         horizon=spec.horizon,
+        **fit_kwargs,
     )
 
     np.testing.assert_array_equal(
