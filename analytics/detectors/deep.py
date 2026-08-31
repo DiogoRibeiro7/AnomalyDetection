@@ -8,6 +8,7 @@ requirements optional.  All classes implement the
 from __future__ import annotations
 
 from pathlib import Path
+from types import ModuleType
 from typing import Any, TYPE_CHECKING, Union
 
 import numpy as np
@@ -18,14 +19,14 @@ from analytics.base import BaseDetector
 
 if TYPE_CHECKING:
     import torch
-    from torch import nn, optim
+    from torch import nn
 
 
 ArrayLike = Union[pd.DataFrame, NDArray[np.floating[Any]]]
 ScoreArray = NDArray[np.floating[Any]]
 
 
-def _import_torch() -> tuple["torch", "nn", "optim"]:
+def _import_torch() -> tuple[ModuleType, ModuleType, ModuleType]:
     """Import ``torch`` lazily and return the core namespaces.
 
     The helper centralises optional dependency checks to keep the detector
@@ -53,7 +54,7 @@ class _EarlyStopping:
 
     def __init__(
         self,
-        torch_module: "torch",
+        torch_module: ModuleType,
         patience: int,
         checkpoint_path: Union[str, Path, None] = None,
     ) -> None:
@@ -97,7 +98,7 @@ class _EarlyStopping:
 
 
 def _split_train_val(
-    torch_module: "torch",
+    torch_module: ModuleType,
     tensor: "torch.Tensor",
     validation_split: float,
 ) -> tuple["torch.Tensor", "torch.Tensor"]:

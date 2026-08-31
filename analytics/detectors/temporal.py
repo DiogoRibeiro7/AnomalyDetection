@@ -67,7 +67,7 @@ class LSTMAutoencoderDetector(_TemporalDetector):
         horizon: int = 0,
         **params: Any,
     ) -> LSTMAutoencoderDetector:
-        torch, nn, optim = _import_torch()
+        torch_module, nn_module, optim_module = _import_torch()
         del params
         self.window_spec = self._window_spec(
             window_length=window_length,
@@ -75,14 +75,16 @@ class LSTMAutoencoderDetector(_TemporalDetector):
             horizon=horizon,
         )
         sequences = self._prepare_sequences(data, window_spec=self.window_spec)
-        tensor = torch.tensor(sequences, dtype=torch.float32)
-        train_seq, val_seq = _split_train_val(torch, tensor, validation_split)
+        tensor = torch_module.tensor(sequences, dtype=torch_module.float32)
+        train_seq, val_seq = _split_train_val(torch_module, tensor, validation_split)
 
-        class LSTMAE(nn.Module):
+        module_base: Any = nn_module.Module
+
+        class LSTMAE(module_base):
             def __init__(self, input_dim: int, hidden_dim: int) -> None:
                 super().__init__()
-                self.encoder = nn.LSTM(input_dim, hidden_dim, batch_first=True)
-                self.decoder = nn.LSTM(hidden_dim, input_dim, batch_first=True)
+                self.encoder = nn_module.LSTM(input_dim, hidden_dim, batch_first=True)
+                self.decoder = nn_module.LSTM(hidden_dim, input_dim, batch_first=True)
 
             def forward(self, x: torch.Tensor) -> torch.Tensor:
                 _, (hidden, _) = self.encoder(x)
@@ -93,9 +95,9 @@ class LSTMAutoencoderDetector(_TemporalDetector):
         self.sequence_length = int(tensor.size(1))
         self.input_dim = int(tensor.size(2))
         self.model = LSTMAE(self.input_dim, hidden_size)
-        optimizer = optim.Adam(self.model.parameters(), lr=lr)
-        loss_fn = nn.MSELoss()
-        stopper = _EarlyStopping(torch, patience, checkpoint_path)
+        optimizer = optim_module.Adam(self.model.parameters(), lr=lr)
+        loss_fn = nn_module.MSELoss()
+        stopper = _EarlyStopping(torch_module, patience, checkpoint_path)
 
         for _ in range(epochs):
             optimizer.zero_grad()
@@ -105,7 +107,7 @@ class LSTMAutoencoderDetector(_TemporalDetector):
             optimizer.step()
 
             self.model.eval()
-            with torch.no_grad():
+            with torch_module.no_grad():
                 val_output = self.model(val_seq)
                 val_loss = loss_fn(val_output, val_seq).item()
             self.model.train()
@@ -115,13 +117,13 @@ class LSTMAutoencoderDetector(_TemporalDetector):
         return self
 
     def score(self, data: Any) -> ScoreArray:
-        torch, _, _ = _import_torch()
+        torch_module, _, _ = _import_torch()
         sequences = self._prepare_sequences(
             data,
             window_spec=getattr(self, "window_spec", None),
         )
-        tensor = torch.tensor(sequences, dtype=torch.float32)
-        with torch.no_grad():
+        tensor = torch_module.tensor(sequences, dtype=torch_module.float32)
+        with torch_module.no_grad():
             reconstructed = self.model(tensor).numpy()
         errors = np.linalg.norm(sequences - reconstructed, axis=(1, 2))
         return -errors
@@ -148,7 +150,7 @@ class TransformerDetector(_TemporalDetector):
         horizon: int = 0,
         **params: Any,
     ) -> TransformerDetector:
-        torch, nn, optim = _import_torch()
+        torch_module, nn_module, optim_module = _import_torch()
         del params
         if d_model % nhead != 0:
             raise ValueError("d_model must be divisible by nhead")
@@ -158,26 +160,28 @@ class TransformerDetector(_TemporalDetector):
             horizon=horizon,
         )
         sequences = self._prepare_sequences(data, window_spec=self.window_spec)
-        tensor = torch.tensor(sequences, dtype=torch.float32)
-        train_seq, val_seq = _split_train_val(torch, tensor, validation_split)
+        tensor = torch_module.tensor(sequences, dtype=torch_module.float32)
+        train_seq, val_seq = _split_train_val(torch_module, tensor, validation_split)
 
-        class TransAE(nn.Module):
+        module_base: Any = nn_module.Module
+
+        class TransAE(module_base):
             def __init__(self, input_dim: int, model_dim: int, heads: int) -> None:
                 super().__init__()
-                self.input = nn.Linear(input_dim, model_dim)
-                encoder_layer = nn.TransformerEncoderLayer(
+                self.input = nn_module.Linear(input_dim, model_dim)
+                encoder_layer = nn_module.TransformerEncoderLayer(
                     model_dim,
                     heads,
                     batch_first=True,
                 )
-                self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=1)
-                decoder_layer = nn.TransformerDecoderLayer(
+                self.encoder = nn_module.TransformerEncoder(encoder_layer, num_layers=1)
+                decoder_layer = nn_module.TransformerDecoderLayer(
                     model_dim,
                     heads,
                     batch_first=True,
                 )
-                self.decoder = nn.TransformerDecoder(decoder_layer, num_layers=1)
-                self.output = nn.Linear(model_dim, input_dim)
+                self.decoder = nn_module.TransformerDecoder(decoder_layer, num_layers=1)
+                self.output = nn_module.Linear(model_dim, input_dim)
 
             def forward(self, x: torch.Tensor) -> torch.Tensor:
                 embedded = self.input(x)
@@ -188,9 +192,9 @@ class TransformerDetector(_TemporalDetector):
         self.sequence_length = int(tensor.size(1))
         self.input_dim = int(tensor.size(2))
         self.model = TransAE(self.input_dim, d_model, nhead)
-        optimizer = optim.Adam(self.model.parameters(), lr=lr)
-        loss_fn = nn.MSELoss()
-        stopper = _EarlyStopping(torch, patience, checkpoint_path)
+        optimizer = optim_module.Adam(self.model.parameters(), lr=lr)
+        loss_fn = nn_module.MSELoss()
+        stopper = _EarlyStopping(torch_module, patience, checkpoint_path)
 
         for _ in range(epochs):
             optimizer.zero_grad()
@@ -200,7 +204,7 @@ class TransformerDetector(_TemporalDetector):
             optimizer.step()
 
             self.model.eval()
-            with torch.no_grad():
+            with torch_module.no_grad():
                 val_output = self.model(val_seq)
                 val_loss = loss_fn(val_output, val_seq).item()
             self.model.train()
@@ -210,13 +214,13 @@ class TransformerDetector(_TemporalDetector):
         return self
 
     def score(self, data: Any) -> ScoreArray:
-        torch, _, _ = _import_torch()
+        torch_module, _, _ = _import_torch()
         sequences = self._prepare_sequences(
             data,
             window_spec=getattr(self, "window_spec", None),
         )
-        tensor = torch.tensor(sequences, dtype=torch.float32)
-        with torch.no_grad():
+        tensor = torch_module.tensor(sequences, dtype=torch_module.float32)
+        with torch_module.no_grad():
             reconstructed = self.model(tensor).numpy()
         errors = np.linalg.norm(sequences - reconstructed, axis=(1, 2))
         return -errors
