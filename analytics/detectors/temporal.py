@@ -10,7 +10,12 @@ from numpy.typing import NDArray
 
 from analytics.base import BaseDetector
 from analytics.detectors.deep import _EarlyStopping, _import_torch, _split_train_val
-from analytics.time_series import WindowSpec, coerce_sequence_batch
+from analytics.time_series import (
+    WindowSpec,
+    WindowedScores,
+    coerce_sequence_batch,
+    window_label_indices,
+)
 
 ScoreArray = NDArray[np.floating[Any]]
 
@@ -19,6 +24,7 @@ class _TemporalDetector(BaseDetector):
     """Shared window configuration for sequence reconstruction detectors."""
 
     score_orientation = "lower_is_more_anomalous"
+    input_contract = "time_series_sequence"
 
     def _window_spec(
         self,
@@ -42,6 +48,17 @@ class _TemporalDetector(BaseDetector):
         window_spec: WindowSpec | None = None,
     ) -> NDArray[np.floating[Any]]:
         return coerce_sequence_batch(data, window_spec=window_spec)
+
+    def _attach_window_alignment(self, scores: ScoreArray, data: Any) -> ScoreArray:
+        spec = getattr(self, "window_spec", None)
+        if spec is None:
+            return scores
+        n_points = int(np.asarray(data).shape[0])
+        return WindowedScores(
+            scores,
+            label_indices=window_label_indices(n_points, spec),
+            window_spec=spec,
+        )
 
 
 class LSTMAutoencoderDetector(_TemporalDetector):
@@ -124,7 +141,7 @@ class LSTMAutoencoderDetector(_TemporalDetector):
         with torch.no_grad():
             reconstructed = self.model(tensor).numpy()
         errors = np.linalg.norm(sequences - reconstructed, axis=(1, 2))
-        return -errors
+        return self._attach_window_alignment(-errors, data)
 
 
 class TransformerDetector(_TemporalDetector):
@@ -222,4 +239,4 @@ class TransformerDetector(_TemporalDetector):
         with torch.no_grad():
             reconstructed = self.model(tensor).numpy()
         errors = np.linalg.norm(sequences - reconstructed, axis=(1, 2))
-        return -errors
+        return self._attach_window_alignment(-errors, data)

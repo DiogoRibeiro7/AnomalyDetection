@@ -130,6 +130,28 @@ def benchmark_config_hash(
     )
 
 
+def _manifest_detector_entries(
+    detector_entries: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Expand effective temporal window defaults for reproducibility."""
+
+    records: list[dict[str, Any]] = []
+    for entry in detector_entries:
+        copied = dict(entry)
+        params = dict(copied.get("params") or {})
+        copied["params"] = params
+        if "window_length" in params:
+            copied["windowing"] = {
+                "window_length": int(params["window_length"]),
+                "stride": int(params.get("stride", 1)),
+                "horizon": int(params.get("horizon", 0)),
+                "aggregation": "window",
+                "label_alignment": "window_end",
+            }
+        records.append(copied)
+    return records
+
+
 def build_manifest(
     *,
     run_id: str,
@@ -155,7 +177,7 @@ def build_manifest(
         "platform": platform.platform(),
         "executable": sys.executable,
         "dataset_keys": dataset_keys,
-        "detectors": detector_entries,
+        "detectors": _manifest_detector_entries(detector_entries),
         "random_seed": random_seed,
         "n_jobs": n_jobs,
         "config_hash": config_hash,
