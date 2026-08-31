@@ -14,6 +14,7 @@ import yaml
 logger = logging.getLogger(__name__)
 
 import benchmarks.load_datasets
+from benchmarks.corrected_loaders import load_cardio_corrected
 
 __all__ = [
     "DatasetLoader",
@@ -53,6 +54,11 @@ def get_dataset_functions() -> DatasetRegistry:
             continue
         key = func_name.replace("load_", "")
         functions[key] = func  # type: ignore[assignment]
+
+    # The legacy Cardiotocography loader accidentally discarded pathological
+    # observations. Override that single registry entry with the corrected,
+    # contract-tested implementation while preserving all public selector keys.
+    functions["cardio"] = load_cardio_corrected
     return functions
 
 
