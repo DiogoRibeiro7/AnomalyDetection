@@ -1,0 +1,25 @@
+name: Quality
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install poetry
+      - run: poetry install --no-interaction
+      - run: poetry run pip install ruff mypy pytest-cov
+      - name: Ruff
+        run: poetry run ruff check analytics/base.py analytics/detectors/registry.py analytics/detectors/correctness.py benchmarks/metrics.py benchmarks/load_all_datasets.py tests/test_benchmark_metric_contract.py tests/test_dataset_label_contract.py tests/test_correctness_regressions.py
+      - name: Mypy
+        run: poetry run mypy analytics/base.py analytics/detectors/registry.py analytics/detectors/correctness.py benchmarks/metrics.py benchmarks/load_all_datasets.py
+      - name: Coverage
+        run: poetry run pytest -q --cov=analytics --cov=benchmarks --cov-report=term-missing --cov-fail-under=50
