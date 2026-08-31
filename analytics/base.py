@@ -21,6 +21,26 @@ ScoreOrientation = Literal[
 TabularArray = NDArray[np.floating[Any]]
 
 
+class OrientedScores(np.ndarray):
+    """NumPy score array carrying the detector's raw score orientation."""
+
+    score_orientation: ScoreOrientation
+
+    def __new__(
+        cls,
+        values: Any,
+        score_orientation: ScoreOrientation,
+    ) -> OrientedScores:
+        obj = np.asarray(values, dtype=float).view(cls)
+        obj.score_orientation = score_orientation
+        return obj
+
+    def __array_finalize__(self, obj: Any) -> None:
+        if obj is None:
+            return
+        self.score_orientation = getattr(obj, "score_orientation", "estimator_defined")
+
+
 def coerce_tabular_2d(
     data: pd.DataFrame | Any,
     *,
@@ -171,13 +191,16 @@ class BaseDetector(ABC):
         """Return anomaly scores for the provided data."""
 
     def detect_anomalies(self, data, **params):
-        """Convenience method that fits and scores in one step."""
+        """Fit and return raw scores carrying their orientation metadata."""
 
         pipeline = params.pop("preprocessing_pipeline", None)
         if pipeline is not None:
             self.set_preprocessing_pipeline(pipeline)
         prepared = self._preprocess_for_fit(data)
         self.fit(prepared, **params)
-        if self._preprocessing_pipeline is None:
-            return self.score(data)
-        return self.score(prepared)
+        raw_scores = (
+            self.score(data)
+            if self._preprocessing_pipeline is None
+            else self.score(prepared)
+        )
+        return OrientedScores(raw_scores, self.score_orientation)
