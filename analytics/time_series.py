@@ -44,6 +44,35 @@ class WindowSpec:
         }
 
 
+class WindowedScores(np.ndarray):
+    """Score array carrying point-label alignment for rolling windows."""
+
+    label_indices: NDArray[np.int_]
+    window_spec: dict[str, int | str]
+
+    def __new__(
+        cls,
+        values: Any,
+        *,
+        label_indices: Any,
+        window_spec: WindowSpec,
+    ) -> WindowedScores:
+        obj = np.asarray(values, dtype=float).view(cls)
+        obj.label_indices = np.asarray(label_indices, dtype=int)
+        obj.window_spec = window_spec.as_dict()
+        if obj.ndim != 1:
+            raise ValueError("Windowed anomaly scores must be one-dimensional")
+        if obj.shape[0] != obj.label_indices.shape[0]:
+            raise ValueError("Window scores and label indices must have equal length")
+        return obj
+
+    def __array_finalize__(self, obj: Any) -> None:
+        if obj is None:
+            return
+        self.label_indices = getattr(obj, "label_indices", np.asarray([], dtype=int))
+        self.window_spec = getattr(obj, "window_spec", {})
+
+
 def _as_float_array(data: pd.DataFrame | Any) -> SequenceArray:
     if isinstance(data, pd.DataFrame):
         return data.to_numpy(dtype=float, copy=False)

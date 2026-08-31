@@ -22,7 +22,7 @@ TabularArray = NDArray[np.floating[Any]]
 
 
 class OrientedScores(np.ndarray):
-    """NumPy score array carrying the detector's raw score orientation."""
+    """NumPy score array carrying detector score and alignment metadata."""
 
     score_orientation: ScoreOrientation
 
@@ -33,12 +33,18 @@ class OrientedScores(np.ndarray):
     ) -> OrientedScores:
         obj = np.asarray(values, dtype=float).view(cls)
         obj.score_orientation = score_orientation
+        for name in ("label_indices", "window_spec"):
+            if hasattr(values, name):
+                setattr(obj, name, getattr(values, name))
         return obj
 
     def __array_finalize__(self, obj: Any) -> None:
         if obj is None:
             return
         self.score_orientation = getattr(obj, "score_orientation", "estimator_defined")
+        for name in ("label_indices", "window_spec"):
+            if hasattr(obj, name):
+                setattr(self, name, getattr(obj, name))
 
 
 def coerce_tabular_2d(

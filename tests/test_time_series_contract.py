@@ -87,3 +87,29 @@ def test_temporal_detectors_never_collapse_sequence_axis(
     scores = detector.score(rows_are_series)
     assert scores.shape == (8,)
     assert np.isfinite(scores).all()
+
+
+def test_lstm_window_scores_expose_point_label_indices() -> None:
+    pytest.importorskip("torch", reason="PyTorch is required for temporal models")
+    rng = np.random.default_rng(11)
+    point_stream = rng.normal(size=(12, 2)).astype(np.float32)
+    spec = WindowSpec(window_length=4, stride=2, horizon=1)
+    detector_cls = get_detector_class("lstm_autoencoder")
+    detector = detector_cls()
+
+    scores = detector.detect_anomalies(
+        point_stream,
+        epochs=1,
+        hidden_size=3,
+        patience=1,
+        validation_split=0.25,
+        window_length=spec.window_length,
+        stride=spec.stride,
+        horizon=spec.horizon,
+    )
+
+    np.testing.assert_array_equal(
+        scores.label_indices,
+        window_label_indices(len(point_stream), spec),
+    )
+    assert scores.window_spec == spec.as_dict()
