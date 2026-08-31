@@ -1,6 +1,6 @@
 # Anomaly Detection
 
-[![CI](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/ci.yml) [![Branch Policy](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/branch-policy.yml/badge.svg?branch=develop)](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/branch-policy.yml) [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/) [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![CI](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/ci.yml) [![Branch Policy](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/branch-policy.yml/badge.svg?branch=develop)](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/branch-policy.yml) [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/) [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21496904.svg)](https://doi.org/10.5281/zenodo.21496904)
 
 Anomaly Detection provides anomaly detection algorithms, benchmark dataset
 loaders, and a command line interface for comparing detectors on standard
@@ -226,12 +226,38 @@ poetry run pre-commit run --all-files
 
 ## Citation
 
-Citation metadata is available in [CITATION.cff](CITATION.cff) and
-[.zenodo.json](.zenodo.json). Zenodo will use `.zenodo.json` when archiving
-GitHub releases for DOI creation.
+Machine-readable citation metadata is maintained in
+[CITATION.cff](CITATION.cff) and [.zenodo.json](.zenodo.json). Zenodo reads
+`.zenodo.json` when it archives a GitHub release and mints the DOI for that
+version, so both files are kept in sync with the version in
+[pyproject.toml](pyproject.toml). `tests/test_citation_metadata.py` and the
+release workflow fail if they drift apart.
 
-To cite all versions of this software, use the Zenodo concept DOI:
-[10.5281/zenodo.21496904](https://doi.org/10.5281/zenodo.21496904).
+Zenodo issues two kinds of DOI:
+
+- The **concept DOI**
+  [10.5281/zenodo.21496904](https://doi.org/10.5281/zenodo.21496904) always
+  resolves to the latest archived version. Cite it when referring to the
+  software in general.
+- A **version DOI** is minted for each archived release. Cite it when the
+  exact version matters for reproducing reported results, and pair it with the
+  run manifest emitted by the benchmark CLI.
+
+BibTeX for the concept DOI:
+
+```bibtex
+@software{ribeiro_anomalydetection,
+  author    = {Ribeiro, Diogo},
+  title     = {{AnomalyDetection: a reproducible benchmarking suite for
+               anomaly detection algorithms}},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.21496904},
+  url       = {https://doi.org/10.5281/zenodo.21496904}
+}
+```
+
+Replace the DOI with the version DOI shown on the Zenodo record to cite a
+specific release, and add the matching `version` and `year` fields.
 
 ## Project Roadmap
 

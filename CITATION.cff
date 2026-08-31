@@ -1,8 +1,16 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it using the metadata from this file."
 type: software
-title: "Anomaly Detection"
-abstract: "Anomaly detection algorithms, benchmark dataset loaders, and command line utilities for comparing detectors on standard datasets."
+title: "AnomalyDetection: a reproducible benchmarking suite for anomaly detection algorithms"
+abstract: >-
+  AnomalyDetection is a Python research package that bundles anomaly detection
+  algorithms, benchmark dataset loaders, and a command line interface for
+  comparing detectors on standard datasets under a single reproducible
+  protocol. It covers classical, ensemble, deep, streaming, graph, forecasting,
+  and modern tabular detectors behind a uniform fit/score lifecycle, evaluates
+  them with configurable ranking and threshold metrics, and records a manifest
+  of package version, random seed, configuration hash, and dataset integrity
+  hashes so that reported results can be reproduced.
 authors:
   - family-names: "Ribeiro"
     given-names: "Diogo"
@@ -10,6 +18,24 @@ authors:
     orcid: "https://orcid.org/0009-0001-2022-7072"
     affiliation: "School of Media Arts and Design, Polytechnic Institute of Porto"
 repository-code: "https://github.com/DiogoRibeiro7/AnomalyDetection"
+url: "https://github.com/DiogoRibeiro7/AnomalyDetection"
 doi: "10.5281/zenodo.21496904"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.21496904"
+    description: "Concept DOI resolving to the latest archived version."
+keywords:
+  - "anomaly detection"
+  - "outlier detection"
+  - "novelty detection"
+  - "unsupervised learning"
+  - "machine learning"
+  - "benchmarking"
+  - "reproducible research"
+  - "research software"
+  - "time series analysis"
+  - "graph analysis"
+  - "streaming data"
+  - "Python"
 license: "MIT"
 version: "0.5.0"
