@@ -11,8 +11,8 @@ from numpy.typing import NDArray
 from analytics.base import BaseDetector
 from analytics.detectors.deep import _EarlyStopping, _import_torch, _split_train_val
 from analytics.time_series import (
-    WindowSpec,
     WindowedScores,
+    WindowSpec,
     coerce_sequence_batch,
     window_label_indices,
 )
