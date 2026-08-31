@@ -93,7 +93,7 @@ def load_wisconsin_breast_cancer():
     df["BareNuclei"] = df["BareNuclei"].replace(
         "?", int(np.mean(df["BareNuclei"][df["BareNuclei"] != "?"].map(int)))
     )
-    df = df.applymap(int)
+    df = df.astype(int)
 
     return df, features, "Class", "wisconsinBreast"
 
