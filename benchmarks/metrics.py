@@ -77,6 +77,32 @@ def resolve_metric_config(config: Any = None) -> MetricConfig:
     raise ValueError("metrics must be a string, list, mapping, or null.")
 
 
+def canonicalize_anomaly_scores(scores: Any) -> NDArray[np.floating[Any]]:
+    """Return scores where larger values consistently mean more anomalous.
+
+    Raw detector score semantics are preserved by detector ``score`` methods.
+    Benchmark evaluation uses orientation metadata carried by
+    ``BaseDetector.detect_anomalies`` to put heterogeneous detectors onto a
+    common ranking direction before computing ranking- or threshold-based
+    metrics.
+    """
+
+    orientation = getattr(scores, "score_orientation", "higher_is_more_anomalous")
+    score_array = np.asarray(scores, dtype=float)
+    if orientation == "higher_is_more_anomalous":
+        return score_array
+    if orientation == "lower_is_more_anomalous":
+        return -score_array
+    if orientation == "binary_anomaly":
+        return score_array
+    if orientation == "estimator_defined":
+        raise ValueError(
+            "Benchmark evaluation requires an explicit score orientation; "
+            "received estimator_defined."
+        )
+    raise ValueError(f"Unknown score orientation: {orientation!r}.")
+
+
 def evaluate_metrics(
     y_true: Any,
     scores: Any,
@@ -84,11 +110,11 @@ def evaluate_metrics(
     runtime_seconds: float,
     config: MetricConfig | None = None,
 ) -> dict[str, float | None]:
-    """Evaluate configured benchmark metrics."""
+    """Evaluate configured benchmark metrics using canonical anomaly scores."""
 
     metric_config = config or resolve_metric_config()
     labels = np.asarray(y_true)
-    score_array = np.asarray(scores, dtype=float)
+    score_array = canonicalize_anomaly_scores(scores)
     positive = _positive_mask(labels, metric_config.positive_label)
     values: dict[str, float | None] = {}
 

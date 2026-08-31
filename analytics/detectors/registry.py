@@ -1,11 +1,34 @@
 from __future__ import annotations
 
 from importlib import import_module
-from typing import MutableMapping, Type
+from typing import Type
 
 from analytics.base import BaseDetector
 
-DETECTOR_REGISTRY: MutableMapping[str, str] = {}
+
+class DetectorRegistry(dict[str, str]):
+    """Detector mapping that can enforce strict lookups after initialization."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._strict = False
+
+    def freeze(self) -> None:
+        """Enable strict membership checks for user-facing detector selection."""
+
+        self._strict = True
+
+    def __contains__(self, key: object) -> bool:
+        exists = super().__contains__(key)
+        if self._strict and isinstance(key, str) and not exists:
+            available = ", ".join(sorted(self))
+            raise ValueError(
+                f"Unknown detector '{key}'. Available detectors: {available}"
+            )
+        return exists
+
+
+DETECTOR_REGISTRY = DetectorRegistry()
 
 
 def _validate_registration(name: str, path: str) -> None:
@@ -26,20 +49,11 @@ def _validate_registration(name: str, path: str) -> None:
 
 
 def register_detector(name: str, path: str, *, allow_override: bool = False) -> None:
-    """Register a detector class by dotted module path.
+    """Register a detector class by dotted module path."""
 
-    Parameters
-    ----------
-    name:
-        Short key used to reference the detector.
-    path:
-        Dotted ``module:ClassName`` path.
-    allow_override:
-        Whether to allow replacing an existing registration. Defaults to
-        ``False`` to prevent accidental collisions.
-    """
     _validate_registration(name, path)
-    if name in DETECTOR_REGISTRY and not allow_override:
+    exists = dict.__contains__(DETECTOR_REGISTRY, name)
+    if exists and not allow_override:
         existing = DETECTOR_REGISTRY[name]
         raise ValueError(
             f"Detector '{name}' is already registered with '{existing}'. "
@@ -49,12 +63,9 @@ def register_detector(name: str, path: str, *, allow_override: bool = False) -> 
 
 
 def get_detector_class(name: str) -> Type[BaseDetector]:
-    """Return the detector class associated with *name*.
+    """Return the detector class associated with *name*."""
 
-    The class is imported lazily to avoid importing optional dependencies
-    until absolutely necessary.
-    """
-    if name not in DETECTOR_REGISTRY:
+    if not dict.__contains__(DETECTOR_REGISTRY, name):
         available = ", ".join(sorted(DETECTOR_REGISTRY))
         raise KeyError(f"Unknown detector '{name}'. Available detectors: {available}")
 
