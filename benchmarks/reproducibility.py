@@ -17,7 +17,6 @@ import numpy as np
 
 from benchmarks.catalog import list_available_datasets, load_catalog
 
-
 REPORT_SCHEMA_VERSION = "benchmark-report-v1"
 MANIFEST_SCHEMA_VERSION = "benchmark-manifest-v1"
 
