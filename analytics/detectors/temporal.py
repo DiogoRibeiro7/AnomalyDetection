@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -21,6 +22,35 @@ if TYPE_CHECKING:
     import torch
 
 ScoreArray = NDArray[np.floating[Any]]
+
+
+def _sinusoidal_position_encoding(
+    torch_module: Any,
+    *,
+    length: int,
+    width: int,
+    device: Any,
+    dtype: Any,
+) -> Any:
+    """Return the standard sinusoidal encoding for explicit sequence positions."""
+
+    if length < 1:
+        raise ValueError("position encoding length must be greater than zero")
+    if width < 1:
+        raise ValueError("position encoding width must be greater than zero")
+
+    position = torch_module.arange(length, device=device, dtype=dtype).unsqueeze(1)
+    even_width = (width + 1) // 2
+    div_term = torch_module.exp(
+        torch_module.arange(even_width, device=device, dtype=dtype)
+        * (-2.0 * math.log(10000.0) / width)
+    )
+    encoding = torch_module.zeros((length, width), device=device, dtype=dtype)
+    encoding[:, 0::2] = torch_module.sin(position * div_term)
+    if width > 1:
+        odd_width = width // 2
+        encoding[:, 1::2] = torch_module.cos(position * div_term[:odd_width])
+    return encoding.unsqueeze(0)
 
 
 class _TemporalDetector(BaseDetector):
@@ -302,6 +332,7 @@ class TransformerDetector(_TemporalDetector):
         class TransAE(module_base):
             def __init__(self, input_dim: int, model_dim: int, heads: int) -> None:
                 super().__init__()
+                self.model_dim = model_dim
                 self.input = nn_module.Linear(input_dim, model_dim)
                 encoder_layer = nn_module.TransformerEncoderLayer(
                     model_dim,
@@ -319,6 +350,14 @@ class TransformerDetector(_TemporalDetector):
 
             def forward(self, x: torch.Tensor) -> torch.Tensor:
                 embedded = self.input(x)
+                positions = _sinusoidal_position_encoding(
+                    torch_module,
+                    length=embedded.size(1),
+                    width=self.model_dim,
+                    device=embedded.device,
+                    dtype=embedded.dtype,
+                )
+                embedded = embedded + positions
                 memory = self.encoder(embedded)
                 decoded = self.decoder(memory, memory)
                 return self.output(decoded)
