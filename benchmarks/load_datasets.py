@@ -1,23 +1,22 @@
-"""Contains data set loading functions. If you want the test script to include a new dataset, a new function must
-be written in this module that returns a pandas Dataframe, the feature column names, the label column name and the
-dataset name.
+"""Contains data set loading functions.
+
+If you want the test script to include a new dataset, a new function must be
+written in this module that returns a pandas Dataframe, the feature column
+names, the label column name and the dataset name.
 
 Written by Gilles Vandewiele in commission of IDLab - INTEC from University Ghent.
 """
-
-from collections import Counter
 
 from analytics.runtime import ensure_supported_python
 
 ensure_supported_python()
 
-from sklearn import datasets
-
-import pandas as pd
-import numpy as np
 import os
-import networkx as nx
 
+import networkx as nx
+import numpy as np
+import pandas as pd
+from sklearn import datasets
 from sklearn.preprocessing import LabelEncoder
 
 
@@ -49,9 +48,11 @@ class MultiColumnLabelEncoder:
 
 def load_wisconsin_breast_cancer():
     """
-    The Breast Cancer Wisconsin (Original) dataset from UCI machine learning repository is a classification dataset,
-    which records the measurements for breast cancer cases. There are two classes, benign and malignant.
-    This dataset has dimensionality 9. The malignant class of this dataset is considered as outliers (239 (35%)),
+    The Breast Cancer Wisconsin (Original) dataset from UCI machine learning
+    repository is a classification dataset, which records the measurements for
+    breast cancer cases. There are two classes, benign and malignant.
+    This dataset has dimensionality 9. The malignant class of this dataset is
+    considered as outliers (239 (35%)),
     while points in the benign class are considered inliers.
     """
 
@@ -100,9 +101,11 @@ def load_wisconsin_breast_cancer():
 
 def load_lympho():
     """
-    The original lymphography dataset from UCI machine learning repository is a classification dataset.
-    It is a multi-class dataset having four classes, but two of them are quite small (2 and 4 data records).
-    Therefore, those two small classes are merged and considered as outliers compared to other two large classes.
+    The original lymphography dataset from UCI machine learning repository is a
+    classification dataset. It is a multi-class dataset having four classes, but
+    two of them are quite small (2 and 4 data records). Therefore, those two
+    small classes are merged and considered as outliers compared to other two
+    large classes.
     """
     df = pd.read_csv(
         os.path.join(
@@ -120,10 +123,13 @@ def load_lympho():
 
 def load_cardio():
     """
-    The original Cardiotocography (Cardio) dataset from UCI machine learning repository consists of measurements of
-    fetal heart rate (FHR) and uterine contraction (UC) features on cardiotocograms classified by expert obstetricians.
-    This is a classification dataset, where the classes are normal, suspect, and pathologic. For outlier detection,
-    The normal class formed the inliers, while the pathologic (outlier) class is downsampled to 176 points.
+    The original Cardiotocography (Cardio) dataset from UCI machine learning
+    repository consists of measurements of fetal heart rate (FHR) and uterine
+    contraction (UC) features on cardiotocograms classified by expert
+    obstetricians. This is a classification dataset, where the classes are
+    normal, suspect, and pathologic. For outlier detection, the normal class
+    formed the inliers, while the pathologic (outlier) class is downsampled to
+    176 points.
     The suspect class is discarded.
     """
     df = pd.read_csv(
@@ -144,9 +150,11 @@ def load_cardio():
 
 def load_arrhythmia():
     """
-    The original arrhythmia dataset from UCI machine learning repository is a multi-class classification dataset with
-    dimensionality 279. There are five categorical attributes which are discarded here, totalling 274 attributes.
-    The smallest classes, i.e., 3, 4, 5, 7, 8, 9, 14, 15 are combined to form the outliers class and
+    The original arrhythmia dataset from UCI machine learning repository is a
+    multi-class classification dataset with dimensionality 279. There are five
+    categorical attributes which are discarded here, totalling 274 attributes.
+    The smallest classes, i.e., 3, 4, 5, 7, 8, 9, 14, 15 are combined to form
+    the outliers class and
     the rest of the classes are combined to form the inliers class.
     """
     df = pd.read_csv(
@@ -268,7 +276,7 @@ def load_karate_club_graph():
     """
 
     G = nx.karate_club_graph()
-    for n, data in G.nodes(data=True):
+    for _n, data in G.nodes(data=True):
         data["label"] = 1 if data["club"] == "Mr. Hi" else 0
     return G, None, "label", "karateClubGraph"
 
@@ -334,24 +342,32 @@ def load_kddcup_sample():
 
 # def load_shuttle():
 #     """
-#     The original Statlog (Shuttle) dataset from UCI machine learning repository is a multi-class classification dataset
-#     with dimensionality 9. Here, the training and test data are combined.
-#     The smallest five classes, i.e. 2, 3, 5, 6, 7 are combined to form the outliers class,
+#     The original Statlog (Shuttle) dataset from UCI machine learning
+#     repository is a multi-class classification dataset with dimensionality 9.
+#     Here, the training and test data are combined.
+#     The smallest five classes, i.e. 2, 3, 5, 6, 7 are combined to form the
+#     outliers class,
 #     while class 1 forms the inlier class. Data for class 4 is discarded.
 #     """
 #
-#     columns = ['feature1', 'feature2', 'feature3', 'feature4', 'feature5', 'feature6', 'feature7', 'feature8',
-#                'feature9', 'Class']
-#     features = ['feature1', 'feature2', 'feature3', 'feature4', 'feature5', 'feature6', 'feature7', 'feature8',
-#                 'feature9']
+#     columns = ['feature1', 'feature2', 'feature3', 'feature4', 'feature5',
+#                'feature6', 'feature7', 'feature8', 'feature9', 'Class']
+#     features = ['feature1', 'feature2', 'feature3', 'feature4', 'feature5',
+#                 'feature6', 'feature7', 'feature8', 'feature9']
 #
-#     df = pd.read_csv(os.path.join(os.sep.join(os.path.realpath(__file__).split(os.sep)[:-1]), 'shuttle.trn'),
-#                      sep=' ')
+#     df = pd.read_csv(
+#         os.path.join(
+#             os.sep.join(os.path.realpath(__file__).split(os.sep)[:-1]),
+#             'shuttle.trn',
+#         ),
+#         sep=' ',
+#     )
 #     df.columns = columns
 #     for feature in features:
 #         if np.min(df[feature]) < 0:
 #             df[feature] += np.min(df[feature]) * (-1)
 #     df = df[df['Class'] != 4]  # Data for class 4 is discarded.
-#     df['Class'] = df['Class'].map({1: 1, 2: 0, 3: 0, 5: 0, 6: 0, 7: 0})  # 2, 3, 5, 6, 7 are combined
+#     # 2, 3, 5, 6, 7 are combined
+#     df['Class'] = df['Class'].map({1: 1, 2: 0, 3: 0, 5: 0, 6: 0, 7: 0})
 #     df = df.reset_index(drop=True)
 #     return df, features, 'Class', 'shuttle'

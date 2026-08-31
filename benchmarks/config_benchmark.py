@@ -221,6 +221,8 @@ def run_from_config(
     if _load_plugins is None or _run_benchmarks is None:
         from cli import (
             load_plugins as _cli_load_plugins,
+        )
+        from cli import (
             run_benchmarks as _cli_run_benchmarks,
         )
 

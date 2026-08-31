@@ -8,26 +8,24 @@ dependencies until required to keep the package lightweight.
 from __future__ import annotations
 
 from importlib import import_module
-from typing import Any, ClassVar, Union
+from typing import Any, ClassVar
 
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
-
-from analytics.base import BaseDetector, coerce_tabular_2d
-from analytics.lof import LOF
-
+from sklearn.cluster import DBSCAN, KMeans
 from sklearn.covariance import EllipticEnvelope, EmpiricalCovariance
 from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
 from sklearn.mixture import GaussianMixture
-from sklearn.cluster import DBSCAN, KMeans
-from sklearn.neighbors import NearestNeighbors, LocalOutlierFactor, KernelDensity
+from sklearn.neighbors import KernelDensity, LocalOutlierFactor, NearestNeighbors
 from sklearn.svm import OneClassSVM
 
+from analytics.base import BaseDetector, coerce_tabular_2d
+from analytics.lof import LOF
 
 ArrayLike = NDArray[np.floating[Any]]
-FrameOrArray = Union[pd.DataFrame, ArrayLike]
+type FrameOrArray = pd.DataFrame | ArrayLike
 ScoreArray = NDArray[np.floating[Any]]
 
 

@@ -7,7 +7,6 @@ import pytest
 
 from analytics.detectors import deep
 
-
 torch = pytest.importorskip(
     "torch", reason="PyTorch is required for deep detector tests"
 )

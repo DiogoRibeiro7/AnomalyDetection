@@ -2,7 +2,7 @@ import pytest
 
 pytest.importorskip("networkx")
 
-from cli import run_benchmarks, load_plugins, summarize_datasets
+from cli import load_plugins, run_benchmarks, summarize_datasets
 
 
 def test_run_benchmarks_subset():

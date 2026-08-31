@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Sequence, Union
+from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -10,13 +11,12 @@ from numpy.typing import NDArray
 
 from analytics.base import BaseDetector
 
-
-ArrayLike = Union[
-    pd.DataFrame,
-    Sequence[float],
-    Sequence[Sequence[float]],
-    NDArray[np.floating[Any]],
-]
+type ArrayLike = (
+    pd.DataFrame
+    | Sequence[float]
+    | Sequence[Sequence[float]]
+    | NDArray[np.floating[Any]]
+)
 ScoreArray = NDArray[np.floating[Any]]
 
 
@@ -70,7 +70,7 @@ class ARIMADetector(BaseDetector):
         X = _ensure_series_matrix(data)
         _validate_series_count(self.models, X, self.get_name())
         scores = []
-        for series, model in zip(X, self.models):
+        for series, model in zip(X, self.models, strict=True):
             pred = model.predict(start=0, end=len(series) - 1)
             resid = np.abs(series - pred)
             scores.append(resid.mean())
@@ -105,7 +105,7 @@ class ProphetDetector(BaseDetector):
         X = _ensure_series_matrix(data)
         _validate_series_count(self.models, X, self.get_name())
         scores = []
-        for series, model in zip(X, self.models):
+        for series, model in zip(X, self.models, strict=True):
             df = pd.DataFrame(
                 {
                     "ds": pd.date_range(start="2000", periods=len(series), freq="D"),

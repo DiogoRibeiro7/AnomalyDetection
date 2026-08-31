@@ -4,10 +4,10 @@ pytest.importorskip("networkx")
 
 from benchmarks.load_datasets import (
     load_cardio,
-    load_iris,
     load_digits,
-    load_lympho,
+    load_iris,
     load_karate_club_graph,
+    load_lympho,
 )
 
 

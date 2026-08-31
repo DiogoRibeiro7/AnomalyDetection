@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from analytics.preprocessing import PreprocessingPipeline
 from analytics.detectors.classical import IsolationForestDetector
+from analytics.preprocessing import PreprocessingPipeline
 
 
 def test_preprocessing_pipeline_handles_missing_values_and_categories() -> None:

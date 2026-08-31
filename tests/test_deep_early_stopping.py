@@ -34,7 +34,7 @@ def test_early_stopping_restores_best_weights(tmp_path: Path) -> None:
 
     stopper.restore(model)
 
-    for param, expected in zip(model.parameters(), expected_weights):
+    for param, expected in zip(model.parameters(), expected_weights, strict=True):
         assert torch.allclose(param, expected)
 
     assert (tmp_path / "ckpt.pt").exists()

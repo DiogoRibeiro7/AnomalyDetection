@@ -10,17 +10,16 @@ import pandas as pd
 import pytest
 
 from analytics.base import BaseDetector
-
 from analytics.detectors.classical import (
     ABODDetector,
     COPODDetector,
+    FeatureBaggingDetector,
     HBOSDetector,
     IsolationForestDetector,
     KNNDetector,
     LODADetector,
     OneClassSVMDetector,
     PCAReconstructionDetector,
-    FeatureBaggingDetector,
 )
 
 

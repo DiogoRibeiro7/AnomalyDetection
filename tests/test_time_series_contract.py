@@ -130,7 +130,9 @@ def test_window_scores_expose_point_label_indices(
 
 
 def test_transformer_positional_encoding_distinguishes_time_steps() -> None:
-    torch = pytest.importorskip("torch", reason="PyTorch is required for temporal models")
+    torch = pytest.importorskip(
+        "torch", reason="PyTorch is required for temporal models"
+    )
 
     encoding = _sinusoidal_position_encoding(
         torch,
@@ -147,7 +149,9 @@ def test_transformer_positional_encoding_distinguishes_time_steps() -> None:
 
 
 def test_transformer_scoring_is_deterministic_in_eval_mode() -> None:
-    torch = pytest.importorskip("torch", reason="PyTorch is required for temporal models")
+    torch = pytest.importorskip(
+        "torch", reason="PyTorch is required for temporal models"
+    )
     torch.manual_seed(17)
     rng = np.random.default_rng(17)
     rows_are_series = rng.normal(size=(8, 6)).astype(np.float32)

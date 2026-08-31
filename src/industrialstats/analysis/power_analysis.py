@@ -8,8 +8,9 @@ validation helpers used across the industrial statistics toolchain.
 from __future__ import annotations
 
 import math
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Literal, Mapping, MutableMapping, Sequence
+from typing import Any, Literal
 
 import pandas as pd
 from scipy import stats
@@ -198,7 +199,7 @@ def factorial_power(
     )
 
 
-_METHOD_REGISTRY: Dict[str, Callable[..., float]] = {
+_METHOD_REGISTRY: dict[str, Callable[..., float]] = {
     "t_test_power": t_test_power,
     "anova_power": anova_power,
     "factorial_power": factorial_power,

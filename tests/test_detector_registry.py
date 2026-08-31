@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from analytics.detectors import registry
 from analytics.base import BaseDetector
+from analytics.detectors import registry
 
 
 class DummyDetector:

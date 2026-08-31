@@ -75,6 +75,16 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
+[tool.ruff.lint.per-file-ignores]
+# Each of these modules must run a guard before the imports it protects:
+# a module-level pytest.skip, pytest.importorskip, or
+# ensure_supported_python() that turns an unsupported interpreter into a
+# clear message instead of an incidental ImportError.
+"analytics/benchmark_test.py" = ["E402"]
+"benchmarks/load_datasets.py" = ["E402"]
+"cli.py" = ["E402"]
+"tests/test_deep_early_stopping.py" = ["E402"]
+
 [tool.mypy]
 python_version = "3.12"
 ignore_missing_imports = true
