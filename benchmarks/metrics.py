@@ -102,6 +102,23 @@ def canonicalize_anomaly_scores(scores: Any) -> NDArray[np.floating[Any]]:
     raise ValueError(f"Unknown score orientation: {orientation!r}.")
 
 
+def _align_labels_to_scores(y_true: Any, scores: Any) -> NDArray[Any]:
+    labels = np.asarray(y_true)
+    label_indices = getattr(scores, "label_indices", None)
+    if label_indices is not None:
+        indices = np.asarray(label_indices, dtype=int)
+        if labels.ndim != 1:
+            raise ValueError("Window-aligned benchmark labels must be one-dimensional")
+        if np.any(indices < 0) or np.any(indices >= labels.shape[0]):
+            raise ValueError("Window score label indices fall outside the label vector")
+        labels = labels[indices]
+    if labels.shape[0] != np.asarray(scores).shape[0]:
+        raise ValueError(
+            "Benchmark labels and anomaly scores must have equal length after alignment"
+        )
+    return labels
+
+
 def evaluate_metrics(
     y_true: Any,
     scores: Any,
@@ -112,7 +129,7 @@ def evaluate_metrics(
     """Evaluate configured benchmark metrics using canonical anomaly scores."""
 
     metric_config = config or resolve_metric_config()
-    labels = np.asarray(y_true)
+    labels = _align_labels_to_scores(y_true, scores)
     score_array = canonicalize_anomaly_scores(scores)
     positive = _positive_mask(labels, metric_config.positive_label)
     values: dict[str, float | None] = {}
