@@ -8,14 +8,14 @@ import platform
 import random
 import sys
 import tomllib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from importlib import metadata
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
-from benchmarks.catalog import load_catalog, list_available_datasets
+from benchmarks.catalog import list_available_datasets, load_catalog
 
 
 REPORT_SCHEMA_VERSION = "benchmark-report-v1"
@@ -40,7 +40,7 @@ SEED_PARAMETER_BY_DETECTOR = {
 def utc_timestamp() -> str:
     """Return an ISO-8601 UTC timestamp."""
 
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
 def canonical_json(value: Any) -> str:
