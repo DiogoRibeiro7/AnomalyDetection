@@ -76,6 +76,10 @@ def resolve_metric_config(config: Any = None) -> MetricConfig:
     raise ValueError("metrics must be a string, list, mapping, or null.")
 
 
+DEFAULT_SCORE_ORIENTATION = "higher_is_more_anomalous"
+"""Orientation applied to scores that carry no orientation metadata."""
+
+
 def canonicalize_anomaly_scores(scores: Any) -> NDArray[np.floating[Any]]:
     """Return scores where larger values consistently mean more anomalous.
 
@@ -86,7 +90,7 @@ def canonicalize_anomaly_scores(scores: Any) -> NDArray[np.floating[Any]]:
     metrics.
     """
 
-    orientation = getattr(scores, "score_orientation", "higher_is_more_anomalous")
+    orientation = getattr(scores, "score_orientation", DEFAULT_SCORE_ORIENTATION)
     score_array = np.asarray(scores, dtype=float)
     if orientation == "higher_is_more_anomalous":
         return score_array

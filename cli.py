@@ -29,7 +29,12 @@ from analytics.detectors import (
 )
 from benchmarks.catalog import resolve_dataset_names
 from benchmarks.load_all_datasets import load_all_datasets
-from benchmarks.metrics import MetricConfig, evaluate_metrics, resolve_metric_config
+from benchmarks.metrics import (
+    DEFAULT_SCORE_ORIENTATION,
+    MetricConfig,
+    evaluate_metrics,
+    resolve_metric_config,
+)
 from benchmarks.reproducibility import (
     apply_seed_to_detector_entries,
     benchmark_config_hash,
@@ -251,6 +256,19 @@ def _resolve_detector_entries(selection):
     return []
 
 
+def _evaluated_score_orientation(scores) -> str:
+    """Return the orientation benchmark evaluation actually applies to *scores*.
+
+    ``BaseDetector.detect_anomalies`` returns ``OrientedScores`` carrying the
+    detector's own orientation. A detector that overrides it may return a plain
+    array, which is evaluated as ``DEFAULT_SCORE_ORIENTATION``. Reporting the
+    class attribute in that case would disagree with how the metrics were
+    computed, so the applied orientation is what gets recorded.
+    """
+
+    return getattr(scores, "score_orientation", DEFAULT_SCORE_ORIENTATION)
+
+
 def _classify_failure(exc: Exception | None) -> str:
     if exc is None:
         return ""
@@ -278,9 +296,9 @@ def _result_rows(
     for dataset_spec in datasets_to_run:
         dataset_name = dataset_spec["name"]
         dataset_key = dataset_spec.get("key") or dataset_name
-        for det_spec in detector_entries:
+        for entry_index, det_spec in enumerate(detector_entries):
             label = det_spec.get("label") or det_spec["name"]
-            outcome = results.get(dataset_name, {}).get(label)
+            outcome = results.get(dataset_name, {}).get(entry_index)
             if not outcome:
                 continue
             params = det_spec.get("params") or {}
@@ -429,7 +447,7 @@ def run_benchmarks(
 
     results = {ds["name"]: {} for ds in datasets_to_run}
 
-    def _evaluate(dataset_spec, det_spec):
+    def _evaluate(dataset_spec, det_spec, entry_index):
         name = dataset_spec["name"]
         df = dataset_spec["dataframe"]
         features = dataset_spec["feature_cols"]
@@ -453,6 +471,7 @@ def run_benchmarks(
             else:
                 scores = detector.detect_anomalies(df, **fit_params)
                 y_true = [data[labels] for _, data in df.nodes(data=True)]
+            evaluated_orientation = _evaluated_score_orientation(scores)
             runtime_seconds = round(time.perf_counter() - started, 6)
             metric_values = evaluate_metrics(
                 y_true,
@@ -464,18 +483,20 @@ def run_benchmarks(
             return (
                 name,
                 det_spec,
+                entry_index,
                 auc,
                 metric_values,
                 None,
                 "",
                 runtime_seconds,
-                score_orientation,
+                evaluated_orientation,
             )
         except Exception as exc:  # pragma: no cover - benchmarking utility
             runtime_seconds = round(time.perf_counter() - started, 6)
             return (
                 name,
                 det_spec,
+                entry_index,
                 None,
                 {},
                 str(exc),
@@ -486,14 +507,15 @@ def run_benchmarks(
 
     with ThreadPoolExecutor(max_workers=worker_count) as executor:
         futures = [
-            executor.submit(_evaluate, dataset_spec, det_spec)
+            executor.submit(_evaluate, dataset_spec, det_spec, entry_index)
             for dataset_spec in datasets_to_run
-            for det_spec in detector_entries
+            for entry_index, det_spec in enumerate(detector_entries)
         ]
         for future in as_completed(futures):
             (
                 dataset_name,
                 det_spec,
+                entry_index,
                 auc,
                 metric_values,
                 error,
@@ -501,8 +523,7 @@ def run_benchmarks(
                 runtime_seconds,
                 score_orientation,
             ) = future.result()
-            key = det_spec.get("label") or det_spec["name"]
-            results[dataset_name][key] = {
+            results[dataset_name][entry_index] = {
                 "auc": auc,
                 "metrics": metric_values,
                 "error": error,
@@ -516,9 +537,9 @@ def run_benchmarks(
         name = dataset_spec["name"]
         print(f"Dataset: {name}")
         dataset_results = results.get(name, {})
-        for det_spec in detector_entries:
+        for entry_index, det_spec in enumerate(detector_entries):
             label = det_spec.get("label") or det_spec["name"]
-            outcome = dataset_results.get(label)
+            outcome = dataset_results.get(entry_index)
             if not outcome:
                 print(f"  {label}: skipped (not evaluated)")
                 continue

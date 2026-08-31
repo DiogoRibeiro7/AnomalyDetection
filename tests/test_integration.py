@@ -360,3 +360,56 @@ def test_config_supports_defaults_and_labels(
     assert row["detector_label"] == "scaled_stub"
     assert row["detector_params"] == '{"scale": 2.0}'
     assert row["auc"] == "1.0"
+
+
+def test_duplicate_detector_entries_keep_separate_results(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Two entries for one detector must report their own results.
+
+    Results used to be keyed by label, so a second entry for the same
+    detector overwrote the first and every row reported the last result
+    stored.
+    """
+
+    dataset = _mock_dataset()
+    _patch_dataset_loader(monkeypatch, dataset)
+
+    recorded_scales: list[float] = []
+    _install_param_detector(monkeypatch, recorded_scales)
+
+    config_path = tmp_path / "config.yaml"
+    leaderboard_path = tmp_path / "leaderboard.csv"
+    config_path.write_text(
+        "leaderboard: " + str(leaderboard_path) + "\n"
+        "n_jobs: 1\n"
+        "datasets:\n"
+        "  - mock_dataset\n"
+        "detectors:\n"
+        "  - name: param_stub\n"
+        "    params:\n"
+        "      scale: 1.0\n"
+        "  - name: param_stub\n"
+        "    params:\n"
+        "      scale: -1.0\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(sys, "argv", ["cli.py", "--config", str(config_path)])
+    cli.main()
+    capsys.readouterr()
+
+    assert sorted(recorded_scales) == [-1.0, 1.0]
+
+    with leaderboard_path.open("r", encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+
+    assert len(rows) == 2
+    assert {row["detector_params"] for row in rows} == {
+        '{"scale": 1.0}',
+        '{"scale": -1.0}',
+    }
+    # Negating the scores inverts the ranking, so the two AUCs must differ.
+    assert rows[0]["auc"] != rows[1]["auc"]

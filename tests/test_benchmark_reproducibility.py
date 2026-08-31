@@ -132,7 +132,9 @@ def test_run_benchmarks_writes_manifest_report_and_enriched_leaderboard(
     assert result_row["random_seed"] == 123
     assert result_row["runtime_seconds"] >= 0
     assert result_row["failure_category"] == ""
-    assert result_row["score_orientation"] == "estimator_defined"
+    # The stub returns a plain array, so evaluation applies the default
+    # orientation and the report records the one actually used.
+    assert result_row["score_orientation"] == "higher_is_more_anomalous"
     assert result_row["metrics"]["roc_auc"] == 1.0
     assert result_row["metrics"]["average_precision"] == 1.0
     assert result_row["metrics"]["runtime"] >= 0
@@ -150,5 +152,5 @@ def test_run_benchmarks_writes_manifest_report_and_enriched_leaderboard(
     assert csv_rows[0]["config_hash"] == manifest["config_hash"]
     assert csv_rows[0]["random_seed"] == "123"
     assert csv_rows[0]["failure_category"] == ""
-    assert csv_rows[0]["score_orientation"] == "estimator_defined"
+    assert csv_rows[0]["score_orientation"] == "higher_is_more_anomalous"
     assert '"average_precision": 1.0' in csv_rows[0]["metrics"]
