@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from analytics.detectors.registry import get_detector_class
+from analytics.detectors.temporal import _sinusoidal_position_encoding
 from analytics.time_series import (
     WindowSpec,
     align_point_labels,
@@ -126,3 +127,42 @@ def test_window_scores_expose_point_label_indices(
         window_label_indices(len(point_stream), spec),
     )
     assert scores.window_spec == spec.as_dict()
+
+
+def test_transformer_positional_encoding_distinguishes_time_steps() -> None:
+    torch = pytest.importorskip("torch", reason="PyTorch is required for temporal models")
+
+    encoding = _sinusoidal_position_encoding(
+        torch,
+        length=5,
+        width=5,
+        device=torch.device("cpu"),
+        dtype=torch.float32,
+    )
+
+    assert tuple(encoding.shape) == (1, 5, 5)
+    assert torch.isfinite(encoding).all()
+    assert not torch.allclose(encoding[:, 0, :], encoding[:, 1, :])
+    assert not torch.allclose(encoding[:, 1, :], encoding[:, 4, :])
+
+
+def test_transformer_scoring_is_deterministic_in_eval_mode() -> None:
+    torch = pytest.importorskip("torch", reason="PyTorch is required for temporal models")
+    torch.manual_seed(17)
+    rng = np.random.default_rng(17)
+    rows_are_series = rng.normal(size=(8, 6)).astype(np.float32)
+    detector_cls = get_detector_class("transformer")
+    detector = detector_cls()
+
+    detector.fit(
+        rows_are_series,
+        epochs=1,
+        d_model=4,
+        nhead=2,
+        validation_split=0.25,
+        patience=1,
+    )
+
+    first = detector.score(rows_are_series)
+    second = detector.score(rows_are_series)
+    np.testing.assert_allclose(first, second, rtol=0.0, atol=0.0)
