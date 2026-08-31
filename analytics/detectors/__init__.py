@@ -67,9 +67,9 @@ register_detector(
     "variational_autoencoder", "analytics.detectors.deep:VariationalAutoencoderDetector"
 )
 register_detector(
-    "lstm_autoencoder", "analytics.detectors.deep:LSTMAutoencoderDetector"
+    "lstm_autoencoder", "analytics.detectors.temporal:LSTMAutoencoderDetector"
 )
-register_detector("transformer", "analytics.detectors.deep:TransformerDetector")
+register_detector("transformer", "analytics.detectors.temporal:TransformerDetector")
 register_detector("anogan", "analytics.detectors.deep:AnoGANDetector")
 register_detector("madgan", "analytics.detectors.deep:MADGANDetector")
 
