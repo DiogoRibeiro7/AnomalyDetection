@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Sequence, Union
+from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -10,8 +11,7 @@ from numpy.typing import NDArray
 
 from analytics.base import BaseDetector
 
-
-ArrayLike = Union[pd.DataFrame, Sequence[Sequence[float]], NDArray[np.floating[Any]]]
+type ArrayLike = pd.DataFrame | Sequence[Sequence[float]] | NDArray[np.floating[Any]]
 RowDict = dict[str | int, float]
 
 

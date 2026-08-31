@@ -3,21 +3,20 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.ensemble import IsolationForest
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
 
 from analytics.base import BaseDetector, coerce_tabular_2d
 
-
 ArrayLike = NDArray[np.floating[Any]]
-FrameOrArray = Union[pd.DataFrame, ArrayLike]
+type FrameOrArray = pd.DataFrame | ArrayLike
 ScoreArray = NDArray[np.floating[Any]]
 
 

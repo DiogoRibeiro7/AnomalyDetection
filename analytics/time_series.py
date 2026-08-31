@@ -120,8 +120,7 @@ def coerce_sequence_batch(
             "Time series is too short for the requested window_length and horizon"
         )
     windows = [
-        array[start : start + window_spec.window_length]
-        for start in starts.tolist()
+        array[start : start + window_spec.window_length] for start in starts.tolist()
     ]
     return np.stack(windows, axis=0)
 

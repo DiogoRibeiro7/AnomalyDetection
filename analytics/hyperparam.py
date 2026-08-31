@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, Tuple
+from collections.abc import Iterable
 
 import numpy as np
 from sklearn.metrics import roc_auc_score
@@ -13,7 +13,7 @@ from analytics.detectors import get_detector_class
 
 def grid_search(
     detector_name: str,
-    param_grid: Dict[str, Iterable],
+    param_grid: dict[str, Iterable],
     X,
     y,
     cv: int = 3,
@@ -38,7 +38,7 @@ def grid_search(
         Best parameter set and corresponding mean ROC-AUC score.
     """
 
-    best_params: Dict[str, object] | None = None
+    best_params: dict[str, object] | None = None
     best_score = -np.inf
     DetectorClass = get_detector_class(detector_name)
     splitter = StratifiedKFold(n_splits=cv, shuffle=True, random_state=0)

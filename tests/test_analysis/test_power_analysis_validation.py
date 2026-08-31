@@ -7,7 +7,8 @@ from itertools import product
 
 import numpy as np
 import pytest
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 from scipy import stats
 
 from industrialstats.analysis.power_analysis import (

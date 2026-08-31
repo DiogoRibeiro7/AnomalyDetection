@@ -18,7 +18,7 @@ jobs:
       - run: poetry install --no-interaction
       - run: poetry run pip install ruff mypy pytest-cov
       - name: Ruff
-        run: poetry run ruff check analytics/base.py analytics/time_series.py analytics/detectors/registry.py analytics/detectors/correctness.py analytics/detectors/temporal.py benchmarks/metrics.py benchmarks/load_all_datasets.py benchmarks/reproducibility.py analytics/detectors/deep.py analytics/preprocessing.py benchmarks/catalog.py tests/test_benchmark_metric_contract.py tests/test_dataset_label_contract.py tests/test_correctness_regressions.py tests/test_time_series_contract.py tests/test_point_stream_contract.py
+        run: poetry run ruff check .
       - name: Mypy
         run: poetry run mypy analytics/base.py analytics/time_series.py analytics/detectors/registry.py analytics/detectors/correctness.py analytics/detectors/temporal.py benchmarks/metrics.py benchmarks/load_all_datasets.py benchmarks/reproducibility.py analytics/detectors/deep.py analytics/preprocessing.py benchmarks/catalog.py
       - name: Coverage

@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf8 -*-
 """
 lof
 ~~~~~~~~~~~~
@@ -10,7 +9,7 @@ This module implements the Local Outlier Factor algorithm.
 :license: GNU GPL v2, see LICENSE for more details.
 
 """
-from __future__ import division
+
 import warnings
 from collections import OrderedDict
 from threading import RLock
@@ -64,7 +63,9 @@ def _make_hashable(instance):
 
 
 def distance_euclidean(instance1, instance2):
-    """Computes the distance between two instances. Instances should be tuples of equal length.
+    """Computes the distance between two instances.
+
+    Instances should be tuples of equal length.
     Returns: Euclidean distance
     Signature: ((attr_1_1, attr_1_2, ...), (attr_2_1, attr_2_2, ...)) -> float"""
     normalized_instance1 = _make_hashable(instance1)
@@ -98,7 +99,7 @@ def distance_euclidean(instance1, instance2):
     # init differences vector
     differences = [0] * len(instance1)
     # compute difference for each attribute and store it to differences vector
-    for i, (attr1, attr2) in enumerate(zip(instance1, instance2)):
+    for i, (attr1, attr2) in enumerate(zip(instance1, instance2, strict=True)):
         type1, attr1 = detect_value_type(attr1)
         type2, attr2 = detect_value_type(attr2)
         # raise error is attributes are not of same data type.
@@ -146,21 +147,27 @@ class LOF:
                 map(lambda x, y: max(x, y), max_values, instance)
             )  # n.maximum(max_values, instance)
 
-        diff = [dim_max - dim_min for dim_max, dim_min in zip(max_values, min_values)]
+        diff = [
+            dim_max - dim_min
+            for dim_max, dim_min in zip(max_values, min_values, strict=True)
+        ]
         if not all(diff):
             problematic_dimensions = ", ".join(
                 str(i + 1) for i, v in enumerate(diff) if v == 0
             )
             warnings.warn(
-                "No data variation in dimensions: %s. You should check your data or disable normalization."
-                % problematic_dimensions
+                "No data variation in dimensions: "
+                f"{problematic_dimensions}. You should check your data "
+                "or disable normalization.",
+                stacklevel=2,
             )
 
         self.max_attribute_values = max_values
         self.min_attribute_values = min_values
 
     def normalize_instances(self):
-        """Normalizes the instances and stores the infromation for rescaling new instances."""
+        """Normalizes the instances and stores the infromation for rescaling
+        new instances."""
         if not hasattr(self, "max_attribute_values"):
             self.compute_instance_attribute_bounds()
         new_instances = []
@@ -183,10 +190,15 @@ class LOF:
         )
 
     def local_outlier_factor(self, min_pts, instance):
-        """The (local) outlier factor of instance captures the degree to which we call instance an outlier.
-        min_pts is a parameter that is specifying a minimum number of instances to consider for computing LOF value.
+        """The (local) outlier factor of instance captures the degree to which
+        we call instance an outlier.
+
+        min_pts is a parameter that is specifying a minimum number of instances
+        to consider for computing LOF value.
         Returns: local outlier factor
-        Signature: (int, (attr1, attr2, ...), ((attr_1_1, ...),(attr_2_1, ...), ...)) -> float
+        Signature:
+            (int, (attr1, attr2, ...), ((attr_1_1, ...),(attr_2_1, ...), ...))
+            -> float
         """
         if self.normalize:
             instance = self.normalize_instance(instance)
@@ -222,7 +234,7 @@ def reachability_distance(
     """The reachability distance of instance1 with respect to instance2.
     Returns: reachability distance
     Signature: (int, (attr_1_1, ...),(attr_2_1, ...)) -> float"""
-    (k_distance_value, neighbours) = k_distance(
+    k_distance_value, neighbours = k_distance(
         k, instance2, instances, distance_function=distance_function
     )
     return max([k_distance_value, distance_function(instance1, instance2)])
@@ -232,9 +244,11 @@ def local_reachability_density(min_pts, instance, instances, **kwargs):
     """Local reachability density of instance is the inverse of the average reachability
     distance based on the min_pts-nearest neighbors of instance.
     Returns: local reachability density
-    Signature: (int, (attr1, attr2, ...), ((attr_1_1, ...),(attr_2_1, ...), ...)) -> float
+    Signature:
+        (int, (attr1, attr2, ...), ((attr_1_1, ...),(attr_2_1, ...), ...))
+        -> float
     """
-    (k_distance_value, neighbours) = k_distance(min_pts, instance, instances, **kwargs)
+    k_distance_value, neighbours = k_distance(min_pts, instance, instances, **kwargs)
     reachability_distances_array = [0] * len(neighbours)  # n.zeros(len(neighbours))
     for i, neighbour in enumerate(neighbours):
         reachability_distances_array[i] = reachability_distance(
@@ -242,8 +256,9 @@ def local_reachability_density(min_pts, instance, instances, **kwargs):
         )
     if not any(reachability_distances_array):
         warnings.warn(
-            "Instance %s (could be normalized) is identical to all the neighbors. Setting local reachability density to inf."
-            % repr(instance)
+            f"Instance {instance!r} (could be normalized) is identical to all "
+            "the neighbors. Setting local reachability density to inf.",
+            stacklevel=2,
         )
         return float("inf")
     else:
@@ -251,12 +266,17 @@ def local_reachability_density(min_pts, instance, instances, **kwargs):
 
 
 def local_outlier_factor(min_pts, instance, instances, **kwargs):
-    """The (local) outlier factor of instance captures the degree to which we call instance an outlier.
-    min_pts is a parameter that is specifying a minimum number of instances to consider for computing LOF value.
+    """The (local) outlier factor of instance captures the degree to which we
+    call instance an outlier.
+
+    min_pts is a parameter that is specifying a minimum number of instances to
+    consider for computing LOF value.
     Returns: local outlier factor
-    Signature: (int, (attr1, attr2, ...), ((attr_1_1, ...),(attr_2_1, ...), ...)) -> float
+    Signature:
+        (int, (attr1, attr2, ...), ((attr_1_1, ...),(attr_2_1, ...), ...))
+        -> float
     """
-    (k_distance_value, neighbours) = k_distance(min_pts, instance, instances, **kwargs)
+    k_distance_value, neighbours = k_distance(min_pts, instance, instances, **kwargs)
     instance_lrd = local_reachability_density(min_pts, instance, instances, **kwargs)
     lrd_ratios_array = [0] * len(neighbours)
     for i, neighbour in enumerate(neighbours):
@@ -276,8 +296,8 @@ def outliers(k, instances, **kwargs):
     for i, instance in enumerate(instances_value_backup):
         instances = list(instances_value_backup)
         instances.remove(instance)
-        l = LOF(instances, **kwargs)
-        value = l.local_outlier_factor(k, instance)
+        lof = LOF(instances, **kwargs)
+        value = lof.local_outlier_factor(k, instance)
         if value > 1:
             outliers.append({"lof": value, "instance": instance, "index": i})
     outliers.sort(key=lambda o: o["lof"], reverse=True)

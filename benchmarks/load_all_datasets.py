@@ -42,9 +42,9 @@ def _canonicalize_anomaly_label(
                 f"present in dataset labels {sorted(labels, key=str)!r}."
             )
         canonical = data.copy()
-        canonical[label_col] = (
-            canonical[label_col] == source_anomaly_label
-        ).astype(int)
+        canonical[label_col] = (canonical[label_col] == source_anomaly_label).astype(
+            int
+        )
         return canonical
 
     if isinstance(data, nx.Graph):
@@ -61,8 +61,7 @@ def _canonicalize_anomaly_label(
             )
         canonical = data.copy()
         canonical_labels = {
-            node: int(value == source_anomaly_label)
-            for node, value in labels.items()
+            node: int(value == source_anomaly_label) for node, value in labels.items()
         }
         nx.set_node_attributes(canonical, canonical_labels, label_col)
         return canonical

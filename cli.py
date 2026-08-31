@@ -4,6 +4,7 @@
 Use ``--summary`` to display information about the available datasets instead
 of running the detectors.
 """
+
 import argparse
 import csv
 import json
@@ -19,9 +20,13 @@ from analytics.runtime import ensure_supported_python
 
 ensure_supported_python()
 
-import pandas as pd
 import networkx as nx
+import pandas as pd
 
+from analytics.detectors import (
+    DETECTOR_REGISTRY,
+    get_detector_class,
+)
 from benchmarks.catalog import resolve_dataset_names
 from benchmarks.load_all_datasets import load_all_datasets
 from benchmarks.metrics import MetricConfig, evaluate_metrics, resolve_metric_config
@@ -36,11 +41,6 @@ from benchmarks.reproducibility import (
     utc_timestamp,
     write_json,
 )
-from analytics.detectors import (
-    DETECTOR_REGISTRY,
-    get_detector_class,
-)
-
 
 logger = logging.getLogger(__name__)
 LEADERBOARD_HEADER = [
@@ -119,7 +119,8 @@ def load_plugins(modules):
     for mod in modules:
         if not mod.startswith(ALLOWED_PLUGIN_PREFIX):
             raise ValueError(
-                f"Plugin '{mod}' is not allowed; must start with '{ALLOWED_PLUGIN_PREFIX}'"
+                f"Plugin '{mod}' is not allowed; "
+                f"must start with '{ALLOWED_PLUGIN_PREFIX}'"
             )
         import_module(mod)
 
