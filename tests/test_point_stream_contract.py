@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 
 from analytics.base import OrientedScores
-from analytics.time_series import WindowSpec, WindowedScores
+from analytics.time_series import WindowedScores, WindowSpec
 from benchmarks.metrics import MetricConfig, evaluate_metrics
 from benchmarks.reproducibility import build_manifest
 
