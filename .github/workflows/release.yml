@@ -64,6 +64,38 @@ jobs:
       - name: Validate project metadata
         run: poetry check
 
+      - name: Validate citation metadata
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          poetry run python - <<'PY'
+          import json
+          import os
+          import sys
+
+          import yaml
+
+          version = os.environ["VERSION"]
+          zenodo = json.load(open(".zenodo.json", encoding="utf-8"))
+          citation = yaml.safe_load(open("CITATION.cff", encoding="utf-8"))
+
+          problems = []
+          if zenodo.get("version") != version:
+              problems.append(f".zenodo.json version is {zenodo.get('version')!r}, expected {version!r}")
+          if str(citation.get("version")) != version:
+              problems.append(f"CITATION.cff version is {citation.get('version')!r}, expected {version!r}")
+          if citation.get("title") != zenodo.get("title"):
+              problems.append("CITATION.cff title does not match .zenodo.json title")
+
+          if problems:
+              print("Citation metadata is stale; Zenodo would archive the wrong version.")
+              for problem in problems:
+                  print(f"- {problem}")
+              sys.exit(1)
+
+          print(f"Citation metadata is current for {version}.")
+          PY
+
       - name: Run tests
         run: poetry run python -m pytest -q
 
