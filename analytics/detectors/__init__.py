@@ -15,7 +15,9 @@ register_detector("sos", "analytics.detectors.classical:SOSDetector")
 register_detector("knn", "analytics.detectors.classical:KNNDetector")
 register_detector("hbos", "analytics.detectors.classical:HBOSDetector")
 register_detector("ocsvm", "analytics.detectors.classical:OneClassSVMDetector")
-register_detector("dbscan", "analytics.detectors.classical:DBSCANDetector")
+register_detector(
+    "dbscan", "analytics.detectors.correctness:InductiveDBSCANDetector"
+)
 register_detector(
     "elliptic_envelope", "analytics.detectors.classical:EllipticEnvelopeDetector"
 )
