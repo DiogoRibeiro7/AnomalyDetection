@@ -6,9 +6,12 @@ import networkx as nx
 import pandas as pd
 import pytest
 
-from benchmarks.catalog import get_dataset_metadata, list_available_datasets
+from benchmarks.catalog import (
+    get_dataset_functions,
+    get_dataset_metadata,
+    list_available_datasets,
+)
 from benchmarks.load_all_datasets import load_all_datasets
-
 
 EXPECTED_SOURCE_ANOMALY_LABELS: dict[str, int] = {
     "arrhythmia": 0,
@@ -57,13 +60,15 @@ def test_loaded_benchmarks_canonicalize_anomaly_class_to_one(dataset_key: str) -
 def test_cardio_raw_and_benchmark_labels_have_distinct_documented_semantics() -> None:
     """Pathological Cardio cases are raw 0 but canonical benchmark anomaly 1."""
 
-    from benchmarks.catalog import get_dataset_functions
-
     raw_loader = get_dataset_functions()["cardio"]
     raw_df, _, raw_label_col, _ = raw_loader()
     benchmark = load_all_datasets(["cardio"])[0]
     benchmark_df = benchmark["dataframe"]
 
     assert isinstance(benchmark_df, pd.DataFrame)
-    assert (raw_df[raw_label_col] == 0).sum() == (benchmark_df[raw_label_col] == 1).sum()
-    assert (raw_df[raw_label_col] == 1).sum() == (benchmark_df[raw_label_col] == 0).sum()
+    raw_anomalies = (raw_df[raw_label_col] == 0).sum()
+    raw_inliers = (raw_df[raw_label_col] == 1).sum()
+    benchmark_anomalies = (benchmark_df[raw_label_col] == 1).sum()
+    benchmark_inliers = (benchmark_df[raw_label_col] == 0).sum()
+    assert raw_anomalies == benchmark_anomalies
+    assert raw_inliers == benchmark_inliers

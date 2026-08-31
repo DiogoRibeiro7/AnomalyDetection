@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from importlib import import_module
-from typing import Type
 
 from analytics.base import BaseDetector
 
@@ -62,7 +61,7 @@ def register_detector(name: str, path: str, *, allow_override: bool = False) -> 
     DETECTOR_REGISTRY[name] = path
 
 
-def get_detector_class(name: str) -> Type[BaseDetector]:
+def get_detector_class(name: str) -> type[BaseDetector]:
     """Return the detector class associated with *name*."""
 
     if not dict.__contains__(DETECTOR_REGISTRY, name):

@@ -10,8 +10,8 @@ from numpy.typing import NDArray
 from sklearn.metrics import (
     average_precision_score,
     f1_score,
-    precision_score,
     precision_recall_curve,
+    precision_score,
     recall_score,
     roc_auc_score,
 )

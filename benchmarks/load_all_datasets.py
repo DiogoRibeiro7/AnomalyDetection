@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
-from typing import List
 
 import networkx as nx
 import pandas as pd
@@ -43,7 +42,9 @@ def _canonicalize_anomaly_label(
                 f"present in dataset labels {sorted(labels, key=str)!r}."
             )
         canonical = data.copy()
-        canonical[label_col] = (canonical[label_col] == source_anomaly_label).astype(int)
+        canonical[label_col] = (
+            canonical[label_col] == source_anomaly_label
+        ).astype(int)
         return canonical
 
     if isinstance(data, nx.Graph):
@@ -59,11 +60,11 @@ def _canonicalize_anomaly_label(
                 f"present in graph labels {sorted(observed, key=str)!r}."
             )
         canonical = data.copy()
-        nx.set_node_attributes(
-            canonical,
-            {node: int(value == source_anomaly_label) for node, value in labels.items()},
-            label_col,
-        )
+        canonical_labels = {
+            node: int(value == source_anomaly_label)
+            for node, value in labels.items()
+        }
+        nx.set_node_attributes(canonical, canonical_labels, label_col)
         return canonical
 
     raise TypeError(
@@ -72,7 +73,7 @@ def _canonicalize_anomaly_label(
     )
 
 
-def load_all_datasets(names: Sequence[str] | None = None) -> List[DatasetSpec]:
+def load_all_datasets(names: Sequence[str] | None = None) -> list[DatasetSpec]:
     """Load benchmark datasets by canonical name.
 
     Raw loaders may use historical label conventions. Dataset metadata declares
@@ -105,7 +106,7 @@ def load_all_datasets(names: Sequence[str] | None = None) -> List[DatasetSpec]:
             )
         selected = [(name, functions[name]) for name in names]
 
-    datasets: List[DatasetSpec] = []
+    datasets: list[DatasetSpec] = []
     for key, func in selected:
         data, feature_cols, label_col, display_name = func()
         metadata = get_dataset_metadata(key)
