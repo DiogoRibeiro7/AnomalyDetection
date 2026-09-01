@@ -81,3 +81,32 @@ def test_registered_detectors_declare_supported_score_orientation(
         detector_cls = registry.get_detector_class(detector_name)
         assert issubclass(detector_cls, BaseDetector)
         assert detector_cls.score_orientation in supported
+
+
+def test_legacy_detector_module_reexports_every_submodule() -> None:
+    """``analytics.detector`` must re-export all detector submodules.
+
+    The aggregator listed only five submodules, so the modern tabular
+    detectors and InductiveDBSCANDetector were unreachable through the
+    backwards-compatible import path it documents.
+    """
+
+    import importlib
+
+    from analytics import detector as legacy
+
+    exported = set(legacy.__all__)
+    for submodule in (
+        "classical",
+        "correctness",
+        "deep",
+        "forecasting",
+        "graph",
+        "modern_tabular",
+        "streaming",
+    ):
+        module = importlib.import_module(f"analytics.detectors.{submodule}")
+        missing = sorted(set(module.__all__) - exported)
+        assert not missing, f"{submodule} not re-exported: {missing}"
+        for name in module.__all__:
+            assert getattr(legacy, name) is getattr(module, name)

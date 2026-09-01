@@ -9,6 +9,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import ParameterGrid, StratifiedKFold
 
 from analytics.detectors import get_detector_class
+from benchmarks.metrics import canonicalize_anomaly_scores
 
 
 def grid_search(
@@ -36,6 +37,9 @@ def grid_search(
     -------
     tuple[dict, float]
         Best parameter set and corresponding mean ROC-AUC score.
+
+    Scores are canonicalised to ``higher_is_more_anomalous`` before scoring,
+    so detectors whose raw scores run the other way are ranked correctly.
     """
 
     best_params: dict[str, object] | None = None
@@ -47,7 +51,9 @@ def grid_search(
         for train_idx, test_idx in splitter.split(X, y):
             detector = DetectorClass()
             detector.fit(X.iloc[train_idx], **params)
-            scores = detector.score(X.iloc[test_idx])
+            scores = canonicalize_anomaly_scores(
+                detector.detect_anomalies(X.iloc[test_idx], **params)
+            )
             fold_scores.append(roc_auc_score(y.iloc[test_idx], scores))
         mean_score = float(np.mean(fold_scores))
         if mean_score > best_score:

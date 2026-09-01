@@ -6,12 +6,22 @@ module re-exports all detector classes for code that previously imported from
 """
 
 from .detectors import classical as _classical
+from .detectors import correctness as _correctness
 from .detectors import deep as _deep
 from .detectors import forecasting as _forecasting
 from .detectors import graph as _graph
+from .detectors import modern_tabular as _modern_tabular
 from .detectors import streaming as _streaming
 
-_MODULES = (_classical, _deep, _streaming, _graph, _forecasting)
+_MODULES = (
+    _classical,
+    _correctness,
+    _deep,
+    _forecasting,
+    _graph,
+    _modern_tabular,
+    _streaming,
+)
 
 __all__ = [name for module in _MODULES for name in module.__all__]
 
