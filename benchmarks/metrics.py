@@ -229,10 +229,19 @@ def _positive_mask(
 
 
 def _safe_metric(func) -> float | None:
+    """Return the metric value, or None when it is undefined.
+
+    scikit-learn reports some undefined metrics by raising and others by
+    returning NaN. Both mean "not computable", and NaN would otherwise reach
+    the JSON report as the bare literal ``NaN``, which strict JSON parsers
+    reject.
+    """
+
     try:
-        return float(func())
+        value = float(func())
     except ValueError:
         return None
+    return value if np.isfinite(value) else None
 
 
 def _effective_k(k: int | None, labels: NDArray[np.bool_]) -> int:
