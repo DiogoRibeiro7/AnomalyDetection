@@ -233,6 +233,7 @@ def generate_validation_report(
 
     records: list[MutableMapping[str, Any]] = []
     for entry in comparisons:
+        payload: dict[str, Any]
         if isinstance(entry, ValidationComparison):
             payload = {
                 "method": entry.method,

@@ -193,7 +193,7 @@ class ECODDetector(BaseDetector):
     upstream_provider = "pyod"
     upstream_module = "pyod.models.ecod.ECOD"
     upstream_version_range = ">=2.0"
-    preset_configs = {
+    preset_configs: dict[str, dict[str, Any]] = {
         "smoke": {},
         "balanced": {},
         "research": {},

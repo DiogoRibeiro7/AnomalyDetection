@@ -12,11 +12,11 @@ from sklearn.manifold import TSNE
 from sklearn.metrics import ConfusionMatrixDisplay, auc, confusion_matrix, roc_curve
 
 try:  # pragma: no cover - optional dependency
-    import umap  # type: ignore[import]
+    import umap
 
     _UMAP_AVAILABLE = True
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
-    umap = None  # type: ignore[assignment]
+    umap = None
     _UMAP_AVAILABLE = False
 
 
@@ -220,7 +220,7 @@ def visualize_embedding(
         if not _UMAP_AVAILABLE:  # pragma: no cover - exercised in tests
             raise ImportError("UMAP is not installed. Install umap-learn to use it.")
         reducer_kwargs.setdefault("random_state", 42)
-        reducer = umap.UMAP(n_components=2, **reducer_kwargs)  # type: ignore[operator]
+        reducer = umap.UMAP(n_components=2, **reducer_kwargs)
     else:
         raise ValueError("method must be either 'tsne' or 'umap'")
 

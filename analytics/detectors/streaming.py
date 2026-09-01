@@ -19,7 +19,8 @@ def _to_dicts(data: ArrayLike) -> list[RowDict]:
     if isinstance(data, pd.DataFrame):
         records = data.to_dict(orient="records")
         return [
-            {key: float(value) for key, value in record.items()} for record in records
+            {str(key): float(value) for key, value in record.items()}
+            for record in records
         ]
 
     if isinstance(data, np.ndarray):
