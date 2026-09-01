@@ -24,20 +24,20 @@ class DegreeCentralityDetector(BaseDetector):
     def get_name(self) -> str:
         return "Degree Centrality"
 
-    def fit(self, graph: nx.Graph, **params: Any) -> DegreeCentralityDetector:
+    def fit(self, data: nx.Graph, **params: Any) -> DegreeCentralityDetector:
         import networkx as nx
 
-        centrality = nx.degree_centrality(graph)
+        centrality = nx.degree_centrality(data)
         values = np.array(list(centrality.values()), dtype=float).reshape(-1, 1)
         from sklearn.preprocessing import StandardScaler
 
         self.scaler = StandardScaler().fit(values)
         return self
 
-    def score(self, graph: nx.Graph) -> ScoreArray:
+    def score(self, data: nx.Graph) -> ScoreArray:
         import networkx as nx
 
-        centrality = nx.degree_centrality(graph)
+        centrality = nx.degree_centrality(data)
         values = np.array(list(centrality.values()), dtype=float).reshape(-1, 1)
         z = np.abs(self.scaler.transform(values))
         return np.asarray(z.ravel(), dtype=float)
@@ -60,16 +60,16 @@ class GraphIsolationForestDetector(BaseDetector):
             [[degrees[n], clustering[n]] for n in graph.nodes()], dtype=float
         )
 
-    def fit(self, graph: nx.Graph, **params: Any) -> GraphIsolationForestDetector:
+    def fit(self, data: nx.Graph, **params: Any) -> GraphIsolationForestDetector:
         from sklearn.ensemble import IsolationForest
 
-        self.nodes = list(graph.nodes())
-        X = self._graph_features(graph)
+        self.nodes = list(data.nodes())
+        X = self._graph_features(data)
         self.model = IsolationForest(**params).fit(X)
         return self
 
-    def score(self, graph: nx.Graph) -> ScoreArray:
-        X = self._graph_features(graph)
+    def score(self, data: nx.Graph) -> ScoreArray:
+        X = self._graph_features(data)
         return np.asarray(self.model.decision_function(X), dtype=float)
 
 

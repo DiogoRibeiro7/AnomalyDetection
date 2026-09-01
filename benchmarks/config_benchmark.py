@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, NoReturn
 
 import yaml
 
@@ -12,7 +12,7 @@ class ConfigValidationError(ValueError):
     """Raised when a benchmark YAML configuration is invalid."""
 
 
-def _fail(path: str, expected: str, value: Any) -> None:
+def _fail(path: str, expected: str, value: Any) -> NoReturn:
     value_type = type(value).__name__
     raise ConfigValidationError(
         f"Invalid config at '{path}': expected {expected}, got {value_type}."

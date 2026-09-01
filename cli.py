@@ -15,6 +15,7 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from importlib import import_module
 from pathlib import Path
+from typing import Any
 
 from analytics.runtime import ensure_supported_python
 
@@ -87,7 +88,7 @@ def summarize_datasets(datasets=None):
         if isinstance(df, pd.DataFrame):
             counts = df[labels].value_counts().to_dict()
             print(f"  samples: {len(df)}")
-            print(f"  features: {len(features)}")
+            print(f"  features: {len(features or [])}")
             print(f"  label distribution: {counts}")
         else:
             counts = Counter(nx.get_node_attributes(df, labels).values())
@@ -95,8 +96,8 @@ def summarize_datasets(datasets=None):
             print(f"  edges: {df.number_of_edges()}")
             print(f"  label distribution: {dict(counts)}")
         tags = metadata.get("tags")
-        if tags:
-            print(f"  tags: {', '.join(tags)}")
+        if isinstance(tags, (list, tuple)) and tags:
+            print(f"  tags: {', '.join(str(tag) for tag in tags)}")
         source = metadata.get("source")
         if source:
             print(f"  source: {source}")
@@ -145,7 +146,7 @@ def _resolve_worker_count(total_tasks, requested):
 def _format_detector_display(entry: dict[str, object]) -> str:
     label = entry.get("label") or entry["name"]
     params = entry.get("params") or {}
-    if not params:
+    if not isinstance(params, dict) or not params:
         return str(label)
     param_bits = ", ".join(f"{key}={value}" for key, value in sorted(params.items()))
     return f"{label} ({param_bits})"
@@ -224,7 +225,9 @@ def _resolve_detector_entries(selection):
             if name not in DETECTOR_REGISTRY or name in excluded:
                 continue
             params = dict(default_params)
-            params.update(entry.get("params") or {})
+            entry_params = entry.get("params") or {}
+            if isinstance(entry_params, dict):
+                params.update(entry_params)
             resolved.append(
                 {
                     "name": name,
@@ -235,7 +238,7 @@ def _resolve_detector_entries(selection):
         return resolved
 
     if isinstance(selection, (list, tuple)):
-        resolved: list[dict[str, object]] = []
+        resolved = []
         for item in selection:
             resolved.extend(_resolve_detector_entries(item))
         return resolved
@@ -246,12 +249,12 @@ def _resolve_detector_entries(selection):
         return [{"name": selection, "params": {}, "label": selection}]
 
     if isinstance(selection, dict) and "name" in selection:
-        name = selection.get("name")
-        if name not in DETECTOR_REGISTRY:
+        selected_name = selection.get("name")
+        if selected_name not in DETECTOR_REGISTRY:
             return []
         params = dict(selection.get("params", {}))
-        label = selection.get("label") or name
-        return [{"name": name, "params": params, "label": label}]
+        label = selection.get("label") or selected_name
+        return [{"name": selected_name, "params": params, "label": label}]
 
     return []
 
@@ -445,7 +448,9 @@ def run_benchmarks(
     total_tasks = len(datasets_to_run) * len(detector_entries)
     worker_count = _resolve_worker_count(total_tasks, n_jobs)
 
-    results = {ds["name"]: {} for ds in datasets_to_run}
+    results: dict[Any, dict[int, dict[str, Any]]] = {
+        ds["name"]: {} for ds in datasets_to_run
+    }
 
     def _evaluate(dataset_spec, det_spec, entry_index):
         name = dataset_spec["name"]

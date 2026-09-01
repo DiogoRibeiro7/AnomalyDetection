@@ -20,6 +20,6 @@ jobs:
       - name: Ruff
         run: poetry run ruff check .
       - name: Mypy
-        run: poetry run mypy analytics/base.py analytics/time_series.py analytics/detectors/registry.py analytics/detectors/correctness.py analytics/detectors/temporal.py benchmarks/metrics.py benchmarks/load_all_datasets.py benchmarks/reproducibility.py analytics/detectors/deep.py analytics/preprocessing.py benchmarks/catalog.py
+        run: poetry run mypy analytics benchmarks src cli.py
       - name: Coverage
         run: poetry run pytest -q --cov=analytics --cov=benchmarks --cov-report=term-missing --cov-fail-under=50

@@ -13,6 +13,7 @@ This module implements the Local Outlier Factor algorithm.
 import warnings
 from collections import OrderedDict
 from threading import RLock
+from typing import Any
 
 
 class _LRUDistanceCache:
@@ -82,10 +83,10 @@ def distance_euclidean(instance1, instance2):
         """Detects the value type (number or non-number).
         Returns: (value type, value casted as detected type)
         Signature: value -> (str or float type, str or float value)"""
-        from numbers import Number
+        from numbers import Real
 
-        attribute_type = None
-        if isinstance(attribute, Number):
+        attribute_type: type
+        if isinstance(attribute, Real):
             attribute_type = float
             attribute = float(attribute)
         else:
@@ -140,10 +141,10 @@ class LOF:
             self.instances[0]
         )  # n.ones(len(self.instances[0])) * -1 * n.inf
         for instance in self.instances:
-            min_values = tuple(
+            min_values = list(
                 map(lambda x, y: min(x, y), min_values, instance)
             )  # n.minimum(min_values, instance)
-            max_values = tuple(
+            max_values = list(
                 map(lambda x, y: max(x, y), max_values, instance)
             )  # n.maximum(max_values, instance)
 
@@ -214,17 +215,22 @@ def k_distance(k, instance, instances, distance_function=distance_euclidean):
     Returns: (k-distance, k-distance neighbours)
     Signature: (int, (attr1, attr2, ...), ((attr_1_1, ...),(attr_2_1, ...), ...)) ->
         (float, ((attr_j_1, ...),(attr_k_1, ...), ...))"""
-    distances = {}
+    distances: dict[Any, list[Any]] = {}
     for instance2 in instances:
         distance_value = distance_function(instance, instance2)
         if distance_value in distances:
             distances[distance_value].append(instance2)
         else:
             distances[distance_value] = [instance2]
-    distances = sorted(distances.items())
-    neighbours = []
-    [neighbours.extend(n[1]) for n in distances[:k]]
-    k_distance_value = distances[k - 1][0] if len(distances) >= k else distances[-1][0]
+    sorted_distances = sorted(distances.items())
+    neighbours: list[Any] = []
+    for _distance, group in sorted_distances[:k]:
+        neighbours.extend(group)
+    k_distance_value = (
+        sorted_distances[k - 1][0]
+        if len(sorted_distances) >= k
+        else sorted_distances[-1][0]
+    )
     return k_distance_value, neighbours
 
 
