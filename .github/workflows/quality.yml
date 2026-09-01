@@ -22,4 +22,4 @@ jobs:
       - name: Mypy
         run: poetry run mypy analytics benchmarks src cli.py tests
       - name: Coverage
-        run: poetry run pytest -q --cov=analytics --cov=benchmarks --cov-report=term-missing --cov-fail-under=63
+        run: poetry run pytest -q --cov=analytics --cov=benchmarks --cov-report=term-missing --cov-fail-under=69
