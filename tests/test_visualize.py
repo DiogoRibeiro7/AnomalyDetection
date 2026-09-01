@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+
 import matplotlib
 import numpy as np
 import pytest
@@ -14,7 +16,7 @@ import analytics.visualize as visualize
 
 
 @pytest.fixture(autouse=True)
-def close_figures() -> None:
+def close_figures() -> Iterator[None]:
     """Ensure Matplotlib figures do not accumulate across tests."""
 
     yield
@@ -54,7 +56,9 @@ def test_plot_confusion_matrix_uses_defaults() -> None:
     ax = visualize.plot_confusion_matrix(y_true, y_pred)
 
     assert ax.get_title() == "Confusion Matrix"
-    assert ax.images[0].get_array().shape == (2, 2)
+    image_array = ax.images[0].get_array()
+    assert image_array is not None
+    assert image_array.shape == (2, 2)
 
 
 def test_visualize_embedding_tsne_returns_scatter() -> None:
@@ -70,7 +74,7 @@ def test_visualize_embedding_tsne_returns_scatter() -> None:
     )
 
     scatter = ax.collections[0]
-    assert scatter.get_offsets().shape[0] == data.shape[0]
+    assert np.asarray(scatter.get_offsets()).shape[0] == data.shape[0]
 
 
 def test_visualize_embedding_umap_branch(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -86,7 +90,7 @@ def test_visualize_embedding_umap_branch(monkeypatch: pytest.MonkeyPatch) -> Non
             reducer_kwargs={"n_neighbors": 5, "min_dist": 0.1},
         )
         scatter = ax.collections[0]
-        assert scatter.get_offsets().shape[0] == data.shape[0]
+        assert np.asarray(scatter.get_offsets()).shape[0] == data.shape[0]
     else:
         with pytest.raises(ImportError):
             visualize.visualize_embedding(data, scores, method="umap")

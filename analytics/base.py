@@ -25,6 +25,8 @@ class OrientedScores(np.ndarray):
     """NumPy score array carrying detector score and alignment metadata."""
 
     score_orientation: ScoreOrientation
+    label_indices: NDArray[np.int_]
+    window_spec: dict[str, int | str]
 
     def __new__(
         cls,

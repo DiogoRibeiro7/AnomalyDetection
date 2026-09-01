@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from itertools import product
+from typing import Any
 
 import numpy as np
 import pytest
@@ -35,7 +36,7 @@ def _anova_group_means(effect_size: float, n_groups: int) -> np.ndarray:
 def test_against_textbook_examples() -> None:
     """Cross-check against published textbook calculations."""
 
-    montgomery_cases = [
+    montgomery_cases: list[dict[str, Any]] = [
         {
             "method": "t_test_power",
             "parameters": {"effect_size": 1.25, "n_per_group": 16, "alpha": 0.05},
@@ -50,7 +51,7 @@ def test_against_textbook_examples() -> None:
         },
     ]
 
-    cohen_cases = [
+    cohen_cases: list[dict[str, Any]] = [
         {
             "method": "t_test_power",
             "parameters": {"effect_size": 0.5, "n_per_group": 64, "alpha": 0.05},
@@ -71,7 +72,7 @@ def test_against_textbook_examples() -> None:
         },
     ]
 
-    factorial_cases = [
+    factorial_cases: list[dict[str, Any]] = [
         {
             "method": "factorial_power",
             "parameters": {"effect_size": 0.7, "n_factors": 3, "n_per_cell": 8},
@@ -231,7 +232,7 @@ def test_monte_carlo_validation() -> None:
     """Monte Carlo experiments validate analytical power estimates."""
 
     rng = np.random.default_rng(87234)
-    t_configs = [
+    t_configs: list[dict[str, Any]] = [
         {"effect_size": 0.5, "n_per_group": 30, "alpha": 0.05},
         {"effect_size": 0.8, "n_per_group": 25, "alpha": 0.05},
     ]
@@ -242,7 +243,7 @@ def test_monte_carlo_validation() -> None:
         theoretical = t_test_power(**cfg)
         assert empirical == pytest.approx(theoretical, abs=TOLERANCE)
 
-    anova_configs = [
+    anova_configs: list[dict[str, Any]] = [
         {"effect_size": 0.25, "n_per_group": 45, "n_groups": 4, "alpha": 0.05},
         {"effect_size": 0.3, "n_per_group": 20, "n_groups": 5, "alpha": 0.05},
     ]
@@ -253,7 +254,7 @@ def test_monte_carlo_validation() -> None:
         theoretical = anova_power(**cfg)
         assert empirical == pytest.approx(theoretical, abs=TOLERANCE)
 
-    factorial_configs = [
+    factorial_configs: list[dict[str, Any]] = [
         {"effect_size": 0.7, "n_factors": 3, "n_per_cell": 8, "alpha": 0.05},
         {"effect_size": 0.9, "n_factors": 3, "n_per_cell": 8, "alpha": 0.05},
     ]
@@ -323,14 +324,14 @@ def test_power_curve_consistency(
 
     for n in sample_sizes:
         curve = [
-            anova_power(effect_size=e, n_per_group=n, n_groups=4, alpha=0.05)
+            anova_power(effect_size=e, n_per_group=int(n), n_groups=4, alpha=0.05)
             for e in effect_sizes
         ]
         assert np.all(np.diff(curve) >= -1e-6)
 
     for e in effect_sizes:
         curve = [
-            anova_power(effect_size=e, n_per_group=n, n_groups=4, alpha=0.05)
+            anova_power(effect_size=e, n_per_group=int(n), n_groups=4, alpha=0.05)
             for n in sample_sizes
         ]
         assert np.all(np.diff(curve) >= -1e-6)

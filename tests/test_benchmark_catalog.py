@@ -14,11 +14,14 @@ def test_catalog_includes_new_datasets() -> None:
     assert "nab_art_daily_small_noise" in names
     assert "nab_machine_temperature" in names
     thyroid_meta = catalog.get_dataset_metadata("thyroid")
-    assert "tabular" in thyroid_meta.get("tags", [])
+    thyroid_tags = thyroid_meta.get("tags")
+    assert isinstance(thyroid_tags, list)
+    assert "tabular" in thyroid_tags
 
 
 def test_resolve_dataset_names_by_tag() -> None:
     names = catalog.resolve_dataset_names("tag:graph")
+    assert names is not None
     assert "karate_club_graph" in names
     assert "thyroid" not in names
 
@@ -30,6 +33,7 @@ def test_resolve_dataset_names_with_limit_and_exclude() -> None:
         "limit": 3,
     }
     names = catalog.resolve_dataset_names(selection)
+    assert names is not None
     assert "iris" not in names
     assert len(names) == 3
 
