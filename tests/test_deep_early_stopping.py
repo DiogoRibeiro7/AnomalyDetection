@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pytest
@@ -41,7 +42,7 @@ def test_early_stopping_restores_best_weights(tmp_path: Path) -> None:
 
 
 def test_denoising_autoencoder_uses_early_stopping(monkeypatch) -> None:
-    calls: dict[str, object] = {}
+    calls: dict[str, Any] = {}
 
     class DummyStopper:
         def __init__(
@@ -59,12 +60,12 @@ def test_denoising_autoencoder_uses_early_stopping(monkeypatch) -> None:
             self.update_calls = 0
             self.restore_calls = 0
 
-        def update(self, loss: float, model) -> bool:  # type: ignore[override]
+        def update(self, loss: float, model) -> bool:
             calls.setdefault("losses", []).append(loss)
             self.update_calls += 1
             return self.update_calls >= 1
 
-        def restore(self, model) -> None:  # type: ignore[override]
+        def restore(self, model) -> None:
             self.restore_calls += 1
             calls["restore_calls"] = self.restore_calls
 
@@ -81,6 +82,6 @@ def test_denoising_autoencoder_uses_early_stopping(monkeypatch) -> None:
     )
 
     assert isinstance(calls["losses"], list)
-    assert all(isinstance(loss, float) for loss in calls["losses"])  # type: ignore[arg-type]
-    assert calls["init_args"]["patience"] == 2  # type: ignore[index]
+    assert all(isinstance(loss, float) for loss in calls["losses"])
+    assert calls["init_args"]["patience"] == 2
     assert calls["restore_calls"] == 1

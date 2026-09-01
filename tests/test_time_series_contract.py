@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import pytest
 
@@ -77,7 +79,7 @@ def test_temporal_detectors_never_collapse_sequence_axis(
     rng = np.random.default_rng(7)
     rows_are_series = rng.normal(size=(8, 6)).astype(np.float32)
     detector_cls = get_detector_class(detector_key)
-    detector = detector_cls()
+    detector: Any = detector_cls()
 
     detector.fit(
         rows_are_series,
