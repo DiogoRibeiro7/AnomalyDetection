@@ -7,6 +7,8 @@ input coercion, clipping bounds, all-categorical and sparse variants, and the
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -99,8 +101,10 @@ def test_numpy_input_is_given_positional_feature_names() -> None:
 
 
 def test_unsupported_input_types_are_rejected() -> None:
+    # Held as Any so the deliberate misuse type-checks the same everywhere.
+    unsupported: Any = [[1.0, 2.0], [3.0, 4.0]]
     with pytest.raises(TypeError, match="DataFrame or numpy array"):
-        PreprocessingPipeline().fit([[1.0, 2.0], [3.0, 4.0]])  # type: ignore[arg-type]
+        PreprocessingPipeline().fit(unsupported)
 
 
 def test_detectors_have_no_preprocessing_pipeline_by_default() -> None:
