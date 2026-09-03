@@ -21,15 +21,55 @@
         }
       ],
       "changelog-sections": [
-        { "type": "feat", "section": "Added" },
-        { "type": "fix", "section": "Fixed" },
-        { "type": "perf", "section": "Performance" },
-        { "type": "refactor", "section": "Changed" },
-        { "type": "docs", "section": "Documentation" },
-        { "type": "test", "section": "Internal", "hidden": false },
-        { "type": "ci", "section": "Internal", "hidden": false },
-        { "type": "chore", "section": "Internal", "hidden": false },
-        { "type": "style", "section": "Internal", "hidden": false }
+        {
+          "type": "feat",
+          "section": "Added"
+        },
+        {
+          "type": "fix",
+          "section": "Fixed"
+        },
+        {
+          "type": "perf",
+          "section": "Performance"
+        },
+        {
+          "type": "refactor",
+          "section": "Changed"
+        },
+        {
+          "type": "docs",
+          "section": "Documentation"
+        },
+        {
+          "type": "test",
+          "section": "Internal",
+          "hidden": false
+        },
+        {
+          "type": "ci",
+          "section": "Internal",
+          "hidden": false
+        },
+        {
+          "type": "chore",
+          "section": "Internal",
+          "hidden": false
+        },
+        {
+          "type": "style",
+          "section": "Internal",
+          "hidden": false
+        },
+        {
+          "type": "revert",
+          "section": "Reverts"
+        },
+        {
+          "type": "build",
+          "section": "Internal",
+          "hidden": false
+        }
       ]
     }
   }
