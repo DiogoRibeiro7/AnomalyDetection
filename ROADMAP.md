@@ -174,7 +174,7 @@ Non-goals:
 
 ## v0.4.0 - Metrics, Datasets, And Evaluation Protocols
 
-Status: implemented; pending release.
+Status: released 2026-07-22.
 
 Goal: broaden evaluation coverage and make metric choice explicit before adding
 many modern detectors.
@@ -223,7 +223,12 @@ Acceptance criteria:
 
 ## v0.5.0 - Modern Tabular Detector Pack
 
-Status: implemented; pending release. Scope is frozen.
+Status: implemented; release prepared. Scope is frozen.
+
+The release also carries two items outside this milestone's scope: the
+migration of every raised exception onto the DataExcept hierarchy, which is
+a breaking change, and the TCN baseline listed under `v0.6.0` below,
+delivered early.
 
 Goal: add contemporary tabular anomaly detection methods without making the
 base install depend on heavy deep learning stacks.
@@ -304,6 +309,7 @@ Priority implementation or adapter targets:
 - TimesNet-style temporal 2D-variation backbones where an upstream dependency
   or compact implementation is maintainable.
 - Lightweight TCN encoder-decoder baseline for CPU-friendly comparison.
+  Delivered ahead of schedule in `v0.5.0`.
 - M2N2 or FITS as research candidates after the core pair is stable.
 - Foundation-model adapters such as MOMENT or Chronos remain optional and may
   move to the experimental foundation-model milestone.
@@ -327,7 +333,8 @@ Deliverables:
 - Time-series detector API guide.
 - At least one transformer-style target not already provided natively by PyOD.
 - At least one non-transformer neural target, with USAD or a TCN baseline as the
-  preferred CPU-friendly option.
+  preferred CPU-friendly option. Satisfied by the TCN baseline shipped in
+  `v0.5.0`.
 - Time-series benchmark config comparing project targets with PyOD baselines.
 - JSON report fields for windowing, aggregation, provenance, and upstream
   provider version.
