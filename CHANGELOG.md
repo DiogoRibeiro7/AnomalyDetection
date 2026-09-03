@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format follows Keep a Changelog, and this project uses semantic versioning.
 
+## [0.5.1](https://github.com/DiogoRibeiro7/AnomalyDetection/compare/v0.5.0...v0.5.1) (2026-09-03)
+
+
+### Internal
+
+* automate releases with release-please ([204246a](https://github.com/DiogoRibeiro7/AnomalyDetection/commit/204246a5acd33c0dc67dc8164ee170b9c97cc6ff))
+* give the wheel upload a retry path ([e798945](https://github.com/DiogoRibeiro7/AnomalyDetection/commit/e798945140baee9daad35f3e1c478172adf6f18b))
+* queue release-please runs and keep attaching the wheel ([9d3f61d](https://github.com/DiogoRibeiro7/AnomalyDetection/commit/9d3f61db540b78ba6c39dc0f35e9b66d62185107))
+
 ## v0.5.0 - 2026-09-03
 
 ### Breaking
