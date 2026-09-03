@@ -40,6 +40,7 @@ jobs:
           fetch-depth: 0
 
       - name: Verify a fast-forward is possible
+        id: verify
         run: |
           git fetch origin main develop
 
@@ -47,7 +48,7 @@ jobs:
             echo "main is not an ancestor of develop, so it cannot be fast-forwarded."
             echo
             echo "Commits on main that develop does not have:"
-            git log --oneline origin/develop..origin/main
+            git log --oneline -n 20 origin/develop..origin/main
             echo
             echo "Merge main into develop first, keeping the merge commit, then"
             echo "re-run this workflow. Squashing that merge discards the second"
@@ -55,17 +56,31 @@ jobs:
             exit 1
           fi
 
+          TARGET="$(git rev-parse origin/develop)"
           AHEAD="$(git rev-list --count origin/main..origin/develop)"
+
           if [[ "${AHEAD}" == "0" ]]; then
             echo "main already matches develop; nothing to promote."
+            echo "promote=false" >> "${GITHUB_OUTPUT}"
             exit 0
           fi
-          echo "Fast-forwarding main by ${AHEAD} commit(s)."
-          git log --oneline origin/main..origin/develop | head -20
+
+          echo "Fast-forwarding main by ${AHEAD} commit(s) to ${TARGET}."
+          # -n rather than a pipe into head: a pipe can leave git killed by
+          # SIGPIPE, which fails the step under `shell: bash` (pipefail).
+          git log --oneline -n 20 origin/main..origin/develop
+
+          echo "promote=true" >> "${GITHUB_OUTPUT}"
+          echo "target=${TARGET}" >> "${GITHUB_OUTPUT}"
 
       - name: Fast-forward main
+        if: steps.verify.outputs.promote == 'true'
+        env:
+          TARGET: ${{ steps.verify.outputs.target }}
         run: |
-          if ! git push origin origin/develop:refs/heads/main; then
+          # Push the exact commit that was verified, not the ref, so a develop
+          # that moves mid-run cannot smuggle an unverified commit onto main.
+          if ! git push origin "${TARGET}:refs/heads/main"; then
             echo
             echo "Push to main was rejected."
             echo
@@ -77,4 +92,21 @@ jobs:
             echo "    git push origin develop:main"
             exit 1
           fi
-          echo "main now points at $(git rev-parse --short origin/develop)."
+
+          git fetch origin main develop
+          MAIN="$(git rev-parse origin/main)"
+          DEVELOP="$(git rev-parse origin/develop)"
+
+          if [[ "${MAIN}" != "${TARGET}" ]]; then
+            echo "main is at ${MAIN}, expected ${TARGET}. Something else moved it."
+            exit 1
+          fi
+
+          if [[ "${MAIN}" != "${DEVELOP}" ]]; then
+            echo "develop advanced to ${DEVELOP} while this run was promoting."
+            echo "main was fast-forwarded to ${TARGET} and is now behind."
+            echo "Re-run this workflow to promote the newer commits."
+            exit 1
+          fi
+
+          echo "main now points at ${TARGET}, matching develop."
