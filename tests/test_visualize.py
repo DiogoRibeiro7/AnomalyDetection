@@ -7,6 +7,7 @@ from collections.abc import Iterator
 import matplotlib
 import numpy as np
 import pytest
+from dataexcept import DependencyError
 
 matplotlib.use("Agg")
 
@@ -92,5 +93,5 @@ def test_visualize_embedding_umap_branch(monkeypatch: pytest.MonkeyPatch) -> Non
         scatter = ax.collections[0]
         assert np.asarray(scatter.get_offsets()).shape[0] == data.shape[0]
     else:
-        with pytest.raises(ImportError):
+        with pytest.raises(DependencyError):
             visualize.visualize_embedding(data, scores, method="umap")

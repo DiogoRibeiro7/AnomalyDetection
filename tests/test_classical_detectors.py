@@ -8,6 +8,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import pytest
+from dataexcept import DataValidationError
 
 from analytics.base import BaseDetector
 from analytics.detectors.classical import (
@@ -191,5 +192,5 @@ def test_pyod_detector_harmonized_interface(
     assert scores_df.shape == (40,)
     assert np.isfinite(scores_df).all()
 
-    with pytest.raises(ValueError):
+    with pytest.raises(DataValidationError):
         detector_cls().fit(np.zeros(5), **fit_kwargs)

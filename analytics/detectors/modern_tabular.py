@@ -7,6 +7,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from dataexcept import DependencyError, HyperparameterError
 from numpy.typing import NDArray
 from sklearn.ensemble import IsolationForest
 from sklearn.exceptions import ConvergenceWarning
@@ -92,7 +93,11 @@ class RandomNetworkDistillationDetector(BaseDetector):
             else min(max(n_features * 4, 8), 64)
         )
         if target_dim <= 0:
-            raise ValueError("representation_dim must be greater than zero.")
+            raise HyperparameterError(
+                "representation_dim",
+                representation_dim,
+                "must be greater than zero",
+            )
         self.target_weights = rng.normal(
             loc=0.0,
             scale=1.0 / np.sqrt(max(1, n_features)),
@@ -160,7 +165,11 @@ class RandomFeatureIsolationForestDetector(BaseDetector):
             else min(max(n_features * 8, 16), 128)
         )
         if target_dim <= 0:
-            raise ValueError("representation_dim must be greater than zero.")
+            raise HyperparameterError(
+                "representation_dim",
+                representation_dim,
+                "must be greater than zero",
+            )
         self.target_weights = rng.normal(
             loc=0.0,
             scale=1.0 / np.sqrt(max(1, n_features)),
@@ -206,7 +215,9 @@ class ECODDetector(BaseDetector):
         try:
             from pyod.models.ecod import ECOD
         except Exception as exc:  # pragma: no cover - optional dependency guard
-            raise ImportError("ECODDetector requires PyOD to be installed.") from exc
+            raise DependencyError(
+                "PyOD", "ECODDetector requires PyOD to be installed"
+            ) from exc
         self.model = ECOD(**params)
         self.model.fit(_coerce(data))
         return self

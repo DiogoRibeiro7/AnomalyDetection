@@ -5,6 +5,8 @@ from __future__ import annotations
 import sys
 from collections.abc import Sequence
 
+from dataexcept import DependencyError
+
 SUPPORTED_PYTHON: tuple[int, int] = (3, 12)
 
 
@@ -18,8 +20,9 @@ def ensure_supported_python(
     if (major, minor) != SUPPORTED_PYTHON:
         expected = f"{SUPPORTED_PYTHON[0]}.{SUPPORTED_PYTHON[1]}"
         current = f"{major}.{minor}"
-        raise RuntimeError(
+        raise DependencyError(
+            "python",
             "Unsupported Python runtime "
             f"{current}. This project currently supports Python {expected}. "
-            "Use a Python 3.12 virtual environment."
+            "Use a Python 3.12 virtual environment.",
         )

@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
+from dataexcept import DataValidationError, HyperparameterError
 
 from analytics.detectors.modern_tabular import (
     ECODDetector,
@@ -72,12 +73,12 @@ def test_random_feature_isolation_forest_is_deterministic_with_seed() -> None:
 def test_random_network_distillation_rejects_invalid_representation_dim() -> None:
     train, _test = _tabular_data()
 
-    with pytest.raises(ValueError, match="representation_dim"):
+    with pytest.raises(HyperparameterError, match="representation_dim"):
         RandomNetworkDistillationDetector().fit(train, representation_dim=0)
 
 
 def test_modern_tabular_detectors_reject_1d_input() -> None:
-    with pytest.raises(ValueError, match="2-D"):
+    with pytest.raises(DataValidationError, match="2-D"):
         ECODDetector().fit(np.zeros(5))
 
 

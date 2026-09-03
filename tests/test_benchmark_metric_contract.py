@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from analytics.base import BaseDetector, OrientedScores
+from analytics.exceptions import UnknownDetectorError
 from cli import _resolve_detector_entries
 
 
@@ -30,5 +31,7 @@ def test_detect_anomalies_preserves_score_orientation_metadata() -> None:
 
 
 def test_unknown_detector_selection_fails_instead_of_expanding_to_all() -> None:
-    with pytest.raises(ValueError, match="Unknown detector 'isolation_forrest'"):
+    with pytest.raises(
+        UnknownDetectorError, match="Unknown detector 'isolation_forrest'"
+    ):
         _resolve_detector_entries(["isolation_forrest"])

@@ -15,6 +15,8 @@ from collections import OrderedDict
 from threading import RLock
 from typing import Any
 
+from dataexcept import DataValidationError
+
 
 class _LRUDistanceCache:
     """Thread-safe LRU cache specialised for LOF distance computations."""
@@ -96,7 +98,11 @@ def distance_euclidean(instance1, instance2):
 
     # check if instances are of same length
     if len(instance1) != len(instance2):
-        raise AttributeError("Instances have different number of arguments.")
+        raise DataValidationError(
+            "instances",
+            (len(instance1), len(instance2)),
+            "Instances have different number of arguments.",
+        )
     # init differences vector
     differences = [0] * len(instance1)
     # compute difference for each attribute and store it to differences vector
@@ -105,7 +111,11 @@ def distance_euclidean(instance1, instance2):
         type2, attr2 = detect_value_type(attr2)
         # raise error is attributes are not of same data type.
         if type1 != type2:
-            raise AttributeError("Instances have different data types.")
+            raise DataValidationError(
+                "instances",
+                (type1.__name__, type2.__name__),
+                "Instances have different data types.",
+            )
         if type1 is float:
             # compute difference for float
             differences[i] = attr1 - attr2

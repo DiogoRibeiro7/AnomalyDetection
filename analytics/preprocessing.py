@@ -9,6 +9,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from dataexcept import DataFormatError, HyperparameterError
 from numpy.typing import NDArray
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
@@ -66,7 +67,11 @@ class PreprocessingPipeline:
 
     def __post_init__(self) -> None:
         if not 0 <= self.clip_quantile < 0.5:
-            raise ValueError("clip_quantile must fall within [0, 0.5)")
+            raise HyperparameterError(
+                "clip_quantile",
+                self.clip_quantile,
+                "must fall within [0, 0.5)",
+            )
 
     def fit(self, data: pd.DataFrame | ArrayLike) -> PreprocessingPipeline:
         """Fit preprocessing steps on ``data``."""
@@ -156,8 +161,9 @@ class PreprocessingPipeline:
         if isinstance(data, pd.DataFrame):
             return data.copy()
         if not isinstance(data, np.ndarray):
-            raise TypeError(
-                "PreprocessingPipeline expects a pandas DataFrame or numpy array"
+            raise DataFormatError(
+                ["pandas DataFrame", "numpy array"],
+                type(data).__name__,
             )
         columns = [f"feature_{idx}" for idx in range(data.shape[1])]
         return pd.DataFrame(data, columns=columns)

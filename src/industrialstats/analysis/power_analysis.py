@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 
 import pandas as pd
+from dataexcept import HyperparameterError, ResourceNotFoundError
 from scipy import stats
 from statsmodels.stats.power import FTestAnovaPower, TTestIndPower
 
@@ -67,8 +68,11 @@ def t_test_power(
     """
 
     if n_per_group <= 1:
-        msg = "n_per_group must be greater than 1 for a t-test power calculation"
-        raise ValueError(msg)
+        raise HyperparameterError(
+            "n_per_group",
+            n_per_group,
+            "must be greater than 1 for a t-test power calculation",
+        )
 
     power = _T_TEST_ANALYSIS.power(
         effect_size=effect_size,
@@ -132,11 +136,15 @@ def anova_power(
     """
 
     if n_per_group <= 1:
-        msg = "n_per_group must be greater than 1 for an ANOVA power calculation"
-        raise ValueError(msg)
+        raise HyperparameterError(
+            "n_per_group",
+            n_per_group,
+            "must be greater than 1 for an ANOVA power calculation",
+        )
     if n_groups < 2:
-        msg = "n_groups must be at least 2 for an ANOVA design"
-        raise ValueError(msg)
+        raise HyperparameterError(
+            "n_groups", n_groups, "must be at least 2 for an ANOVA design"
+        )
 
     total_n = n_per_group * n_groups
     power = _ANOVA_ANALYSIS.power(
@@ -184,11 +192,13 @@ def factorial_power(
     """
 
     if n_factors < 1:
-        msg = "n_factors must be at least 1 for a factorial design"
-        raise ValueError(msg)
+        raise HyperparameterError(
+            "n_factors", n_factors, "must be at least 1 for a factorial design"
+        )
     if n_per_cell <= 0:
-        msg = "n_per_cell must be positive for a factorial design"
-        raise ValueError(msg)
+        raise HyperparameterError(
+            "n_per_cell", n_per_cell, "must be positive for a factorial design"
+        )
 
     n_per_group = n_per_cell * (2 ** (n_factors - 1))
     return t_test_power(
@@ -249,8 +259,7 @@ def generate_validation_report(
         method = payload["method"]
         func = _METHOD_REGISTRY.get(method)
         if func is None:
-            msg = f"Unknown validation method '{method}'"
-            raise KeyError(msg)
+            raise ResourceNotFoundError("validation method", str(method))
 
         calculated = float(func(**payload["parameters"]))
         difference = abs(calculated - float(payload["reference_power"]))

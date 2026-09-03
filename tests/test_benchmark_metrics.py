@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from dataexcept import ConfigurationError, DataValidationError
 
 from analytics.base import OrientedScores
 from benchmarks.metrics import (
@@ -69,7 +70,7 @@ def test_binary_anomaly_scores_are_preserved() -> None:
 
 def test_estimator_defined_orientation_is_rejected() -> None:
     raw_scores = OrientedScores([0.1, 0.9], "estimator_defined")
-    with pytest.raises(ValueError, match="explicit score orientation"):
+    with pytest.raises(DataValidationError, match="explicit score orientation"):
         canonicalize_anomaly_scores(raw_scores)
 
 
@@ -82,5 +83,5 @@ def test_top_k_metrics_default_k_to_number_of_positives() -> None:
 
 
 def test_invalid_metric_name_fails_fast() -> None:
-    with pytest.raises(ValueError, match="Unsupported benchmark metric"):
+    with pytest.raises(ConfigurationError, match="unsupported benchmark metric"):
         resolve_metric_config(["not_a_metric"])

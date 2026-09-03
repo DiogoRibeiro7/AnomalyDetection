@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
+from dataexcept import DependencyError, HyperparameterError
 from numpy.typing import NDArray
 
 from analytics.base import BaseDetector
@@ -37,7 +38,9 @@ def _import_torch() -> tuple[ModuleType, ModuleType, ModuleType]:
         import torch
         from torch import nn, optim
     except Exception as exc:  # pragma: no cover - dependency optional
-        raise ImportError("This detector requires PyTorch to be installed") from exc
+        raise DependencyError(
+            "PyTorch", "this detector requires PyTorch to be installed"
+        ) from exc
     return torch, nn, optim
 
 
@@ -59,7 +62,9 @@ class _EarlyStopping:
         checkpoint_path: str | Path | None = None,
     ) -> None:
         if patience < 1:
-            raise ValueError("patience must be greater than or equal to 1")
+            raise HyperparameterError(
+                "patience", patience, "must be greater than or equal to 1"
+            )
         self._torch = torch_module
         self.patience = patience
         self.checkpoint_path = (

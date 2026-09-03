@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 
 from analytics.detectors import get_detector_class
+from analytics.exceptions import DetectorNotFittedError
 
 GRAPH_DETECTORS = ["degree_centrality", "graph_isolation_forest"]
 
@@ -47,7 +48,7 @@ def test_score_returns_one_value_per_node(detector_key: str, star: nx.Graph) -> 
 @pytest.mark.parametrize("detector_key", GRAPH_DETECTORS)
 def test_score_before_fit_is_refused(detector_key: str, star: nx.Graph) -> None:
     detector = get_detector_class(detector_key)()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(DetectorNotFittedError):
         detector.score(star)
 
 

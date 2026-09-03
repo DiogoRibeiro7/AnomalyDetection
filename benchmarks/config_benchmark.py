@@ -6,16 +6,22 @@ from pathlib import Path
 from typing import Any, NoReturn
 
 import yaml
+from dataexcept import ConfigurationError
 
 
-class ConfigValidationError(ValueError):
-    """Raised when a benchmark YAML configuration is invalid."""
+class ConfigValidationError(ConfigurationError):
+    """Raised when a benchmark YAML configuration is invalid.
+
+    Inherits from :class:`dataexcept.ConfigurationError`, so the offending
+    key is available as ``option`` in addition to the formatted message.
+    """
 
 
 def _fail(path: str, expected: str, value: Any) -> NoReturn:
     value_type = type(value).__name__
     raise ConfigValidationError(
-        f"Invalid config at '{path}': expected {expected}, got {value_type}."
+        path,
+        f"Invalid config at '{path}': expected {expected}, got {value_type}.",
     )
 
 
@@ -118,7 +124,8 @@ def _validate_metric_selector(selector: Any, path: str) -> None:
         if unknown:
             unknown_keys = ", ".join(sorted(unknown))
             raise ConfigValidationError(
-                f"Invalid config at '{path}': unknown key(s): {unknown_keys}."
+                path,
+                f"Invalid config at '{path}': unknown key(s): {unknown_keys}.",
             )
         names = selector.get("include", selector.get("names"))
         if names is not None:
@@ -156,7 +163,8 @@ def _validate_config(config: Any) -> None:
     if unknown:
         unknown_keys = ", ".join(sorted(unknown))
         raise ConfigValidationError(
-            f"Invalid config at 'root': unknown key(s): {unknown_keys}."
+            "root",
+            f"Invalid config at 'root': unknown key(s): {unknown_keys}.",
         )
 
     _validate_dataset_selector(config.get("datasets"), "datasets")

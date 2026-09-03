@@ -7,6 +7,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from dataexcept import DependencyError
 from numpy.typing import NDArray
 
 from analytics.base import BaseDetector
@@ -74,10 +75,11 @@ class RandomCutForestDetector(BaseDetector):
         from river import anomaly  # lazy import
 
         if not hasattr(anomaly, "RandomCutForest"):
-            raise ImportError(
+            raise DependencyError(
+                "river",
                 "river.anomaly.RandomCutForest is not available in the installed "
                 "River version. Use 'half_space_trees' or 'online_isolation_forest' "
-                "for River-backed streaming anomaly detection."
+                "for River-backed streaming anomaly detection.",
             )
         self.model = anomaly.RandomCutForest(**params)
         for row in _to_dicts(data):

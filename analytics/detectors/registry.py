@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from importlib import import_module
 
+from dataexcept import ConfigurationError
+
 from analytics.base import BaseDetector
+from analytics.exceptions import UnknownDetectorError
 
 
 class DetectorRegistry(dict[str, str]):
@@ -20,10 +23,7 @@ class DetectorRegistry(dict[str, str]):
     def __contains__(self, key: object) -> bool:
         exists = super().__contains__(key)
         if self._strict and isinstance(key, str) and not exists:
-            available = ", ".join(sorted(self))
-            raise ValueError(
-                f"Unknown detector '{key}'. Available detectors: {available}"
-            )
+            raise UnknownDetectorError(key, sorted(self))
         return exists
 
 
@@ -32,18 +32,19 @@ DETECTOR_REGISTRY = DetectorRegistry()
 
 def _validate_registration(name: str, path: str) -> None:
     if not isinstance(name, str) or not name.strip():
-        raise ValueError("Detector name must be a non-empty string.")
+        raise ConfigurationError("detector name", "must be a non-empty string")
     if not isinstance(path, str) or not path.strip():
-        raise ValueError("Detector path must be a non-empty string.")
+        raise ConfigurationError("detector path", "must be a non-empty string")
     if ":" not in path:
-        raise ValueError(
-            "Detector path must use 'module:ClassName' format " f"(received: {path!r})."
+        raise ConfigurationError(
+            "detector path",
+            f"must use 'module:ClassName' format (received: {path!r})",
         )
     module_path, class_name = path.split(":", 1)
     if not module_path or not class_name:
-        raise ValueError(
-            "Detector path must include both module and class name "
-            f"(received: {path!r})."
+        raise ConfigurationError(
+            "detector path",
+            f"must include both module and class name (received: {path!r})",
         )
 
 
@@ -54,9 +55,10 @@ def register_detector(name: str, path: str, *, allow_override: bool = False) -> 
     exists = dict.__contains__(DETECTOR_REGISTRY, name)
     if exists and not allow_override:
         existing = DETECTOR_REGISTRY[name]
-        raise ValueError(
-            f"Detector '{name}' is already registered with '{existing}'. "
-            "Pass allow_override=True to replace it."
+        raise ConfigurationError(
+            name,
+            f"already registered with '{existing}'. "
+            "Pass allow_override=True to replace it",
         )
     DETECTOR_REGISTRY[name] = path
 
@@ -65,8 +67,7 @@ def get_detector_class(name: str) -> type[BaseDetector]:
     """Return the detector class associated with *name*."""
 
     if not dict.__contains__(DETECTOR_REGISTRY, name):
-        available = ", ".join(sorted(DETECTOR_REGISTRY))
-        raise KeyError(f"Unknown detector '{name}'. Available detectors: {available}")
+        raise UnknownDetectorError(name, sorted(DETECTOR_REGISTRY))
 
     registration = DETECTOR_REGISTRY[name]
     _validate_registration(name, registration)
@@ -75,7 +76,7 @@ def get_detector_class(name: str) -> type[BaseDetector]:
     try:
         return getattr(module, class_name)
     except AttributeError as exc:
-        raise ImportError(
-            f"Detector '{name}' points to missing class '{class_name}' "
-            f"in module '{module_path}'."
+        raise ConfigurationError(
+            name,
+            f"points to missing class '{class_name}' " f"in module '{module_path}'",
         ) from exc

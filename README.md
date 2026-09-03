@@ -110,6 +110,36 @@ LODA, ABOD, Half-Space Trees, Online Isolation Forest, AnoGAN, MAD-GAN, Degree
 Centrality, Graph Isolation Forest, ECOD, Random Feature Isolation Forest,
 Random Network Distillation, ARIMA, and Prophet.
 
+## Exceptions
+
+Errors raised by this package come from
+[DataExcept](https://pypi.org/project/DataExcept/), which provides structured
+exceptions carrying the offending field, value, or dependency rather than a
+bare message. Every one inherits from `dataexcept.DataExceptError`:
+
+```python
+from dataexcept import DataExceptError, HyperparameterError
+
+try:
+    WindowSpec(window_length=1)
+except HyperparameterError as exc:
+    print(exc.param, exc.value)  # window_length 1
+
+try:
+    run_benchmarks()
+except DataExceptError:  # catches anything this package raises
+    ...
+```
+
+These exceptions **do not inherit from** `ValueError`, `KeyError`, `TypeError`,
+`RuntimeError`, or `ImportError`. Code written against earlier versions that
+caught those must be updated; see the mapping table in
+[CHANGELOG.md](CHANGELOG.md).
+
+Cases DataExcept has no direct equivalent for are defined in
+[analytics/exceptions.py](analytics/exceptions.py) and still inherit from it:
+`DetectorNotFittedError`, `UnknownDetectorError`, and `UnknownDatasetError`.
+
 ## Plugins
 
 External detector packages can register themselves through plugin modules whose

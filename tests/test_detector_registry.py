@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import pytest
+from dataexcept import ConfigurationError
 
 from analytics.base import BaseDetector
 from analytics.detectors import registry
+from analytics.exceptions import UnknownDetectorError
 
 
 class DummyDetector:
@@ -35,13 +37,13 @@ def test_register_and_resolve_detector_class() -> None:
     ],
 )
 def test_register_rejects_invalid_path_format(path: str) -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ConfigurationError):
         registry.register_detector("dummy", path)
 
 
 def test_register_rejects_duplicate_without_override() -> None:
     registry.register_detector("dummy", __name__ + ":DummyDetector")
-    with pytest.raises(ValueError):
+    with pytest.raises(ConfigurationError):
         registry.register_detector("dummy", __name__ + ":ReplacementDetector")
 
 
@@ -56,13 +58,13 @@ def test_register_allows_duplicate_when_override_enabled() -> None:
 
 
 def test_get_detector_class_raises_for_unknown_detector() -> None:
-    with pytest.raises(KeyError):
+    with pytest.raises(UnknownDetectorError):
         registry.get_detector_class("missing")
 
 
 def test_get_detector_class_raises_for_missing_target_class() -> None:
     registry.register_detector("dummy", __name__ + ":DoesNotExist")
-    with pytest.raises(ImportError):
+    with pytest.raises(ConfigurationError):
         registry.get_detector_class("dummy")
 
 

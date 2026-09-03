@@ -12,7 +12,9 @@ from typing import Any
 import networkx as nx
 import pandas as pd
 import pytest
+from dataexcept import DataFormatError, DataValidationError, MissingColumnError
 
+from analytics.exceptions import UnknownDatasetError
 from benchmarks.load_all_datasets import _canonicalize_anomaly_label, load_all_datasets
 
 
@@ -22,12 +24,12 @@ def frame() -> pd.DataFrame:
 
 
 def test_missing_label_column_is_rejected(frame: pd.DataFrame) -> None:
-    with pytest.raises(KeyError, match="is missing"):
+    with pytest.raises(MissingColumnError, match="Missing required column"):
         _canonicalize_anomaly_label(frame, label_col="absent", source_anomaly_label=1)
 
 
 def test_empty_label_column_is_rejected(frame: pd.DataFrame) -> None:
-    with pytest.raises(ValueError, match="at least one value"):
+    with pytest.raises(DataValidationError, match="at least one value"):
         _canonicalize_anomaly_label(
             frame.iloc[0:0], label_col="Class", source_anomaly_label=1
         )
@@ -36,7 +38,7 @@ def test_empty_label_column_is_rejected(frame: pd.DataFrame) -> None:
 def test_absent_source_label_is_rejected(frame: pd.DataFrame) -> None:
     """A declared anomaly label that never occurs means the audit is stale."""
 
-    with pytest.raises(ValueError, match="is not present in dataset labels"):
+    with pytest.raises(DataValidationError, match="is not present in dataset labels"):
         _canonicalize_anomaly_label(frame, label_col="Class", source_anomaly_label=9)
 
 
@@ -56,7 +58,7 @@ def test_graph_without_the_label_attribute_is_rejected() -> None:
     graph = nx.Graph()
     graph.add_node(0)
 
-    with pytest.raises(ValueError, match="must expose node attribute"):
+    with pytest.raises(DataValidationError, match="must expose node attribute"):
         _canonicalize_anomaly_label(graph, label_col="label", source_anomaly_label=1)
 
 
@@ -64,7 +66,7 @@ def test_graph_with_an_absent_source_label_is_rejected() -> None:
     graph = nx.Graph()
     graph.add_node(0, label=0)
 
-    with pytest.raises(ValueError, match="is not present in graph labels"):
+    with pytest.raises(DataValidationError, match="is not present in graph labels"):
         _canonicalize_anomaly_label(graph, label_col="label", source_anomaly_label=9)
 
 
@@ -84,14 +86,14 @@ def test_graph_labels_are_mapped_to_one_for_anomalies() -> None:
 def test_unsupported_dataset_types_are_rejected() -> None:
     unsupported: Any = [[1, 2], [3, 4]]
 
-    with pytest.raises(TypeError, match="DataFrames or NetworkX graphs"):
+    with pytest.raises(DataFormatError, match="Expected data format"):
         _canonicalize_anomaly_label(
             unsupported, label_col="Class", source_anomaly_label=1
         )
 
 
 def test_unknown_dataset_names_list_the_available_ones() -> None:
-    with pytest.raises(KeyError) as excinfo:
+    with pytest.raises(UnknownDatasetError) as excinfo:
         load_all_datasets(["not_a_dataset"])
 
     message = str(excinfo.value)

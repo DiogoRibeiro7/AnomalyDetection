@@ -7,7 +7,14 @@ from collections.abc import Sequence
 
 import networkx as nx
 import pandas as pd
+from dataexcept import (
+    ConfigurationError,
+    DataFormatError,
+    DataValidationError,
+    MissingColumnError,
+)
 
+from analytics.exceptions import UnknownDatasetError
 from benchmarks.catalog import (
     DatasetSpec,
     get_dataset_functions,
@@ -32,14 +39,18 @@ def _canonicalize_anomaly_label(
 
     if isinstance(data, pd.DataFrame):
         if label_col not in data.columns:
-            raise KeyError(f"Dataset label column '{label_col}' is missing.")
+            raise MissingColumnError(label_col)
         labels = set(data[label_col].dropna().unique())
         if not labels:
-            raise ValueError("Dataset label column must contain at least one value.")
+            raise DataValidationError(
+                label_col, None, "dataset label column must contain at least one value"
+            )
         if source_anomaly_label not in labels:
-            raise ValueError(
-                f"Declared source anomaly label {source_anomaly_label!r} is not "
-                f"present in dataset labels {sorted(labels, key=str)!r}."
+            raise DataValidationError(
+                "source_anomaly_label",
+                source_anomaly_label,
+                f"declared source anomaly label {source_anomaly_label!r} is not "
+                f"present in dataset labels {sorted(labels, key=str)!r}",
             )
         canonical = data.copy()
         canonical[label_col] = (canonical[label_col] == source_anomaly_label).astype(
@@ -50,14 +61,18 @@ def _canonicalize_anomaly_label(
     if isinstance(data, nx.Graph):
         labels = nx.get_node_attributes(data, label_col)
         if not labels:
-            raise ValueError(
-                f"Graph dataset must expose node attribute '{label_col}' for labels."
+            raise DataValidationError(
+                label_col,
+                None,
+                f"graph dataset must expose node attribute '{label_col}' for labels",
             )
         observed = set(labels.values())
         if source_anomaly_label not in observed:
-            raise ValueError(
-                f"Declared source anomaly label {source_anomaly_label!r} is not "
-                f"present in graph labels {sorted(observed, key=str)!r}."
+            raise DataValidationError(
+                "source_anomaly_label",
+                source_anomaly_label,
+                f"declared source anomaly label {source_anomaly_label!r} is not "
+                f"present in graph labels {sorted(observed, key=str)!r}",
             )
         canonical = data.copy()
         canonical_labels = {
@@ -66,10 +81,7 @@ def _canonicalize_anomaly_label(
         nx.set_node_attributes(canonical, canonical_labels, label_col)
         return canonical
 
-    raise TypeError(
-        "Benchmark datasets must be pandas DataFrames or NetworkX graphs before "
-        "label canonicalization."
-    )
+    raise DataFormatError(["pandas DataFrame", "NetworkX graph"], type(data).__name__)
 
 
 def load_all_datasets(names: Sequence[str] | None = None) -> list[DatasetSpec]:
@@ -99,10 +111,7 @@ def load_all_datasets(names: Sequence[str] | None = None) -> list[DatasetSpec]:
                 missing_str,
                 available,
             )
-            raise KeyError(
-                "Unknown dataset selector(s): "
-                f"{missing_str}. Available datasets: {available}"
-            )
+            raise UnknownDatasetError(missing_str, functions)
         selected = [(name, functions[name]) for name in names]
 
     datasets: list[DatasetSpec] = []
@@ -110,8 +119,9 @@ def load_all_datasets(names: Sequence[str] | None = None) -> list[DatasetSpec]:
         data, feature_cols, label_col, display_name = func()
         metadata = get_dataset_metadata(key)
         if "source_anomaly_label" not in metadata:
-            raise ValueError(
-                f"Dataset '{key}' must declare source_anomaly_label in datasets.yml."
+            raise ConfigurationError(
+                key,
+                f"dataset '{key}' must declare source_anomaly_label " "in datasets.yml",
             )
         source_anomaly_label = metadata["source_anomaly_label"]
         canonical_data = _canonicalize_anomaly_label(

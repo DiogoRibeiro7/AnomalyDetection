@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+from dataexcept import DataValidationError
 
 from benchmarks.catalog import list_available_datasets, load_catalog
 
@@ -231,7 +232,11 @@ def collect_dataset_integrity(names: list[str] | None) -> list[dict[str, Any]]:
                 )
             size = file_path.stat().st_size
             if size <= 0:
-                raise ValueError(f"Bundled benchmark file is empty: {relative_path}")
+                raise DataValidationError(
+                    str(relative_path),
+                    0,
+                    "bundled benchmark file is empty",
+                )
             digest = hashlib.sha256(file_path.read_bytes()).hexdigest()
             records.append(
                 {

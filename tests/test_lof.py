@@ -10,6 +10,7 @@ from __future__ import annotations
 import math
 
 import pytest
+from dataexcept import DataValidationError
 
 from analytics.lof import (
     LOF,
@@ -47,12 +48,12 @@ def test_distance_accepts_lists_and_tuples_alike() -> None:
 
 
 def test_distance_rejects_mismatched_lengths() -> None:
-    with pytest.raises(AttributeError, match="different number of arguments"):
+    with pytest.raises(DataValidationError, match="different number of arguments"):
         distance_euclidean((1.0, 2.0), (1.0,))
 
 
 def test_distance_rejects_mixed_attribute_types() -> None:
-    with pytest.raises(AttributeError, match="different data types"):
+    with pytest.raises(DataValidationError, match="different data types"):
         distance_euclidean((1.0,), ("a",))
 
 

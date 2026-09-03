@@ -12,6 +12,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import pytest
+from dataexcept import DataFormatError, HyperparameterError, PreprocessingError
 
 from analytics.base import OrientedScores
 from analytics.detectors import get_detector_class
@@ -24,12 +25,12 @@ def mixed() -> pd.DataFrame:
 
 
 def test_clip_quantile_must_stay_below_one_half() -> None:
-    with pytest.raises(ValueError, match=r"\[0, 0.5\)"):
+    with pytest.raises(HyperparameterError, match=r"\[0, 0.5\)"):
         PreprocessingPipeline(clip_quantile=0.5)
 
 
 def test_clip_quantile_must_not_be_negative() -> None:
-    with pytest.raises(ValueError, match=r"\[0, 0.5\)"):
+    with pytest.raises(HyperparameterError, match=r"\[0, 0.5\)"):
         PreprocessingPipeline(clip_quantile=-0.1)
 
 
@@ -103,7 +104,7 @@ def test_numpy_input_is_given_positional_feature_names() -> None:
 def test_unsupported_input_types_are_rejected() -> None:
     # Held as Any so the deliberate misuse type-checks the same everywhere.
     unsupported: Any = [[1.0, 2.0], [3.0, 4.0]]
-    with pytest.raises(TypeError, match="DataFrame or numpy array"):
+    with pytest.raises(DataFormatError, match="Expected data format"):
         PreprocessingPipeline().fit(unsupported)
 
 
@@ -130,7 +131,7 @@ def test_scoring_before_the_pipeline_is_fitted_is_refused(
     detector = get_detector_class("isolation_forest")()
     detector.set_preprocessing_pipeline(PreprocessingPipeline())
 
-    with pytest.raises(RuntimeError, match="fit_preprocessed"):
+    with pytest.raises(PreprocessingError, match="fit_preprocessed"):
         detector.score_preprocessed(mixed)
 
 
