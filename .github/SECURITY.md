@@ -7,7 +7,6 @@ stable branches through the normal release flow.
 
 | Version | Supported |
 | ------- | --------- |
-| develop | :white_check_mark: |
 | main    | :white_check_mark: |
 | older branches | :x: |
 

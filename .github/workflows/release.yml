@@ -14,7 +14,7 @@ on:
       target:
         description: "Branch, tag, or commit SHA to release"
         required: true
-        default: "develop"
+        default: "main"
         type: string
       title:
         description: "Release title. Defaults to v<version>"

@@ -19,6 +19,7 @@ name: Release Please
 on:
   push:
     branches:
+      - main
       - develop
   workflow_dispatch:
     inputs:
@@ -52,7 +53,7 @@ jobs:
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-          target-branch: develop
+          target-branch: main
 
   publish-wheel:
     name: Attach the wheel to the release
