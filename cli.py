@@ -300,6 +300,7 @@ def _classify_failure(exc: Exception | None) -> str:
             DataFormatError,
             DataValidationError,
             HyperparameterError,
+            TypeError,
             ValueError,
         ),
     ):

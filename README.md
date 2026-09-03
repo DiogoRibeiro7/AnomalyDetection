@@ -120,15 +120,14 @@ bare message. Every one inherits from `dataexcept.DataExceptError`:
 ```python
 from dataexcept import DataExceptError, HyperparameterError
 
+from analytics.time_series import WindowSpec
+
 try:
     WindowSpec(window_length=1)
 except HyperparameterError as exc:
     print(exc.param, exc.value)  # window_length 1
-
-try:
-    run_benchmarks()
 except DataExceptError:  # catches anything this package raises
-    ...
+    raise
 ```
 
 These exceptions **do not inherit from** `ValueError`, `KeyError`, `TypeError`,
@@ -159,8 +158,8 @@ replace an existing detector intentionally, pass `allow_override=True` to
 All built-in detectors follow the same lifecycle:
 
 - `fit(data, **params)` trains the detector and marks it as fitted.
-- `score(data)` returns detector-specific anomaly scores and raises a
-  `RuntimeError` if called before `fit`.
+- `score(data)` returns detector-specific anomaly scores and raises
+  `DetectorNotFittedError` if called before `fit`.
 - `detect_anomalies(data, **params)` is the fit-and-score convenience path used
   by benchmark workflows.
 

@@ -205,10 +205,12 @@ def visualize_embedding(
 
     Raises
     ------
-    ValueError
-        If an unsupported ``method`` is provided or the score length does not
+    HyperparameterError
+        If an unsupported ``method`` is provided.
+    DataValidationError
+        If ``data`` is not two-dimensional or the score length does not
         match ``data``.
-    ImportError
+    DependencyError
         When ``method`` is "umap" but the optional dependency is unavailable.
     """
 

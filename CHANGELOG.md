@@ -23,7 +23,8 @@ The format follows Keep a Changelog, and this project uses semantic versioning.
   | `ValueError` on detector/field validation | `DataValidationError` |
   | `ValueError` on a parameter value | `HyperparameterError` |
   | `ValueError` on configuration | `ConfigurationError` |
-  | `ValueError`/`TypeError` on input shape or container | `DataFormatError` |
+  | `ValueError` on input shape | `DataValidationError` |
+  | `TypeError` on an unsupported container type | `DataFormatError` |
   | `KeyError` on a missing dataframe column | `MissingColumnError` |
   | `KeyError`/`ValueError` on an unknown detector | `UnknownDetectorError` |
   | `KeyError` on an unknown dataset | `UnknownDatasetError` |

@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from dataexcept import DataValidationError
+from dataexcept import DataValidationError, ResourceNotFoundError
 
 from benchmarks.catalog import list_available_datasets, load_catalog
 
@@ -227,8 +227,8 @@ def collect_dataset_integrity(names: list[str] | None) -> list[dict[str, Any]]:
             relative_path = Path(str(relative_file))
             file_path = _BENCHMARK_DIR / relative_path
             if not file_path.exists():
-                raise FileNotFoundError(
-                    f"Bundled benchmark file is missing: {relative_path}"
+                raise ResourceNotFoundError(
+                    "bundled benchmark file", str(relative_path)
                 )
             size = file_path.stat().st_size
             if size <= 0:

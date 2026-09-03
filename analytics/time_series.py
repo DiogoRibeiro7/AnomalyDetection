@@ -7,11 +7,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from dataexcept import (
-    DataFormatError,
-    DataValidationError,
-    HyperparameterError,
-)
+from dataexcept import DataValidationError, HyperparameterError
 from numpy.typing import NDArray
 
 SequenceArray = NDArray[np.floating[Any]]
@@ -128,7 +124,11 @@ def coerce_sequence_batch(
         return array
 
     if array.ndim != 2:
-        raise DataFormatError(["2-D array", "3-D array"], f"{array.ndim}-D array")
+        raise DataValidationError(
+            "series",
+            f"{array.ndim}-D",
+            "time-series input must be a 2-D or 3-D array",
+        )
     if array.shape[0] == 0 or array.shape[1] == 0:
         raise DataValidationError(
             "series", array.shape, "time-series input must not be empty"

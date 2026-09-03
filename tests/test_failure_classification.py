@@ -46,6 +46,7 @@ def test_missing_dependency_covers_both_families(exc: Exception) -> None:
         ConfigurationError("option", "bad"),
         DataFormatError(["DataFrame"], "list"),
         ValueError("raised by scikit-learn"),
+        TypeError("raised by a third-party detector"),
     ],
 )
 def test_invalid_input_covers_both_families(exc: Exception) -> None:

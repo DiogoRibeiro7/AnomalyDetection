@@ -10,11 +10,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
-from dataexcept import (
-    DataFormatError,
-    DataValidationError,
-    HyperparameterError,
-)
+from dataexcept import DataValidationError, HyperparameterError
 
 from analytics.time_series import (
     WindowedScores,
@@ -131,7 +127,7 @@ def test_coerce_rejects_degenerate_three_dimensional_batches(
 
 
 def test_coerce_rejects_one_dimensional_input() -> None:
-    with pytest.raises(DataFormatError, match="Expected data format"):
+    with pytest.raises(DataValidationError, match="2-D or 3-D"):
         coerce_sequence_batch(np.zeros(5))
 
 
