@@ -1,5 +1,9 @@
 name: Manual Release
 
+# Fallback path. Releases normally come from the Release Please pull request,
+# which computes the version and writes the changelog from commit messages.
+# Use this only when that path is unavailable.
+
 on:
   workflow_dispatch:
     inputs:
@@ -10,7 +14,7 @@ on:
       target:
         description: "Branch, tag, or commit SHA to release"
         required: true
-        default: "main"
+        default: "develop"
         type: string
       title:
         description: "Release title. Defaults to v<version>"
@@ -108,14 +112,21 @@ jobs:
           version = os.environ["VERSION"]
           text = open("CHANGELOG.md", encoding="utf-8").read()
 
+          # Accepts both the hand-written form and the one release-please writes:
+          #   ## v0.5.0 - 2026-09-03
+          #   ## [0.6.0](https://.../compare/v0.5.0...v0.6.0) (2026-09-03)
+          escaped = re.escape(version)
           heading = re.search(
-              rf"^## v{re.escape(version)} - (.+)$", text, flags=re.MULTILINE
+              rf"^## (?:v{escaped} - (?P<dash>\S+)"
+              rf"|\[{escaped}\]\([^)]*\) \((?P<paren>[^)]+)\))",
+              text,
+              flags=re.MULTILINE,
           )
           if heading is None:
-              print(f"CHANGELOG.md has no '## v{version} - <date>' section.")
+              print(f"CHANGELOG.md has no section for version {version}.")
               sys.exit(1)
 
-          date = heading.group(1).strip()
+          date = (heading.group("dash") or heading.group("paren")).strip()
           if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date):
               print(
                   f"CHANGELOG.md section for v{version} is dated {date!r}; "

@@ -93,34 +93,43 @@ Open a pull request that describes the motivation, implementation details, and
 validation performed. Open an issue first for larger design changes.
 ## Releasing
 
-`develop` is the integration branch. `main` points at the last released commit
-and is never a place where work is authored.
+Releases are automated. Nothing about a version is typed by hand.
 
-Promote by **fast-forward**, never through a pull request:
+[Release Please](https://github.com/googleapis/release-please) reads the
+Conventional Commit messages on `develop` and keeps a release pull request open
+that carries the next version and its changelog. Merging that pull request tags
+the release and publishes it; Zenodo archives the published release and mints
+the DOI.
 
-```bash
-git push origin develop:main
-```
+So the whole release is: **merge the release pull request.**
 
-or run the **Promote Develop To Main** workflow, which performs the same
-fast-forward and refuses to run if one is not possible.
+The version is derived from the commits, which is why the prefix matters:
 
-Then run the **Manual Release** workflow with the version and `main` as the
-target. It validates that the version agrees across `pyproject.toml`,
-`.zenodo.json`, and `CITATION.cff`, and that `CHANGELOG.md` has a dated section
-for that version, before tagging and publishing.
+| Commit prefix | Effect while pre-1.0 |
+| --- | --- |
+| `fix:` | patch bump |
+| `feat:` | minor bump |
+| `feat!:` or a `BREAKING CHANGE:` footer | minor bump, listed under Breaking |
+| `chore:`, `ci:`, `docs:`, `test:`, `refactor:`, `style:` | no bump; grouped in the notes |
 
-### Why promotion must be a fast-forward
+The release pull request updates the version in `pyproject.toml`,
+`.zenodo.json`, and `CITATION.cff` together, and
+`tests/test_citation_metadata.py` asserts the three agree, so a missed file
+fails CI rather than shipping.
 
-Both branches require a linear history, so a pull request into `main` can only
-be squashed or rebased, and each of those writes a **new commit onto `main`**
-with a new SHA. `develop` never receives it, so the branches diverge
-immediately and the next promotion conflicts on the files every release
-touches: the changelog and the citation metadata.
+### Manual releases
 
-A fast-forward creates no commit, so the two branches stay identical and the
-next promotion is a fast-forward again.
+`Manual Release` remains as a fallback for when the automated path is
+unavailable. It validates that the version agrees across the three files and
+that `CHANGELOG.md` has a dated section for it before tagging. Prefer the
+release pull request.
 
-If `main` ever does end up ahead, merge it back into `develop` and **keep the
-merge commit**. Squashing that merge discards its second parent, so the
-histories stay diverged and the conflict returns.
+### Branches
+
+`develop` is the default branch and the one releases are cut from. `main` is a
+leftover from an earlier two-branch flow and is no longer part of releasing; it
+can be deleted once nothing external points at it.
+
+A two-branch flow does not work with this automation: the release commit lands
+on whichever branch is released from, and never reaches the other, so the two
+diverge on exactly the files every release touches.

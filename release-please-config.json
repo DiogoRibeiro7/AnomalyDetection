@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "python",
+      "package-name": "anomaly-detection",
+      "changelog-path": "CHANGELOG.md",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": false,
+      "include-component-in-tag": false,
+      "extra-files": [
+        {
+          "type": "json",
+          "path": ".zenodo.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "yaml",
+          "path": "CITATION.cff",
+          "jsonpath": "$.version"
+        }
+      ],
+      "changelog-sections": [
+        { "type": "feat", "section": "Added" },
+        { "type": "fix", "section": "Fixed" },
+        { "type": "perf", "section": "Performance" },
+        { "type": "refactor", "section": "Changed" },
+        { "type": "docs", "section": "Documentation" },
+        { "type": "test", "section": "Internal", "hidden": false },
+        { "type": "ci", "section": "Internal", "hidden": false },
+        { "type": "chore", "section": "Internal", "hidden": false },
+        { "type": "style", "section": "Internal", "hidden": false }
+      ]
+    }
+  }
+}
