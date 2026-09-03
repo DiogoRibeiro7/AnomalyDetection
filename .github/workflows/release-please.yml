@@ -8,11 +8,24 @@ name: Release Please
 # commits, and it is written into pyproject.toml, .zenodo.json, and
 # CITATION.cff together. tests/test_citation_metadata.py still asserts those
 # three agree, so a missed file fails CI rather than shipping.
+#
+# If the wheel fails to build or upload, the release is already published
+# without it, and a re-run of the push event will not retry: release_created is
+# false once the release exists. Recover by dispatching this workflow with the
+# tag, which runs the wheel job on its own. A `release: published` trigger
+# cannot serve that purpose, because releases created with GITHUB_TOKEN do not
+# trigger further workflows.
 
 on:
   push:
     branches:
       - develop
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build and attach a wheel to (recovery only)"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -28,6 +41,7 @@ concurrency:
 jobs:
   release-please:
     name: Maintain the release pull request
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
@@ -43,16 +57,34 @@ jobs:
   publish-wheel:
     name: Attach the wheel to the release
     needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
+    if: |
+      always() && (
+        needs.release-please.outputs.release_created == 'true'
+        || (github.event_name == 'workflow_dispatch' && inputs.tag != '')
+      )
     runs-on: ubuntu-latest
     steps:
-      # release-please tags and publishes but does not build anything, so the
-      # wheel that Manual Release used to attach has to be built here or the
-      # published release would carry no artifact.
+      - name: Resolve the tag to attach to
+        id: resolve
+        env:
+          DISPATCH_TAG: ${{ inputs.tag }}
+          RELEASE_TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          TAG="${DISPATCH_TAG:-${RELEASE_TAG}}"
+          if [[ -z "${TAG}" ]]; then
+            echo "No tag to attach to."
+            exit 1
+          fi
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+          echo "Attaching a wheel to ${TAG}."
+
+      # release-please tags and publishes but builds nothing, so the wheel that
+      # Manual Release used to attach has to be built here or the published
+      # release would carry no artifact.
       - name: Checkout the released tag
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.release-please.outputs.tag_name }}
+          ref: ${{ steps.resolve.outputs.tag }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -68,5 +100,5 @@ jobs:
       - name: Upload wheel to the release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ needs.release-please.outputs.tag_name }}
+          TAG: ${{ steps.resolve.outputs.tag }}
         run: gh release upload "${TAG}" dist/*.whl --clobber
