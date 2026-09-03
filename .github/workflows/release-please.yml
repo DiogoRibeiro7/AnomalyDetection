@@ -1,0 +1,30 @@
+name: Release Please
+
+# Keeps a release pull request open that carries the next version and its
+# changelog, both derived from Conventional Commit messages. Merging that pull
+# request tags the release and publishes it, which is what Zenodo archives.
+#
+# Nothing about a release is typed by hand: the version is computed from the
+# commits, and it is written into pyproject.toml, .zenodo.json, and
+# CITATION.cff together. tests/test_citation_metadata.py still asserts those
+# three agree, so a missed file fails CI rather than shipping.
+
+on:
+  push:
+    branches:
+      - develop
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    name: Maintain the release pull request
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          target-branch: develop
