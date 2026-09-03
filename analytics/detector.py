@@ -1,29 +1,103 @@
 """Backwards compatible aggregator for detector classes.
 
-Detectors are now organised under :mod:`analytics.detectors` submodules.  This
-module re-exports all detector classes for code that previously imported from
+Detectors are now organised under :mod:`analytics.detectors` submodules. This
+module re-exports every detector class for code that previously imported from
 ``analytics.detector``.
+
+The re-exports are written out explicitly rather than installed into
+``globals()`` at import time, so type checkers and IDEs can resolve them.
 """
 
-from .detectors import classical as _classical
-from .detectors import correctness as _correctness
-from .detectors import deep as _deep
-from .detectors import forecasting as _forecasting
-from .detectors import graph as _graph
-from .detectors import modern_tabular as _modern_tabular
-from .detectors import streaming as _streaming
+from __future__ import annotations
 
-_MODULES = (
-    _classical,
-    _correctness,
-    _deep,
-    _forecasting,
-    _graph,
-    _modern_tabular,
-    _streaming,
+from .detectors.classical import (
+    ABODDetector,
+    COPODDetector,
+    DBSCANDetector,
+    EllipticEnvelopeDetector,
+    EnsembleDetector,
+    FeatureBaggingDetector,
+    GaussianMixtureDetector,
+    HBOSDetector,
+    IsolationForestDetector,
+    KDEDetector,
+    KMeansDetector,
+    KNNDetector,
+    LODADetector,
+    LOFDetector,
+    MahalanobisDetector,
+    OneClassSVMDetector,
+    PCAReconstructionDetector,
+    SklearnLOFDetector,
+    SOSDetector,
+)
+from .detectors.correctness import (
+    InductiveDBSCANDetector,
+)
+from .detectors.deep import (
+    AnoGANDetector,
+    AutoencoderDetector,
+    DenoisingAutoencoderDetector,
+    LSTMAutoencoderDetector,
+    MADGANDetector,
+    TransformerDetector,
+    VariationalAutoencoderDetector,
+)
+from .detectors.forecasting import (
+    ARIMADetector,
+    ProphetDetector,
+)
+from .detectors.graph import (
+    DegreeCentralityDetector,
+    GraphIsolationForestDetector,
+)
+from .detectors.modern_tabular import (
+    ECODDetector,
+    RandomFeatureIsolationForestDetector,
+    RandomNetworkDistillationDetector,
+)
+from .detectors.streaming import (
+    HalfSpaceTreesDetector,
+    OnlineIsolationForestDetector,
+    RandomCutForestDetector,
 )
 
-__all__ = [name for module in _MODULES for name in module.__all__]
-
-for module in _MODULES:
-    globals().update({name: getattr(module, name) for name in module.__all__})
+__all__ = [
+    "ABODDetector",
+    "ARIMADetector",
+    "AnoGANDetector",
+    "AutoencoderDetector",
+    "COPODDetector",
+    "DBSCANDetector",
+    "DegreeCentralityDetector",
+    "DenoisingAutoencoderDetector",
+    "ECODDetector",
+    "EllipticEnvelopeDetector",
+    "EnsembleDetector",
+    "FeatureBaggingDetector",
+    "GaussianMixtureDetector",
+    "GraphIsolationForestDetector",
+    "HBOSDetector",
+    "HalfSpaceTreesDetector",
+    "InductiveDBSCANDetector",
+    "IsolationForestDetector",
+    "KDEDetector",
+    "KMeansDetector",
+    "KNNDetector",
+    "LODADetector",
+    "LOFDetector",
+    "LSTMAutoencoderDetector",
+    "MADGANDetector",
+    "MahalanobisDetector",
+    "OneClassSVMDetector",
+    "OnlineIsolationForestDetector",
+    "PCAReconstructionDetector",
+    "ProphetDetector",
+    "RandomCutForestDetector",
+    "RandomFeatureIsolationForestDetector",
+    "RandomNetworkDistillationDetector",
+    "SOSDetector",
+    "SklearnLOFDetector",
+    "TransformerDetector",
+    "VariationalAutoencoderDetector",
+]

@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.metrics import auc, roc_curve
 
-from analytics.detectors.classical import (
+from analytics.detector import (
     HBOSDetector,
     IsolationForestDetector,
     KNNDetector,
