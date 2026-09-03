@@ -16,10 +16,16 @@ jobs:
           python-version: "3.12"
       - run: pip install poetry
       - run: poetry install --no-interaction
-      - run: poetry run pip install ruff mypy pytest-cov
+      # Pinned: unpinned linters drift between a developer's machine and CI,
+      # which surfaces as suppressions that are required locally and unused
+      # here, or vice versa. types-PyYAML is required for mypy to see yaml as
+      # typed rather than an untyped import. Bump deliberately.
+      - run: >-
+          poetry run pip install ruff==0.16.1 mypy==1.20.2
+          pytest-cov==7.1.0 types-PyYAML==6.0.12.20260815
       - name: Ruff
         run: poetry run ruff check .
       - name: Mypy
         run: poetry run mypy analytics benchmarks src cli.py tests
       - name: Coverage
-        run: poetry run pytest -q --cov=analytics --cov=benchmarks --cov-report=term-missing --cov-fail-under=69
+        run: poetry run pytest -q --cov=analytics --cov=benchmarks --cov-report=term-missing --cov-fail-under=71
