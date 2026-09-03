@@ -4,8 +4,10 @@ from typing import Any
 
 import numpy as np
 import pytest
+from dataexcept import DataValidationError
 
 from analytics.base import BaseDetector, coerce_tabular_2d
+from analytics.exceptions import DetectorNotFittedError
 
 
 class LifecycleDetector(BaseDetector):
@@ -25,7 +27,9 @@ def test_detector_starts_unfitted_and_scores_only_after_fit() -> None:
     detector = LifecycleDetector()
 
     assert detector.is_fitted is False
-    with pytest.raises(RuntimeError, match="must be fitted before calling score"):
+    with pytest.raises(
+        DetectorNotFittedError, match="must be fitted before calling score"
+    ):
         detector.score(object())
 
     assert detector.fit(object()) is detector
@@ -52,8 +56,8 @@ def test_detect_anomalies_uses_fit_and_score_lifecycle() -> None:
 def test_coerce_tabular_2d_validates_shape_and_empty_input() -> None:
     assert coerce_tabular_2d([[1, 2], [3, 4]]).shape == (2, 2)
 
-    with pytest.raises(ValueError, match="2-D array"):
+    with pytest.raises(DataValidationError, match="2-D array"):
         coerce_tabular_2d([1, 2, 3])
 
-    with pytest.raises(ValueError, match="at least one sample"):
+    with pytest.raises(DataValidationError, match="at least one sample"):
         coerce_tabular_2d(np.empty((0, 2)))

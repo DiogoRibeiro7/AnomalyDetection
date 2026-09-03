@@ -23,11 +23,19 @@ ensure_supported_python()
 
 import networkx as nx
 import pandas as pd
+from dataexcept import (
+    ConfigurationError,
+    DataFormatError,
+    DataValidationError,
+    DependencyError,
+    HyperparameterError,
+)
 
 from analytics.detectors import (
     DETECTOR_REGISTRY,
     get_detector_class,
 )
+from analytics.exceptions import DetectorNotFittedError
 from benchmarks.catalog import resolve_dataset_names
 from benchmarks.load_all_datasets import load_all_datasets
 from benchmarks.metrics import (
@@ -124,9 +132,10 @@ def load_plugins(modules):
     """Import plugin modules while restricting the allowed namespace."""
     for mod in modules:
         if not mod.startswith(ALLOWED_PLUGIN_PREFIX):
-            raise ValueError(
-                f"Plugin '{mod}' is not allowed; "
-                f"must start with '{ALLOWED_PLUGIN_PREFIX}'"
+            raise ConfigurationError(
+                "plugins",
+                f"plugin '{mod}' is not allowed; "
+                f"must start with '{ALLOWED_PLUGIN_PREFIX}'",
             )
         import_module(mod)
 
@@ -273,13 +282,30 @@ def _evaluated_score_orientation(scores) -> str:
 
 
 def _classify_failure(exc: Exception | None) -> str:
+    """Categorise a detector failure for the benchmark report.
+
+    Both the DataExcept types this package raises and the builtin types that
+    third-party detectors still raise are recognised, so the category does not
+    depend on which library produced the error.
+    """
+
     if exc is None:
         return ""
-    if isinstance(exc, (ImportError, ModuleNotFoundError)):
+    if isinstance(exc, (DependencyError, ImportError, ModuleNotFoundError)):
         return "missing_dependency"
-    if isinstance(exc, ValueError):
+    if isinstance(
+        exc,
+        (
+            ConfigurationError,
+            DataFormatError,
+            DataValidationError,
+            HyperparameterError,
+            TypeError,
+            ValueError,
+        ),
+    ):
         return "invalid_input_or_parameter"
-    if isinstance(exc, RuntimeError):
+    if isinstance(exc, (DetectorNotFittedError, RuntimeError)):
         return "runtime_error"
     return "detector_error"
 

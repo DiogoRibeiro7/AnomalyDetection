@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+from dataexcept import HyperparameterError
 from numpy.typing import NDArray
 
 from analytics.base import BaseDetector
@@ -35,9 +36,13 @@ def _sinusoidal_position_encoding(
     """Return the standard sinusoidal encoding for explicit sequence positions."""
 
     if length < 1:
-        raise ValueError("position encoding length must be greater than zero")
+        raise HyperparameterError(
+            "length", length, "position encoding length must be greater than zero"
+        )
     if width < 1:
-        raise ValueError("position encoding width must be greater than zero")
+        raise HyperparameterError(
+            "width", width, "position encoding width must be greater than zero"
+        )
 
     position = torch_module.arange(length, device=device, dtype=dtype).unsqueeze(1)
     even_width = (width + 1) // 2
@@ -201,9 +206,13 @@ class TCNAutoencoderDetector(_TemporalDetector):
         torch_module, nn_module, optim_module = _import_torch()
         del params
         if hidden_channels < 1:
-            raise ValueError("hidden_channels must be greater than zero")
+            raise HyperparameterError(
+                "hidden_channels", hidden_channels, "must be greater than zero"
+            )
         if kernel_size < 2 or kernel_size % 2 == 0:
-            raise ValueError("kernel_size must be an odd integer greater than one")
+            raise HyperparameterError(
+                "kernel_size", kernel_size, "must be an odd integer greater than one"
+            )
 
         self.window_spec = self._window_spec(
             window_length=window_length,
@@ -317,7 +326,9 @@ class TransformerDetector(_TemporalDetector):
         torch_module, nn_module, optim_module = _import_torch()
         del params
         if d_model % nhead != 0:
-            raise ValueError("d_model must be divisible by nhead")
+            raise HyperparameterError(
+                "d_model", d_model, f"must be divisible by nhead ({nhead})"
+            )
         self.window_spec = self._window_spec(
             window_length=window_length,
             stride=stride,

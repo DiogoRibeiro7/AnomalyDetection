@@ -1,4 +1,5 @@
 import pytest
+from dataexcept import ConfigurationError
 
 pytest.importorskip("networkx")
 
@@ -17,5 +18,5 @@ def test_summarize_outputs(capsys):
 
 
 def test_plugin_restriction():
-    with pytest.raises(ValueError):
+    with pytest.raises(ConfigurationError):
         load_plugins(["os"])

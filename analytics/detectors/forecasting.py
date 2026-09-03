@@ -7,6 +7,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from dataexcept import DataValidationError
 from numpy.typing import NDArray
 
 from analytics.base import BaseDetector
@@ -40,9 +41,11 @@ def _validate_series_count(
     expected = len(models)
     actual = int(series_matrix.shape[0])
     if expected != actual:
-        raise ValueError(
-            f"{detector_name} received {actual} series for scoring, "
-            f"but was fitted on {expected} series."
+        raise DataValidationError(
+            detector_name,
+            actual,
+            f"received {actual} series for scoring, "
+            f"but was fitted on {expected} series",
         )
 
 

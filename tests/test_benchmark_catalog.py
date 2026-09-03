@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from analytics.exceptions import UnknownDatasetError
 from benchmarks import catalog
 from benchmarks.load_all_datasets import load_all_datasets
 
@@ -75,8 +76,9 @@ def test_load_all_datasets_includes_metadata() -> None:
 def test_load_all_datasets_raises_on_unknown() -> None:
     try:
         load_all_datasets(["not_a_dataset"])
-    except KeyError as exc:
-        assert "Unknown dataset selector" in str(exc)
+    except UnknownDatasetError as exc:
+        assert "Unknown dataset" in str(exc)
+        assert exc.identifier == "not_a_dataset"
     else:  # pragma: no cover - defensive fallback
         raise AssertionError("Expected KeyError for unknown dataset selector")
 

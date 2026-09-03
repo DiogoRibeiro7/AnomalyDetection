@@ -6,6 +6,7 @@ from typing import Any
 
 import numpy as np
 import pytest
+from dataexcept import DataValidationError
 
 from analytics.detectors.registry import get_detector_class
 from analytics.detectors.temporal import _sinusoidal_position_encoding
@@ -49,7 +50,7 @@ def test_window_labels_align_to_window_end_plus_horizon() -> None:
 
 
 def test_window_contract_rejects_sequence_length_one() -> None:
-    with pytest.raises(ValueError, match="at least two time steps"):
+    with pytest.raises(DataValidationError, match="at least two time steps"):
         coerce_sequence_batch(np.ones((5, 1)))
 
 

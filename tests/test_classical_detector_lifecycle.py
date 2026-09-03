@@ -16,6 +16,7 @@ import pytest
 
 from analytics.detectors import get_detector_class
 from analytics.detectors.classical import EnsembleDetector, LOFDetector
+from analytics.exceptions import DetectorNotFittedError
 
 COLUMNS = list("abc")
 
@@ -84,7 +85,7 @@ def test_score_before_fit_is_refused(
     _, test = frames
     detector = get_detector_class(detector_key)()
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(DetectorNotFittedError):
         detector.score(test)
 
 

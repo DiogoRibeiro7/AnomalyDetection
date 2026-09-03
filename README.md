@@ -110,6 +110,35 @@ LODA, ABOD, Half-Space Trees, Online Isolation Forest, AnoGAN, MAD-GAN, Degree
 Centrality, Graph Isolation Forest, ECOD, Random Feature Isolation Forest,
 Random Network Distillation, ARIMA, and Prophet.
 
+## Exceptions
+
+Errors raised by this package come from
+[DataExcept](https://pypi.org/project/DataExcept/), which provides structured
+exceptions carrying the offending field, value, or dependency rather than a
+bare message. Every one inherits from `dataexcept.DataExceptError`:
+
+```python
+from dataexcept import DataExceptError, HyperparameterError
+
+from analytics.time_series import WindowSpec
+
+try:
+    WindowSpec(window_length=1)
+except HyperparameterError as exc:
+    print(exc.param, exc.value)  # window_length 1
+except DataExceptError:  # catches anything this package raises
+    raise
+```
+
+These exceptions **do not inherit from** `ValueError`, `KeyError`, `TypeError`,
+`RuntimeError`, or `ImportError`. Code written against earlier versions that
+caught those must be updated; see the mapping table in
+[CHANGELOG.md](CHANGELOG.md).
+
+Cases DataExcept has no direct equivalent for are defined in
+[analytics/exceptions.py](analytics/exceptions.py) and still inherit from it:
+`DetectorNotFittedError`, `UnknownDetectorError`, and `UnknownDatasetError`.
+
 ## Plugins
 
 External detector packages can register themselves through plugin modules whose
@@ -129,8 +158,8 @@ replace an existing detector intentionally, pass `allow_override=True` to
 All built-in detectors follow the same lifecycle:
 
 - `fit(data, **params)` trains the detector and marks it as fitted.
-- `score(data)` returns detector-specific anomaly scores and raises a
-  `RuntimeError` if called before `fit`.
+- `score(data)` returns detector-specific anomaly scores and raises
+  `DetectorNotFittedError` if called before `fit`.
 - `detect_anomalies(data, **params)` is the fit-and-score convenience path used
   by benchmark workflows.
 

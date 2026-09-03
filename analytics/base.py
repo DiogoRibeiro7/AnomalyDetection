@@ -7,7 +7,10 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pandas as pd
+from dataexcept import DataValidationError, PreprocessingError
 from numpy.typing import NDArray
+
+from analytics.exceptions import DetectorNotFittedError
 
 if TYPE_CHECKING:  # pragma: no cover - optional dependency for typing only
     from analytics.preprocessing import PreprocessingPipeline
@@ -63,9 +66,17 @@ def coerce_tabular_2d(
         array = np.asarray(data, dtype=float)
 
     if array.ndim != 2:
-        raise ValueError(f"{detector_name} input must be a 2-D array.")
+        raise DataValidationError(
+            field=detector_name,
+            value=f"{array.ndim}-D",
+            message="input must be a 2-D array.",
+        )
     if not allow_empty and array.shape[0] == 0:
-        raise ValueError(f"{detector_name} input must contain at least one sample.")
+        raise DataValidationError(
+            field=detector_name,
+            value=array.shape[0],
+            message="input must contain at least one sample.",
+        )
 
     return array
 
@@ -139,9 +150,7 @@ class BaseDetector(ABC):
 
     def _require_fitted(self) -> None:
         if not self.is_fitted:
-            raise RuntimeError(
-                f"{self.get_name()} must be fitted before calling score()."
-            )
+            raise DetectorNotFittedError(self.get_name())
 
     @property
     def preprocessing_pipeline(self) -> PreprocessingPipeline | None:
@@ -180,9 +189,9 @@ class BaseDetector(ABC):
         if self._preprocessing_pipeline is None:
             return data
         if not self._preprocessing_fitted:
-            raise RuntimeError(
-                "Preprocessing pipeline must be fitted by calling fit_preprocessed "
-                "before scoring."
+            raise PreprocessingError(
+                "pipeline",
+                "must be fitted by calling fit_preprocessed before scoring",
             )
         return self._preprocessing_pipeline.transform(data)
 

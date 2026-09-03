@@ -10,6 +10,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
+from dataexcept import DataValidationError, HyperparameterError
 
 from analytics.time_series import (
     WindowedScores,
@@ -24,23 +25,23 @@ from analytics.time_series import (
 @pytest.mark.parametrize(
     ("kwargs", "message"),
     [
-        ({"window_length": 1}, "window_length must be at least 2"),
-        ({"window_length": 4, "stride": 0}, "stride must be at least 1"),
-        ({"window_length": 4, "horizon": -1}, "horizon must be non-negative"),
+        ({"window_length": 1}, "must be at least 2"),
+        ({"window_length": 4, "stride": 0}, "must be at least 1"),
+        ({"window_length": 4, "horizon": -1}, "must be non-negative"),
         (
             {"window_length": 4, "aggregation": "mean"},
-            "Only window aggregation is currently supported",
+            "only window aggregation is currently supported",
         ),
         (
             {"window_length": 4, "label_alignment": "window_start"},
-            "Only window_end label alignment is currently supported",
+            "only window_end label alignment is currently supported",
         ),
     ],
 )
 def test_window_spec_rejects_unsupported_configuration(
     kwargs: dict[str, object], message: str
 ) -> None:
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(HyperparameterError, match=message):
         WindowSpec(**kwargs)  # type: ignore[arg-type]
 
 
@@ -76,19 +77,19 @@ def test_align_point_labels_selects_the_aligned_positions() -> None:
 
 def test_align_point_labels_requires_one_dimensional_labels() -> None:
     spec = WindowSpec(window_length=3)
-    with pytest.raises(ValueError, match="one-dimensional"):
+    with pytest.raises(DataValidationError, match="one-dimensional"):
         align_point_labels(np.zeros((4, 2)), spec)
 
 
 def test_windowed_scores_requires_one_dimensional_values() -> None:
     spec = WindowSpec(window_length=3)
-    with pytest.raises(ValueError, match="one-dimensional"):
+    with pytest.raises(DataValidationError, match="one-dimensional"):
         WindowedScores(np.zeros((2, 2)), label_indices=[0, 1, 2, 3], window_spec=spec)
 
 
 def test_windowed_scores_requires_matching_label_indices() -> None:
     spec = WindowSpec(window_length=3)
-    with pytest.raises(ValueError, match="equal length"):
+    with pytest.raises(DataValidationError, match="equal length"):
         WindowedScores([0.1, 0.2], label_indices=[0], window_spec=spec)
 
 
@@ -121,18 +122,18 @@ def test_coerce_accepts_a_three_dimensional_batch_unchanged() -> None:
 def test_coerce_rejects_degenerate_three_dimensional_batches(
     batch: np.ndarray,
 ) -> None:
-    with pytest.raises(ValueError, match="non-empty sequences"):
+    with pytest.raises(DataValidationError, match="non-empty sequences"):
         coerce_sequence_batch(batch)
 
 
 def test_coerce_rejects_one_dimensional_input() -> None:
-    with pytest.raises(ValueError, match="2-D or 3-D"):
+    with pytest.raises(DataValidationError, match="2-D or 3-D"):
         coerce_sequence_batch(np.zeros(5))
 
 
 @pytest.mark.parametrize("shape", [(0, 3), (3, 0)])
 def test_coerce_rejects_empty_two_dimensional_input(shape: tuple[int, int]) -> None:
-    with pytest.raises(ValueError, match="must not be empty"):
+    with pytest.raises(DataValidationError, match="must not be empty"):
         coerce_sequence_batch(np.zeros(shape))
 
 
@@ -145,7 +146,7 @@ def test_coerce_without_a_spec_treats_rows_as_series() -> None:
 
 
 def test_coerce_without_a_spec_requires_two_time_steps() -> None:
-    with pytest.raises(ValueError, match="at least two time steps"):
+    with pytest.raises(DataValidationError, match="at least two time steps"):
         coerce_sequence_batch(np.zeros((4, 1)))
 
 
@@ -162,7 +163,7 @@ def test_coerce_with_a_spec_builds_rolling_windows() -> None:
 
 def test_coerce_with_a_spec_rejects_a_series_that_is_too_short() -> None:
     spec = WindowSpec(window_length=8, horizon=2)
-    with pytest.raises(ValueError, match="too short"):
+    with pytest.raises(DataValidationError, match="too short"):
         coerce_sequence_batch(np.zeros((5, 1)), window_spec=spec)
 
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
+from dataexcept import DataValidationError
 
 _BENCHMARK_DIR = Path(__file__).resolve().parent
 
@@ -34,9 +35,15 @@ def load_cardio_corrected() -> tuple[pd.DataFrame, list[str], str, str]:
     df = df.drop(columns=["NSP"])
 
     if df["Class"].isna().any():
-        raise ValueError("Cardiotocography class mapping produced missing labels.")
+        raise DataValidationError(
+            "Class", None, "cardiotocography class mapping produced missing labels"
+        )
     if set(df["Class"].unique()) != {0, 1}:
-        raise ValueError("Cardiotocography benchmark must contain both classes.")
+        raise DataValidationError(
+            "Class",
+            sorted(df["Class"].unique()),
+            "cardiotocography benchmark must contain both classes",
+        )
 
     features = [column for column in df.columns if column != "Class"]
     return df, features, "Class", "cardio"

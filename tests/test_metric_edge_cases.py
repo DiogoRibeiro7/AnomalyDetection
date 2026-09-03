@@ -11,6 +11,7 @@ from typing import Any
 
 import numpy as np
 import pytest
+from dataexcept import ConfigurationError, DataValidationError
 
 from analytics.base import OrientedScores
 from analytics.time_series import WindowedScores, WindowSpec
@@ -60,28 +61,28 @@ def test_resolve_reads_k_positive_label_and_threshold() -> None:
 
 
 def test_resolve_rejects_a_non_sequence_name_list() -> None:
-    with pytest.raises(ValueError, match="metrics.include"):
+    with pytest.raises(ConfigurationError, match="string or list"):
         resolve_metric_config({"include": 5})
 
 
 def test_resolve_rejects_a_non_positive_k() -> None:
-    with pytest.raises(ValueError, match="greater than zero"):
+    with pytest.raises(ConfigurationError, match="greater than zero"):
         resolve_metric_config({"include": ["precision_at_k"], "k": 0})
 
 
 def test_resolve_rejects_an_unsupported_metric_name() -> None:
-    with pytest.raises(ValueError, match="Unsupported benchmark metric"):
+    with pytest.raises(ConfigurationError, match="unsupported benchmark metric"):
         resolve_metric_config(["not_a_metric"])
 
 
 def test_resolve_rejects_an_unusable_configuration_type() -> None:
-    with pytest.raises(ValueError, match="string, list, mapping, or null"):
+    with pytest.raises(ConfigurationError, match="string, list, mapping, or null"):
         resolve_metric_config(5)
 
 
 def test_canonicalize_rejects_an_unknown_orientation() -> None:
     scores = OrientedScores([0.1, 0.2], "sideways")  # type: ignore[arg-type]
-    with pytest.raises(ValueError, match="Unknown score orientation"):
+    with pytest.raises(DataValidationError, match="unknown score orientation"):
         canonicalize_anomaly_scores(scores)
 
 
@@ -94,7 +95,7 @@ def test_window_aligned_labels_require_a_one_dimensional_label_vector() -> None:
     spec = WindowSpec(window_length=2)
     scores = WindowedScores([0.1, 0.2], label_indices=[0, 1], window_spec=spec)
 
-    with pytest.raises(ValueError, match="one-dimensional"):
+    with pytest.raises(DataValidationError, match="one-dimensional"):
         evaluate_metrics(np.zeros((2, 2)), scores, runtime_seconds=0.0)
 
 
@@ -102,7 +103,7 @@ def test_window_label_indices_must_fall_inside_the_label_vector() -> None:
     spec = WindowSpec(window_length=2)
     scores = WindowedScores([0.1, 0.2], label_indices=[0, 9], window_spec=spec)
 
-    with pytest.raises(ValueError, match="outside the label vector"):
+    with pytest.raises(DataValidationError, match="outside the label vector"):
         evaluate_metrics([0, 1, 0], scores, runtime_seconds=0.0)
 
 

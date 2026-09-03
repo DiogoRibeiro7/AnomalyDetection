@@ -6,6 +6,31 @@ The format follows Keep a Changelog, and this project uses semantic versioning.
 
 ## v0.5.0 - Unreleased
 
+### Breaking
+
+- Replaced the builtin exceptions raised by this package with the structured
+  hierarchy from [DataExcept](https://pypi.org/project/DataExcept/). Every error
+  raised here now inherits from `dataexcept.DataExceptError` and **no longer
+  inherits from `ValueError`, `KeyError`, `TypeError`, `RuntimeError`, or
+  `ImportError`**. Code that caught those from this package must catch the
+  DataExcept types, or `DataExceptError` to catch all of them.
+- `benchmarks.config_benchmark.ConfigValidationError` now inherits from
+  `dataexcept.ConfigurationError` instead of `ValueError`. Its message is
+  unchanged and the offending key is available as `option`.
+
+  | Previously | Now |
+  | --- | --- |
+  | `ValueError` on detector/field validation | `DataValidationError` |
+  | `ValueError` on a parameter value | `HyperparameterError` |
+  | `ValueError` on configuration | `ConfigurationError` |
+  | `ValueError` on input shape | `DataValidationError` |
+  | `TypeError` on an unsupported container type | `DataFormatError` |
+  | `KeyError` on a missing dataframe column | `MissingColumnError` |
+  | `KeyError`/`ValueError` on an unknown detector | `UnknownDetectorError` |
+  | `KeyError` on an unknown dataset | `UnknownDatasetError` |
+  | `RuntimeError` on scoring before fit | `DetectorNotFittedError` |
+  | `ImportError` on an optional dependency | `DependencyError` |
+
 - Added modern tabular detectors: ECOD, Random Feature Isolation Forest, and
   Random Network Distillation.
 - Added seed support for modern tabular detectors in benchmark manifests and

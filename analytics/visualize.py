@@ -7,6 +7,11 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
+from dataexcept import (
+    DataValidationError,
+    DependencyError,
+    HyperparameterError,
+)
 from matplotlib.axes import Axes
 from sklearn.manifold import TSNE
 from sklearn.metrics import ConfusionMatrixDisplay, auc, confusion_matrix, roc_curve
@@ -53,14 +58,18 @@ def plot_roc_curves(
 
     y_true_array = np.asarray(y_true)
     if y_true_array.ndim != 1:
-        raise ValueError("y_true must be a one-dimensional array")
+        raise DataValidationError(
+            "y_true", f"{y_true_array.ndim}-D", "must be a one-dimensional array"
+        )
 
     for name, scores in detector_scores.items():
         score_array = np.asarray(scores)
         if score_array.shape[0] != y_true_array.shape[0]:
-            raise ValueError(
-                f"Detector '{name}' produced {score_array.shape[0]} scores but "
-                f"expected {y_true_array.shape[0]}"
+            raise DataValidationError(
+                name,
+                score_array.shape[0],
+                f"produced {score_array.shape[0]} scores but expected "
+                f"{y_true_array.shape[0]}",
             )
         fpr, tpr, _ = roc_curve(y_true_array, score_array)
         roc_auc = auc(fpr, tpr)
@@ -196,20 +205,28 @@ def visualize_embedding(
 
     Raises
     ------
-    ValueError
-        If an unsupported ``method`` is provided or the score length does not
+    HyperparameterError
+        If an unsupported ``method`` is provided.
+    DataValidationError
+        If ``data`` is not two-dimensional or the score length does not
         match ``data``.
-    ImportError
+    DependencyError
         When ``method`` is "umap" but the optional dependency is unavailable.
     """
 
     embeddings = np.asarray(data)
     if embeddings.ndim != 2:
-        raise ValueError("data must be a two-dimensional array")
+        raise DataValidationError(
+            "data", f"{embeddings.ndim}-D", "must be a two-dimensional array"
+        )
 
     score_array = np.asarray(scores)
     if score_array.shape[0] != embeddings.shape[0]:
-        raise ValueError("scores must have the same length as data")
+        raise DataValidationError(
+            "scores",
+            score_array.shape[0],
+            "must have the same length as data",
+        )
 
     reducer_kwargs = dict(reducer_kwargs or {})
 
@@ -218,11 +235,13 @@ def visualize_embedding(
         reducer = TSNE(n_components=2, **reducer_kwargs)
     elif method.lower() == "umap":
         if not _UMAP_AVAILABLE:  # pragma: no cover - exercised in tests
-            raise ImportError("UMAP is not installed. Install umap-learn to use it.")
+            raise DependencyError(
+                "umap-learn", "UMAP is not installed. Install umap-learn to use it."
+            )
         reducer_kwargs.setdefault("random_state", 42)
         reducer = umap.UMAP(n_components=2, **reducer_kwargs)
     else:
-        raise ValueError("method must be either 'tsne' or 'umap'")
+        raise HyperparameterError("method", method, "must be either 'tsne' or 'umap'")
 
     embedding = reducer.fit_transform(embeddings)
 

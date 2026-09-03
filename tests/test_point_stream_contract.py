@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+from dataexcept import DataValidationError
 
 from analytics.base import OrientedScores
 from analytics.time_series import WindowedScores, WindowSpec
@@ -51,7 +52,7 @@ def test_metrics_reject_unaligned_length_mismatch() -> None:
 
     try:
         evaluate_metrics(labels, scores, runtime_seconds=0.0)
-    except ValueError as exc:
+    except DataValidationError as exc:
         assert "equal length after alignment" in str(exc)
     else:  # pragma: no cover - defensive assertion
         raise AssertionError("Expected an explicit label/score length failure")

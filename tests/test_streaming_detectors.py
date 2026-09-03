@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
+from dataexcept import DependencyError
 
 pytest.importorskip("river")
 
@@ -42,5 +43,5 @@ def test_online_isolation_forest_alias_scores_dataframe_input() -> None:
 def test_random_cut_forest_reports_unsupported_river_model() -> None:
     detector = RandomCutForestDetector()
 
-    with pytest.raises(ImportError, match="RandomCutForest is not available"):
+    with pytest.raises(DependencyError, match="RandomCutForest is not available"):
         detector.fit(np.array([[0.0], [1.0]], dtype=float))

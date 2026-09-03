@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+from dataexcept import ConfigurationError, DataValidationError
 from numpy.typing import NDArray
 from sklearn.metrics import (
     average_precision_score,
@@ -60,12 +61,14 @@ def resolve_metric_config(config: Any = None) -> MetricConfig:
         if isinstance(names, str):
             names = [names]
         if not isinstance(names, (list, tuple)):
-            raise ValueError("metrics.include must be a string or list of strings.")
+            raise ConfigurationError(
+                "metrics.include", "must be a string or list of strings"
+            )
         k = config.get("k")
         if k is not None:
             k = int(k)
             if k <= 0:
-                raise ValueError("metrics.k must be greater than zero.")
+                raise ConfigurationError("metrics.k", "must be greater than zero")
         threshold = float(config.get("threshold", 0.5))
         return MetricConfig(
             names=_validate_metric_names(list(names)),
@@ -73,7 +76,7 @@ def resolve_metric_config(config: Any = None) -> MetricConfig:
             k=k,
             threshold=threshold,
         )
-    raise ValueError("metrics must be a string, list, mapping, or null.")
+    raise ConfigurationError("metrics", "must be a string, list, mapping, or null")
 
 
 DEFAULT_SCORE_ORIENTATION = "higher_is_more_anomalous"
@@ -99,11 +102,15 @@ def canonicalize_anomaly_scores(scores: Any) -> NDArray[np.floating[Any]]:
     if orientation == "binary_anomaly":
         return score_array
     if orientation == "estimator_defined":
-        raise ValueError(
-            "Benchmark evaluation requires an explicit score orientation; "
-            "received estimator_defined."
+        raise DataValidationError(
+            "score_orientation",
+            orientation,
+            "benchmark evaluation requires an explicit score orientation; "
+            "received estimator_defined",
         )
-    raise ValueError(f"Unknown score orientation: {orientation!r}.")
+    raise DataValidationError(
+        "score_orientation", orientation, "unknown score orientation"
+    )
 
 
 def _align_labels_to_scores(y_true: Any, scores: Any) -> NDArray[Any]:
@@ -112,13 +119,24 @@ def _align_labels_to_scores(y_true: Any, scores: Any) -> NDArray[Any]:
     if label_indices is not None:
         indices = np.asarray(label_indices, dtype=int)
         if labels.ndim != 1:
-            raise ValueError("Window-aligned benchmark labels must be one-dimensional")
+            raise DataValidationError(
+                "y_true",
+                f"{labels.ndim}-D",
+                "window-aligned benchmark labels must be one-dimensional",
+            )
         if np.any(indices < 0) or np.any(indices >= labels.shape[0]):
-            raise ValueError("Window score label indices fall outside the label vector")
+            raise DataValidationError(
+                "label_indices",
+                (int(indices.min()), int(indices.max())),
+                "window score label indices fall outside the label vector",
+            )
         labels = labels[indices]
     if labels.shape[0] != np.asarray(scores).shape[0]:
-        raise ValueError(
-            "Benchmark labels and anomaly scores must have equal length after alignment"
+        raise DataValidationError(
+            "y_true",
+            (labels.shape[0], np.asarray(scores).shape[0]),
+            "benchmark labels and anomaly scores must have equal length "
+            "after alignment",
         )
     return labels
 
@@ -218,7 +236,10 @@ def _validate_metric_names(names: list[Any]) -> list[str]:
     normalized = [str(name) for name in names]
     unknown = sorted(set(normalized) - SUPPORTED_METRICS)
     if unknown:
-        raise ValueError(f"Unsupported benchmark metric(s): {', '.join(unknown)}.")
+        raise ConfigurationError(
+            "metrics",
+            f"unsupported benchmark metric(s): {', '.join(unknown)}",
+        )
     return normalized or DEFAULT_METRICS.copy()
 
 
