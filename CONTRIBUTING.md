@@ -91,3 +91,36 @@ poetry run python -m pytest -q
 
 Open a pull request that describes the motivation, implementation details, and
 validation performed. Open an issue first for larger design changes.
+## Releasing
+
+`develop` is the integration branch. `main` points at the last released commit
+and is never a place where work is authored.
+
+Promote by **fast-forward**, never through a pull request:
+
+```bash
+git push origin develop:main
+```
+
+or run the **Promote Develop To Main** workflow, which performs the same
+fast-forward and refuses to run if one is not possible.
+
+Then run the **Manual Release** workflow with the version and `main` as the
+target. It validates that the version agrees across `pyproject.toml`,
+`.zenodo.json`, and `CITATION.cff`, and that `CHANGELOG.md` has a dated section
+for that version, before tagging and publishing.
+
+### Why promotion must be a fast-forward
+
+Both branches require a linear history, so a pull request into `main` can only
+be squashed or rebased, and each of those writes a **new commit onto `main`**
+with a new SHA. `develop` never receives it, so the branches diverge
+immediately and the next promotion conflicts on the files every release
+touches: the changelog and the citation metadata.
+
+A fast-forward creates no commit, so the two branches stay identical and the
+next promotion is a fast-forward again.
+
+If `main` ever does end up ahead, merge it back into `develop` and **keep the
+merge commit**. Squashing that merge discards its second parent, so the
+histories stay diverged and the conflict returns.

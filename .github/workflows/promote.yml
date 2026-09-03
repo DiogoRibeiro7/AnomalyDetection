@@ -1,0 +1,80 @@
+name: Promote Develop To Main
+
+# Moves `main` to the tip of `develop` as a fast-forward, so no new commit is
+# created on `main` and the two branches never diverge.
+#
+# Promoting through a pull request cannot do this: both branches require a
+# linear history, so the only merge strategies available are squash and rebase,
+# and each writes a fresh commit onto `main` that `develop` never receives. The
+# branches then conflict on the files every release touches - the changelog and
+# the citation metadata - which is what happened before v0.5.0.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type 'promote' to confirm fast-forwarding main to develop"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    name: Fast-forward main to develop
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check confirmation
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          if [[ "${CONFIRM}" != "promote" ]]; then
+            echo "Confirmation input must be exactly 'promote'."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify a fast-forward is possible
+        run: |
+          git fetch origin main develop
+
+          if ! git merge-base --is-ancestor origin/main origin/develop; then
+            echo "main is not an ancestor of develop, so it cannot be fast-forwarded."
+            echo
+            echo "Commits on main that develop does not have:"
+            git log --oneline origin/develop..origin/main
+            echo
+            echo "Merge main into develop first, keeping the merge commit, then"
+            echo "re-run this workflow. Squashing that merge discards the second"
+            echo "parent and leaves the histories diverged."
+            exit 1
+          fi
+
+          AHEAD="$(git rev-list --count origin/main..origin/develop)"
+          if [[ "${AHEAD}" == "0" ]]; then
+            echo "main already matches develop; nothing to promote."
+            exit 0
+          fi
+          echo "Fast-forwarding main by ${AHEAD} commit(s)."
+          git log --oneline origin/main..origin/develop | head -20
+
+      - name: Fast-forward main
+        run: |
+          if ! git push origin origin/develop:refs/heads/main; then
+            echo
+            echo "Push to main was rejected."
+            echo
+            echo "main requires a pull request review, which also blocks pushes"
+            echo "from Actions. Allow this workflow to bypass that rule by adding"
+            echo "the GitHub Actions app to the branch protection bypass list for"
+            echo "main, or run the promotion locally as a repository admin:"
+            echo
+            echo "    git push origin develop:main"
+            exit 1
+          fi
+          echo "main now points at $(git rev-parse --short origin/develop)."
