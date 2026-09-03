@@ -96,7 +96,7 @@ validation performed. Open an issue first for larger design changes.
 Releases are automated. Nothing about a version is typed by hand.
 
 [Release Please](https://github.com/googleapis/release-please) reads the
-Conventional Commit messages on `develop` and keeps a release pull request open
+Conventional Commit messages on `main` and keeps a release pull request open
 that carries the next version and its changelog. Merging that pull request tags
 the release and publishes it; Zenodo archives the published release and mints
 the DOI.
@@ -126,10 +126,10 @@ release pull request.
 
 ### Branches
 
-`develop` is the default branch and the one releases are cut from. `main` is a
-leftover from an earlier two-branch flow and is no longer part of releasing; it
-can be deleted once nothing external points at it.
+`main` is the only long-lived branch. Work happens on short-lived branches that
+merge into it, and releases are cut from it.
 
-A two-branch flow does not work with this automation: the release commit lands
-on whichever branch is released from, and never reaches the other, so the two
-diverge on exactly the files every release touches.
+There is deliberately no second long-lived branch. The release commit lands on
+whichever branch is released from and never reaches the other, so a two-branch
+flow diverges on exactly the files every release touches. That cost several
+rounds of conflict resolution before v0.5.0.
