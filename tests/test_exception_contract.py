@@ -49,10 +49,20 @@ def _raised_names(path: Path) -> list[tuple[str, int]]:
     return found
 
 
-def _dataexcept_names() -> set[str]:
-    import dataexcept
+def _project_exception_classes() -> list[type[BaseException]]:
+    """Every exception class this package defines, wherever it is declared."""
 
     import analytics.exceptions as project
+    from benchmarks.config_benchmark import ConfigValidationError
+
+    classes = [getattr(project, name) for name in project.__all__]
+    # Declared outside analytics.exceptions, so not covered by __all__ above.
+    classes.append(ConfigValidationError)
+    return classes
+
+
+def _dataexcept_names() -> set[str]:
+    import dataexcept
 
     names = {
         name
@@ -60,9 +70,14 @@ def _dataexcept_names() -> set[str]:
         if isinstance(getattr(dataexcept, name), type)
         and issubclass(getattr(dataexcept, name), DataExceptError)
     }
-    names |= set(project.__all__)
-    # Project subclasses declared outside analytics.exceptions.
-    names.add("ConfigValidationError")
+    # Derived from the hierarchy rather than from names: an exception that
+    # stopped inheriting from DataExceptError drops out of the allowed set, so
+    # its raise sites are reported instead of being whitelisted by name.
+    names |= {
+        cls.__name__
+        for cls in _project_exception_classes()
+        if issubclass(cls, DataExceptError)
+    }
     return names
 
 
@@ -82,23 +97,14 @@ def test_every_raise_uses_the_dataexcept_hierarchy() -> None:
 
 
 def test_project_exceptions_all_inherit_from_dataexcept_error() -> None:
-    import analytics.exceptions as project
-
-    for name in project.__all__:
-        cls = getattr(project, name)
-        assert issubclass(cls, DataExceptError), name
+    for cls in _project_exception_classes():
+        assert issubclass(cls, DataExceptError), cls.__name__
 
 
 def test_project_exceptions_do_not_inherit_from_builtins() -> None:
     """The breaking change is that these are no longer builtin subclasses."""
 
-    import analytics.exceptions as project
-    from benchmarks.config_benchmark import ConfigValidationError
-
-    classes = [getattr(project, name) for name in project.__all__]
-    classes.append(ConfigValidationError)
-
-    for cls in classes:
+    for cls in _project_exception_classes():
         for builtin in (ValueError, KeyError, TypeError, RuntimeError, ImportError):
             assert not issubclass(
                 cls, builtin
