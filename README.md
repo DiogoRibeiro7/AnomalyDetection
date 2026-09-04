@@ -298,6 +298,9 @@ specific release, and add the matching `version` and `year` fields.
 - Add caching to LOF calculations. Completed.
 - Provide a CLI for running included benchmarks. Completed.
 - Add dataset summary output to the CLI. Completed.
+- Publish the package to PyPI. Completed.
+- Publish a documentation site. Completed:
+  <https://diogoribeiro7.github.io/anomalybench/>.
 - Expand the detector library with additional algorithms and deep learning
   approaches. See [ROADMAP.md](ROADMAP.md).
 

@@ -9,7 +9,22 @@ APIs when needed, but each release should preserve documented workflows or
 provide a migration note. The roadmap was reviewed on 2026-07-22 against the
 current PyOD capability catalogue and expanded to include newer anomaly
 detection families, stronger benchmark requirements, explicit implementation
-provenance, and clearer acceptance criteria.
+provenance, and clearer acceptance criteria. It was reviewed again on
+2026-09-04 to record the releases that have shipped since and to separate
+milestone identity from version numbering.
+
+## Milestone Numbering
+
+Versions are no longer chosen by hand. release-please derives them from
+Conventional Commit prefixes on `main`, so a milestone lands in whichever minor
+comes next rather than in the number this document happens to print beside it.
+
+The `v0.6.0` heading below is the first place that mattered: `v0.6.0` and
+`v0.6.1` were consumed by the distribution work recorded under
+[v0.6.x](#v06x---distribution-and-documentation), not by the time-series
+detector pack the heading names. Headings are therefore read as an **ordered
+sequence of milestones**, not as a commitment to a version string. When a
+milestone ships, its section records the version it actually landed in.
 
 ## Planning Principles
 
@@ -136,7 +151,7 @@ Patch policy:
 
 ## v0.3.0 - Benchmark Reproducibility
 
-Status: in development.
+Status: released as `v0.3.0` on 2026-07-22; patch releases only.
 
 Goal: make benchmark results reproducible, comparable, and easier to share.
 
@@ -174,7 +189,7 @@ Non-goals:
 
 ## v0.4.0 - Metrics, Datasets, And Evaluation Protocols
 
-Status: released 2026-07-22.
+Status: released as `v0.4.0` on 2026-07-23; patch releases only.
 
 Goal: broaden evaluation coverage and make metric choice explicit before adding
 many modern detectors.
@@ -223,7 +238,7 @@ Acceptance criteria:
 
 ## v0.5.0 - Modern Tabular Detector Pack
 
-Status: implemented; release prepared. Scope is frozen.
+Status: released as `v0.5.0` on 2026-09-03. Scope is frozen.
 
 The release also carries two items outside this milestone's scope: the
 migration of every raised exception onto the DataExcept hierarchy, which is
@@ -283,9 +298,56 @@ Post-release watchlist:
 - PReNet, FEAWAD, and REPEN for labelled or weakly supervised settings.
 - GOAD and NeuTraL AD only when they were not already delivered in `v0.5.0`.
 
+## v0.6.x - Distribution And Documentation
+
+Status: released as `v0.6.0` and `v0.6.1` on 2026-09-04.
+
+This milestone was not planned. It exists because making the project
+installable from PyPI required a rename, and the rename was a breaking change
+that had to be released rather than folded into a detector milestone.
+
+Delivered scope:
+
+- Renamed the distribution and the import namespace to `anomalybench`. The
+  previous top-level `analytics` and `benchmarks` packages were too generic to
+  claim on PyPI without colliding with unrelated projects. Every module now
+  lives under `anomalybench/`, and the detector registry's dotted-path strings
+  were rewritten with it.
+- Published to PyPI using Trusted Publishing, so releases upload through a
+  short-lived OIDC token rather than a stored API token.
+- Replaced manual release preparation with release-please: version bumps,
+  changelog, and tags are derived from Conventional Commit prefixes, and the
+  bump propagates to `.zenodo.json` and `CITATION.cff` through `extra-files`.
+- Collapsed `develop` and `main` into a single long-lived branch. Maintaining
+  both under `required_linear_history` with squash promotion produced divergence
+  that could not be reconciled by merging.
+- Added a MkDocs site with narrative guides and an mkdocstrings API reference,
+  built with `--strict` in CI and deployed to GitHub Pages from `main`:
+  <https://diogoribeiro7.github.io/anomalybench/>.
+
+Known defects, both since fixed:
+
+- `v0.5.1` and `v0.6.1` are no-op releases. The `changelog-sections` config
+  marked housekeeping commit types releasable, so `ci:`-only changes cut a
+  version, a tag, a PyPI upload, and a Zenodo DOI for changes no user could
+  observe. Housekeeping types are now `hidden` and non-releasing.
+- `v0.4.0` shipped with an undated "Unreleased" changelog heading. The release
+  workflow now rejects a release whose changelog section is undated.
+
+Consequences for later milestones:
+
+- Any citation or benchmark manifest produced before `v0.6.0` refers to import
+  paths that no longer exist. The version DOI still resolves, so published
+  results remain reproducible against the release they name.
+- The documentation site is now a release surface. A detector added without a
+  declared `score_orientation`, or with a docstring that griffe cannot parse,
+  fails the docs build.
+
 ## v0.6.0 - Modern Time-Series Detector Pack
 
-Status: planned.
+Status: planned. The `v0.6.0` version number was consumed by the distribution
+work above, so this milestone ships in the next feature minor. The heading is
+kept because later sections and the `v0.5.0` notes refer to it by name.
 
 Goal: add current multivariate and contextual time-series anomaly detection
 methods with explicit windowing, metrics, and reproducibility controls, while
