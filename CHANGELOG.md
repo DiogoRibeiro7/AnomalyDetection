@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format follows Keep a Changelog, and this project uses semantic versioning.
 
+## [0.6.0](https://github.com/DiogoRibeiro7/anomalybench/compare/v0.5.1...v0.6.0) (2026-09-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* imports move from analytics.* and benchmarks.* to anomalybench.analytics.* and anomalybench.benchmarks.*, and the distribution is renamed from anomaly-detection to anomalybench.
+
+### Fixed
+
+* address review findings and follow the repository rename ([7e490f7](https://github.com/DiogoRibeiro7/anomalybench/commit/7e490f78988171244092ef4b4ad9aeb8567898bf))
+
+
+### Changed
+
+* nest the packages under an anomalybench namespace ([5c30d4d](https://github.com/DiogoRibeiro7/anomalybench/commit/5c30d4d48a226e75dc30dca6e3b0e30c29aa72b4))
+
 ## [0.5.1](https://github.com/DiogoRibeiro7/AnomalyDetection/compare/v0.5.0...v0.5.1) (2026-09-04)
 
 
