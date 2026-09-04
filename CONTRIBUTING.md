@@ -109,8 +109,14 @@ The version is derived from the commits, which is why the prefix matters:
 | --- | --- |
 | `fix:` | patch bump |
 | `feat:` | minor bump |
+| `perf:`, `revert:`, `deps:` | patch bump |
 | `feat!:` or a `BREAKING CHANGE:` footer | minor bump, listed under Breaking |
-| `chore:`, `ci:`, `docs:`, `test:`, `refactor:`, `style:` | no bump; grouped in the notes |
+| `chore:`, `ci:`, `docs:`, `test:`, `refactor:`, `style:`, `build:` | **no release** |
+
+Housekeeping prefixes deliberately cut no release. A release mints a Zenodo DOI
+and uploads to PyPI, so a workflow tweak or a test-only change should not
+produce one. Those commits still land on `main` and ship with the next real
+release; `git log` remains the complete record.
 
 The release pull request updates the version in `pyproject.toml`,
 `.zenodo.json`, and `CITATION.cff` together, and
