@@ -64,7 +64,7 @@ def package_version() -> str:
         with pyproject_path.open("rb") as fh:
             return str(tomllib.load(fh)["project"]["version"])
     try:
-        return metadata.version("anomaly-detection")
+        return metadata.version("anomalybench")
     except metadata.PackageNotFoundError:
         return "unknown"
 

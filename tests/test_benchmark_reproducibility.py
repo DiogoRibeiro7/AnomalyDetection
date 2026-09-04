@@ -54,6 +54,30 @@ def test_package_version_matches_the_source_of_truth() -> None:
     assert package_version() == expected
 
 
+def test_package_version_falls_back_to_the_installed_distribution(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """An installed wheel has no pyproject beside it, so the fallback must work.
+
+    The fallback names the distribution as a string, so renaming the package
+    without updating it silently degrades every benchmark manifest to a version
+    of "unknown" rather than failing loudly.
+    """
+
+    asked: list[str] = []
+
+    def _version(name: str) -> str:
+        asked.append(name)
+        return "1.2.3"
+
+    # tmp_path has no pyproject.toml, which is what site-packages looks like.
+    monkeypatch.setattr(reproducibility, "_PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(reproducibility.metadata, "version", _version)
+
+    assert package_version() == "1.2.3"
+    assert asked == ["anomalybench"]
+
+
 def test_package_version_prefers_source_over_installed_metadata(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

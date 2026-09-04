@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-"""Command line interface to run anomaly detection anomalybench.benchmarks.
+"""Command line interface to run anomaly detection benchmarks.
 
 Use ``--summary`` to display information about the available datasets instead
 of running the detectors.

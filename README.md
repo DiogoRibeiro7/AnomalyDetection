@@ -1,6 +1,6 @@
 # Anomaly Detection
 
-[![CI](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/DiogoRibeiro7/AnomalyDetection/actions/workflows/ci.yml) [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/) [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21496904.svg)](https://doi.org/10.5281/zenodo.21496904)
+[![CI](https://github.com/DiogoRibeiro7/anomalybench/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/DiogoRibeiro7/anomalybench/actions/workflows/ci.yml) [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/) [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21496904.svg)](https://doi.org/10.5281/zenodo.21496904)
 
 Anomaly Detection provides anomaly detection algorithms, benchmark dataset
 loaders, and a command line interface for comparing detectors on standard
@@ -189,7 +189,8 @@ runtime so modern and classical methods can be compared explicitly.
 
 ## Hyperparameter Search
 
-Stratified cross-validation utilities are available in `analytics.hyperparam`:
+Stratified cross-validation utilities are available in
+`anomalybench.analytics.hyperparam`:
 
 ```python
 from anomalybench.analytics.hyperparam import grid_search
@@ -278,7 +279,7 @@ BibTeX for the concept DOI:
 ```bibtex
 @software{ribeiro_anomalydetection,
   author    = {Ribeiro, Diogo},
-  title     = {{AnomalyDetection: a reproducible benchmarking suite for
+  title     = {{AnomalyBench: a reproducible benchmarking suite for
                anomaly detection algorithms}},
   publisher = {Zenodo},
   doi       = {10.5281/zenodo.21496904},
