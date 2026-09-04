@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from analytics.base import BaseDetector, OrientedScores
-from analytics.exceptions import UnknownDetectorError
-from cli import _resolve_detector_entries
+from anomalybench.analytics.base import BaseDetector, OrientedScores
+from anomalybench.analytics.exceptions import UnknownDetectorError
+from anomalybench.cli import _resolve_detector_entries
 
 
 class LowerScoreDetector(BaseDetector):

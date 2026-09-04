@@ -14,7 +14,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
 
-from analytics.base import BaseDetector, coerce_tabular_2d
+from anomalybench.analytics.base import BaseDetector, coerce_tabular_2d
 
 ArrayLike = NDArray[np.floating[Any]]
 type FrameOrArray = pd.DataFrame | ArrayLike

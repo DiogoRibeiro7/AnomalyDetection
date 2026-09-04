@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from analytics.exceptions import UnknownDatasetError
-from benchmarks import catalog
-from benchmarks.load_all_datasets import load_all_datasets
+from anomalybench.analytics.exceptions import UnknownDatasetError
+from anomalybench.benchmarks import catalog
+from anomalybench.benchmarks.load_all_datasets import load_all_datasets
 
 
 def test_catalog_includes_new_datasets() -> None:

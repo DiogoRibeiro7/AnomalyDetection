@@ -6,12 +6,12 @@ import networkx as nx
 import pandas as pd
 import pytest
 
-from benchmarks.catalog import (
+from anomalybench.benchmarks.catalog import (
     get_dataset_functions,
     get_dataset_metadata,
     list_available_datasets,
 )
-from benchmarks.load_all_datasets import load_all_datasets
+from anomalybench.benchmarks.load_all_datasets import load_all_datasets
 
 EXPECTED_SOURCE_ANOMALY_LABELS: dict[str, int] = {
     "arrhythmia": 0,

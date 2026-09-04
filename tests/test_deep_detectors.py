@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from analytics.detectors import deep
+from anomalybench.analytics.detectors import deep
 
 torch = pytest.importorskip(
     "torch", reason="PyTorch is required for deep detector tests"

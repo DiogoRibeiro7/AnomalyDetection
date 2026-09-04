@@ -11,9 +11,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import cli
-from benchmarks import reproducibility
-from benchmarks.reproducibility import (
+import anomalybench.cli as cli
+from anomalybench.benchmarks import reproducibility
+from anomalybench.benchmarks.reproducibility import (
     MANIFEST_SCHEMA_VERSION,
     REPORT_SCHEMA_VERSION,
     apply_seed_to_detector_entries,

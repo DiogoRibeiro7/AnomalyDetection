@@ -3,7 +3,7 @@ from dataexcept import ConfigurationError
 
 pytest.importorskip("networkx")
 
-from cli import load_plugins, run_benchmarks, summarize_datasets
+from anomalybench.cli import load_plugins, run_benchmarks, summarize_datasets
 
 
 def test_run_benchmarks_subset():

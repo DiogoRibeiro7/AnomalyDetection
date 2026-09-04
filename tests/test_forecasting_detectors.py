@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from dataexcept import DataValidationError
 
-from analytics.detectors.forecasting import ARIMADetector, ProphetDetector
+from anomalybench.analytics.detectors.forecasting import ARIMADetector, ProphetDetector
 
 
 class _ArimaLikeModel:

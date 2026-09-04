@@ -16,8 +16,8 @@ import pytest
 from dataexcept import DataExceptError
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_ROOTS = ["analytics", "benchmarks", "src"]
-SOURCE_FILES = ["cli.py"]
+SOURCE_ROOTS = ["anomalybench", "src"]
+SOURCE_FILES: list[str] = []
 
 # Raised deliberately as control flow for the test suite itself, not as a
 # failure this package reports to callers.
@@ -52,8 +52,8 @@ def _raised_names(path: Path) -> list[tuple[str, int]]:
 def _project_exception_classes() -> list[type[BaseException]]:
     """Every exception class this package defines, wherever it is declared."""
 
-    import analytics.exceptions as project
-    from benchmarks.config_benchmark import ConfigValidationError
+    import anomalybench.analytics.exceptions as project
+    from anomalybench.benchmarks.config_benchmark import ConfigValidationError
 
     classes = [getattr(project, name) for name in project.__all__]
     # Declared outside analytics.exceptions, so not covered by __all__ above.

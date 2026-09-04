@@ -14,8 +14,11 @@ import pandas as pd
 import pytest
 from dataexcept import DataFormatError, DataValidationError, MissingColumnError
 
-from analytics.exceptions import UnknownDatasetError
-from benchmarks.load_all_datasets import _canonicalize_anomaly_label, load_all_datasets
+from anomalybench.analytics.exceptions import UnknownDatasetError
+from anomalybench.benchmarks.load_all_datasets import (
+    _canonicalize_anomaly_label,
+    load_all_datasets,
+)
 
 
 @pytest.fixture

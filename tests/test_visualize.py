@@ -13,7 +13,7 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 
-import analytics.visualize as visualize
+import anomalybench.analytics.visualize as visualize
 
 
 @pytest.fixture(autouse=True)

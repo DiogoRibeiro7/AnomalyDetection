@@ -1,8 +1,8 @@
 """Backwards compatible aggregator for detector classes.
 
-Detectors are now organised under :mod:`analytics.detectors` submodules. This
-module re-exports every detector class for code that previously imported from
-``analytics.detector``.
+Detectors are now organised under :mod:`anomalybench.analytics.detectors`
+submodules. This module re-exports every detector class for code that
+previously imported from ``anomalybench.analytics.detector``.
 
 The re-exports are written out explicitly rather than installed into
 ``globals()`` at import time, so type checkers and IDEs can resolve them.

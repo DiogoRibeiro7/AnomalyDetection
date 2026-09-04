@@ -14,7 +14,7 @@ from numpy.typing import NDArray
 from sklearn.cluster import DBSCAN
 from sklearn.metrics import pairwise_distances
 
-from analytics.base import BaseDetector, coerce_tabular_2d
+from anomalybench.analytics.base import BaseDetector, coerce_tabular_2d
 
 ScoreArray = NDArray[np.floating[Any]]
 

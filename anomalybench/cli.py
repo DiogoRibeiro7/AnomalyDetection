@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Command line interface to run anomaly detection benchmarks.
+"""Command line interface to run anomaly detection anomalybench.benchmarks.
 
 Use ``--summary`` to display information about the available datasets instead
 of running the detectors.
@@ -17,7 +17,7 @@ from importlib import import_module
 from pathlib import Path
 from typing import Any
 
-from analytics.runtime import ensure_supported_python
+from anomalybench.analytics.runtime import ensure_supported_python
 
 ensure_supported_python()
 
@@ -31,20 +31,20 @@ from dataexcept import (
     HyperparameterError,
 )
 
-from analytics.detectors import (
+from anomalybench.analytics.detectors import (
     DETECTOR_REGISTRY,
     get_detector_class,
 )
-from analytics.exceptions import DetectorNotFittedError
-from benchmarks.catalog import resolve_dataset_names
-from benchmarks.load_all_datasets import load_all_datasets
-from benchmarks.metrics import (
+from anomalybench.analytics.exceptions import DetectorNotFittedError
+from anomalybench.benchmarks.catalog import resolve_dataset_names
+from anomalybench.benchmarks.load_all_datasets import load_all_datasets
+from anomalybench.benchmarks.metrics import (
     DEFAULT_SCORE_ORIENTATION,
     MetricConfig,
     evaluate_metrics,
     resolve_metric_config,
 )
-from benchmarks.reproducibility import (
+from anomalybench.benchmarks.reproducibility import (
     apply_seed_to_detector_entries,
     benchmark_config_hash,
     build_manifest,
@@ -706,7 +706,7 @@ def main():
     if args.plugins:
         load_plugins(args.plugins)
     if args.config:
-        from benchmarks.config_benchmark import run_from_config
+        from anomalybench.benchmarks.config_benchmark import run_from_config
 
         run_from_config(
             args.config,

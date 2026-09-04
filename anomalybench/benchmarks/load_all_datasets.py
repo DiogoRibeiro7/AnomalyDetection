@@ -14,8 +14,8 @@ from dataexcept import (
     MissingColumnError,
 )
 
-from analytics.exceptions import UnknownDatasetError
-from benchmarks.catalog import (
+from anomalybench.analytics.exceptions import UnknownDatasetError
+from anomalybench.benchmarks.catalog import (
     DatasetSpec,
     get_dataset_functions,
     get_dataset_metadata,

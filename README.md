@@ -69,26 +69,26 @@ poetry run benchmark-cli --detectors knn hbos
 Run from a YAML configuration:
 
 ```bash
-poetry run benchmark-cli --config benchmarks/benchmark_config.yml
+poetry run benchmark-cli --config anomalybench/benchmarks/benchmark_config.yml
 ```
 
 Run a reproducible smoke benchmark with a manifest, JSON report, and enriched
 leaderboard:
 
 ```bash
-poetry run benchmark-cli --config benchmarks/benchmark_config.v0.3.0-smoke.yml
+poetry run benchmark-cli --config anomalybench/benchmarks/benchmark_config.v0.3.0-smoke.yml
 ```
 
 Run a multi-metric benchmark using dataset metadata selectors:
 
 ```bash
-poetry run benchmark-cli --config benchmarks/benchmark_config.v0.4.0-metrics.yml
+poetry run benchmark-cli --config anomalybench/benchmarks/benchmark_config.v0.4.0-metrics.yml
 ```
 
 Run a modern tabular detector smoke benchmark:
 
 ```bash
-poetry run benchmark-cli --config benchmarks/benchmark_config.v0.5.0-modern-tabular.yml
+poetry run benchmark-cli --config anomalybench/benchmarks/benchmark_config.v0.5.0-modern-tabular.yml
 ```
 
 Show dataset summaries:
@@ -120,7 +120,7 @@ bare message. Every one inherits from `dataexcept.DataExceptError`:
 ```python
 from dataexcept import DataExceptError, HyperparameterError
 
-from analytics.time_series import WindowSpec
+from anomalybench.analytics.time_series import WindowSpec
 
 try:
     WindowSpec(window_length=1)
@@ -136,7 +136,7 @@ caught those must be updated; see the mapping table in
 [CHANGELOG.md](CHANGELOG.md).
 
 Cases DataExcept has no direct equivalent for are defined in
-[analytics/exceptions.py](analytics/exceptions.py) and still inherit from it:
+[anomalybench/analytics/exceptions.py](anomalybench/analytics/exceptions.py) and still inherit from it:
 `DetectorNotFittedError`, `UnknownDetectorError`, and `UnknownDatasetError`.
 
 ## Plugins
@@ -148,7 +148,8 @@ names start with `plugins.`:
 poetry run benchmark-cli --plugins plugins.my_module --detectors my_custom_detector
 ```
 
-The module should call `analytics.detectors.register_detector` during import.
+The module should call `anomalybench.analytics.detectors.register_detector` during
+import.
 Detector keys are protected against accidental collisions by default. To
 replace an existing detector intentionally, pass `allow_override=True` to
 `register_detector`.
@@ -191,7 +192,7 @@ runtime so modern and classical methods can be compared explicitly.
 Stratified cross-validation utilities are available in `analytics.hyperparam`:
 
 ```python
-from analytics.hyperparam import grid_search
+from anomalybench.analytics.hyperparam import grid_search
 
 best_params, score = grid_search(
     "isolation_forest",
@@ -233,7 +234,7 @@ The JSON report embeds a benchmark manifest with the package version, Python
 version, selected dataset keys, detector keys and parameters, random seed,
 metric configuration, configuration hash, timestamp, and bundled dataset file
 integrity hashes.
-Bundled dataset metadata in `benchmarks/datasets.yml` records source URLs,
+Bundled dataset metadata in `anomalybench/benchmarks/datasets.yml` records source URLs,
 license notes, modality, task type, label semantics, and local files used for
 integrity checks.
 

@@ -14,9 +14,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from analytics.detectors import get_detector_class
-from analytics.detectors.classical import EnsembleDetector, LOFDetector
-from analytics.exceptions import DetectorNotFittedError
+from anomalybench.analytics.detectors import get_detector_class
+from anomalybench.analytics.detectors.classical import EnsembleDetector, LOFDetector
+from anomalybench.analytics.exceptions import DetectorNotFittedError
 
 COLUMNS = list("abc")
 

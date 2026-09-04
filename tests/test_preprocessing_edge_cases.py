@@ -14,9 +14,9 @@ import pandas as pd
 import pytest
 from dataexcept import DataFormatError, HyperparameterError, PreprocessingError
 
-from analytics.base import OrientedScores
-from analytics.detectors import get_detector_class
-from analytics.preprocessing import PreprocessingPipeline
+from anomalybench.analytics.base import OrientedScores
+from anomalybench.analytics.detectors import get_detector_class
+from anomalybench.analytics.preprocessing import PreprocessingPipeline
 
 
 @pytest.fixture

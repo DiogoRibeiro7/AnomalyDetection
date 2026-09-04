@@ -227,10 +227,10 @@ def run_from_config(
     _validate_config(config)
     global _load_plugins, _run_benchmarks
     if _load_plugins is None or _run_benchmarks is None:
-        from cli import (
+        from anomalybench.cli import (
             load_plugins as _cli_load_plugins,
         )
-        from cli import (
+        from anomalybench.cli import (
             run_benchmarks as _cli_run_benchmarks,
         )
 

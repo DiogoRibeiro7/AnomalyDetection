@@ -16,12 +16,12 @@ from typing import Any
 import numpy as np
 from dataexcept import DataValidationError, ResourceNotFoundError
 
-from benchmarks.catalog import list_available_datasets, load_catalog
+from anomalybench.benchmarks.catalog import list_available_datasets, load_catalog
 
 REPORT_SCHEMA_VERSION = "benchmark-report-v1"
 MANIFEST_SCHEMA_VERSION = "benchmark-manifest-v1"
 
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 _BENCHMARK_DIR = Path(__file__).resolve().parent
 
 SEED_PARAMETER_BY_DETECTOR = {

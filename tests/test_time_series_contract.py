@@ -8,9 +8,9 @@ import numpy as np
 import pytest
 from dataexcept import DataValidationError
 
-from analytics.detectors.registry import get_detector_class
-from analytics.detectors.temporal import _sinusoidal_position_encoding
-from analytics.time_series import (
+from anomalybench.analytics.detectors.registry import get_detector_class
+from anomalybench.analytics.detectors.temporal import _sinusoidal_position_encoding
+from anomalybench.analytics.time_series import (
     WindowSpec,
     align_point_labels,
     coerce_sequence_batch,
@@ -59,9 +59,9 @@ def test_registry_uses_sequence_aware_temporal_detectors() -> None:
     tcn = get_detector_class("tcn_autoencoder")
     transformer = get_detector_class("transformer")
 
-    assert lstm.__module__ == "analytics.detectors.temporal"
-    assert tcn.__module__ == "analytics.detectors.temporal"
-    assert transformer.__module__ == "analytics.detectors.temporal"
+    assert lstm.__module__ == "anomalybench.analytics.detectors.temporal"
+    assert tcn.__module__ == "anomalybench.analytics.detectors.temporal"
+    assert transformer.__module__ == "anomalybench.analytics.detectors.temporal"
 
 
 @pytest.mark.parametrize(

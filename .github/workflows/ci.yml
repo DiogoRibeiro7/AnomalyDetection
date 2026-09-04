@@ -32,7 +32,7 @@ jobs:
         run: poetry install --no-interaction
 
       - name: Validate runtime version
-        run: poetry run python -c "from analytics.runtime import ensure_supported_python; ensure_supported_python()"
+        run: poetry run python -c "from anomalybench.analytics.runtime import ensure_supported_python; ensure_supported_python()"
 
       - name: Run tests
         run: poetry run pytest -q
@@ -59,4 +59,4 @@ jobs:
         run: poetry run python -c "import river; print('river-ok')"
 
       - name: Streaming detector smoke test
-        run: poetry run python -c "import numpy as np; from analytics.detectors.streaming import OnlineIsolationForestDetector; d=OnlineIsolationForestDetector().fit(np.array([[0.0],[1.0],[2.0]])); s=d.score(np.array([[0.5],[1.5]])); assert len(s)==2"
+        run: poetry run python -c "import numpy as np; from anomalybench.analytics.detectors.streaming import OnlineIsolationForestDetector; d=OnlineIsolationForestDetector().fit(np.array([[0.0],[1.0],[2.0]])); s=d.score(np.array([[0.5],[1.5]])); assert len(s)==2"

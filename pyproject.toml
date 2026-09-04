@@ -1,7 +1,7 @@
 [project]
-name = "anomaly-detection"
+name = "anomalybench"
 version = "0.5.1"
-description = "Anomaly detection algorithms and benchmarking utilities."
+description = "Benchmarking suite for anomaly detection algorithms."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 license = "MIT"
@@ -44,20 +44,17 @@ forecasting = ["prophet"]
 all-detectors = ["torch", "tensorflow", "river", "prophet"]
 
 [project.scripts]
-benchmark-cli = "cli:main"
+benchmark-cli = "anomalybench.cli:main"
 
 [tool.poetry]
 packages = [
-  { include = "analytics" },
-  { include = "benchmarks" },
-  { include = "industrialstats", from = "src" },
-  { include = "cli.py" },
+  { include = "anomalybench" },
 ]
 include = [
-  "benchmarks/*.csv",
-  "benchmarks/*.data",
-  "benchmarks/*.dat",
-  "benchmarks/*.yml",
+  "anomalybench/benchmarks/*.csv",
+  "anomalybench/benchmarks/*.data",
+  "anomalybench/benchmarks/*.dat",
+  "anomalybench/benchmarks/*.yml",
 ]
 
 [tool.poetry.group.dev.dependencies]
@@ -81,9 +78,9 @@ select = ["E", "F", "I", "UP", "B"]
 # a module-level pytest.skip, pytest.importorskip, or
 # ensure_supported_python() that turns an unsupported interpreter into a
 # clear message instead of an incidental ImportError.
-"analytics/benchmark_test.py" = ["E402"]
-"benchmarks/load_datasets.py" = ["E402"]
-"cli.py" = ["E402"]
+"anomalybench/analytics/benchmark_test.py" = ["E402"]
+"anomalybench/benchmarks/load_datasets.py" = ["E402"]
+"anomalybench/cli.py" = ["E402"]
 "tests/test_deep_early_stopping.py" = ["E402"]
 
 [tool.mypy]
@@ -97,7 +94,7 @@ check_untyped_defs = true
 
 [tool.coverage.run]
 branch = true
-source = ["analytics", "benchmarks"]
+source = ["anomalybench"]
 
 [tool.coverage.report]
 show_missing = true

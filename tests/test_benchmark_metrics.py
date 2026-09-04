@@ -5,8 +5,8 @@ from __future__ import annotations
 import pytest
 from dataexcept import ConfigurationError, DataValidationError
 
-from analytics.base import OrientedScores
-from benchmarks.metrics import (
+from anomalybench.analytics.base import OrientedScores
+from anomalybench.benchmarks.metrics import (
     canonicalize_anomaly_scores,
     evaluate_metrics,
     precision_at_k,

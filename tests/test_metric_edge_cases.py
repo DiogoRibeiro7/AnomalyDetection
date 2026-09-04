@@ -13,9 +13,9 @@ import numpy as np
 import pytest
 from dataexcept import ConfigurationError, DataValidationError
 
-from analytics.base import OrientedScores
-from analytics.time_series import WindowedScores, WindowSpec
-from benchmarks.metrics import (
+from anomalybench.analytics.base import OrientedScores
+from anomalybench.analytics.time_series import WindowedScores, WindowSpec
+from anomalybench.benchmarks.metrics import (
     DEFAULT_METRICS,
     best_f1_score,
     canonicalize_anomaly_scores,

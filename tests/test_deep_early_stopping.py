@@ -12,7 +12,7 @@ torch = pytest.importorskip(
     "torch", reason="PyTorch is required for early stopping tests"
 )
 
-from analytics.detectors import deep
+from anomalybench.analytics.detectors import deep
 
 
 def test_early_stopping_restores_best_weights(tmp_path: Path) -> None:

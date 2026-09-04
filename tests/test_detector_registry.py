@@ -3,9 +3,9 @@ from __future__ import annotations
 import pytest
 from dataexcept import ConfigurationError
 
-from analytics.base import BaseDetector
-from analytics.detectors import registry
-from analytics.exceptions import UnknownDetectorError
+from anomalybench.analytics.base import BaseDetector
+from anomalybench.analytics.detectors import registry
+from anomalybench.analytics.exceptions import UnknownDetectorError
 
 
 class DummyDetector:
@@ -95,7 +95,7 @@ def test_legacy_detector_module_reexports_every_submodule() -> None:
 
     import importlib
 
-    from analytics import detector as legacy
+    from anomalybench.analytics import detector as legacy
 
     exported = set(legacy.__all__)
     for submodule in (
@@ -107,7 +107,9 @@ def test_legacy_detector_module_reexports_every_submodule() -> None:
         "modern_tabular",
         "streaming",
     ):
-        module = importlib.import_module(f"analytics.detectors.{submodule}")
+        module = importlib.import_module(
+            f"anomalybench.analytics.detectors.{submodule}"
+        )
         missing = sorted(set(module.__all__) - exported)
         assert not missing, f"{submodule} not re-exported: {missing}"
         for name in module.__all__:

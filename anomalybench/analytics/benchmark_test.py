@@ -19,13 +19,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.metrics import auc, roc_curve
 
-from analytics.detector import (
+from anomalybench.analytics.detector import (
     HBOSDetector,
     IsolationForestDetector,
     KNNDetector,
     SOSDetector,
 )
-from benchmarks.load_all_datasets import load_all_datasets
+from anomalybench.benchmarks.load_all_datasets import load_all_datasets
 
 resource.setrlimit(
     resource.RLIMIT_CORE, (resource.RLIM_INFINITY, resource.RLIM_INFINITY)

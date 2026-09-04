@@ -26,7 +26,7 @@ benchmark tooling.
 ## Adding A New Detector
 
 1. Create a detector class inheriting from `BaseDetector` in the appropriate
-   module under `analytics/detectors/`.
+   module under `anomalybench/analytics/detectors/`.
 2. Implement `fit` and `score`. Use existing detectors as references.
 3. Register the detector so it can be selected with `--detectors`.
 4. Add focused unit tests that cover expected behavior and important edge cases.
@@ -35,11 +35,11 @@ benchmark tooling.
 
 ## Expanding Benchmark Datasets
 
-1. Add compact dataset assets under `benchmarks/`. Prefer small,
+1. Add compact dataset assets under `anomalybench/benchmarks/`. Prefer small,
    redistributable excerpts that keep tests fast.
-2. Implement a loader in `benchmarks/load_datasets.py` that returns
+2. Implement a loader in `anomalybench/benchmarks/load_datasets.py` that returns
    `(dataframe, feature_columns, label_column, display_name)`.
-3. Describe the dataset in `benchmarks/datasets.yml`, including tags such as
+3. Describe the dataset in `anomalybench/benchmarks/datasets.yml`, including tags such as
    `tabular`, `graph`, or `time_series`, plus source metadata.
 4. Cover new loaders with tests. `tests/test_benchmark_catalog.py` contains
    examples that assert catalog registration and metadata exposure.
@@ -47,7 +47,7 @@ benchmark tooling.
 ## Benchmark Configuration
 
 The CLI accepts YAML configuration via `--config`. See
-`benchmarks/config_benchmark.py` for supported keys. Configuration can:
+`anomalybench/benchmarks/config_benchmark.py` for supported keys. Configuration can:
 
 - Select datasets by name, by tag, or through `include`, `exclude`, and `limit`
   selectors.

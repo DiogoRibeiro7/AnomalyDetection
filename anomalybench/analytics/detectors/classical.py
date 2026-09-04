@@ -1,6 +1,7 @@
 """Classical anomaly detectors built on scikit-learn and PyOD.
 
-Each detector exposes a :class:`~analytics.base.BaseDetector` interface with
+Each detector exposes a :class:`~anomalybench.analytics.base.BaseDetector`
+interface with
 ``fit`` and ``score`` methods.  The implementations avoid importing optional
 dependencies until required to keep the package lightweight.
 """
@@ -21,8 +22,8 @@ from sklearn.mixture import GaussianMixture
 from sklearn.neighbors import KernelDensity, LocalOutlierFactor, NearestNeighbors
 from sklearn.svm import OneClassSVM
 
-from analytics.base import BaseDetector, coerce_tabular_2d
-from analytics.lof import LOF
+from anomalybench.analytics.base import BaseDetector, coerce_tabular_2d
+from anomalybench.analytics.lof import LOF
 
 ArrayLike = NDArray[np.floating[Any]]
 type FrameOrArray = pd.DataFrame | ArrayLike
@@ -168,7 +169,7 @@ class LOFDetector(BaseDetector):
         list[float]: Local outlier factor scores produced by :meth:`score`.
 
     Attributes:
-        lof: The :class:`analytics.lof.LOF` instance trained during
+        lof: The :class:`anomalybench.analytics.lof.LOF` instance trained during
             :meth:`fit`.
         min_pts: Minimum number of neighbors used when computing the local
             outlier factor.
@@ -197,7 +198,7 @@ class LOFDetector(BaseDetector):
             normalize (bool, optional): Whether to apply LOF's internal
                 normalization routine. Defaults to ``False``.
             **params: Additional parameters such as ``min_pts`` forwarded to
-                :class:`analytics.lof.LOF`.
+                :class:`anomalybench.analytics.lof.LOF`.
 
         Returns:
             LOFDetector: The fitted detector instance.

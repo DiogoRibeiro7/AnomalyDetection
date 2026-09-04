@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 from dataexcept import DataValidationError, HyperparameterError
 
-from analytics.detectors.modern_tabular import (
+from anomalybench.analytics.detectors.modern_tabular import (
     ECODDetector,
     RandomFeatureIsolationForestDetector,
     RandomNetworkDistillationDetector,

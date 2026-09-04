@@ -11,8 +11,8 @@ from typing import Any, TypedDict
 
 import yaml
 
-import benchmarks.load_datasets
-from benchmarks.corrected_loaders import load_cardio_corrected
+from anomalybench.benchmarks import load_datasets
+from anomalybench.benchmarks.corrected_loaders import load_cardio_corrected
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ def get_dataset_functions() -> DatasetRegistry:
     """Return mapping of canonical dataset names to loader callables."""
 
     functions: dict[str, DatasetLoader] = {}
-    for func_name, func in getmembers(benchmarks.load_datasets, isfunction):
+    for func_name, func in getmembers(load_datasets, isfunction):
         if not func_name.startswith("load_"):
             continue
         key = func_name.replace("load_", "")
