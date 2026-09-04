@@ -1,0 +1,53 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install poetry
+      # The package itself must be importable: mkdocstrings imports every
+      # module it documents, so a broken import fails the docs build.
+      - run: poetry install --no-interaction
+      # Pinned for the same reason the linters are pinned in quality.yml --
+      # an unpinned griffe changes which docstrings it warns about, and
+      # --strict turns every warning into a failed build.
+      - run: >-
+          poetry run pip install mkdocs==1.6.1 mkdocs-material==9.7.7
+          mkdocstrings[python]==1.0.6
+      - name: Build
+        run: poetry run mkdocs build --strict
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
