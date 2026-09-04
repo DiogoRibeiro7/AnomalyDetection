@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -95,6 +96,56 @@ def test_zenodo_related_identifiers_use_known_relations() -> None:
     for related in _load_zenodo().get("related_identifiers", []):
         assert related["relation"] in ZENODO_RELATIONS
         assert related["identifier"].startswith("https://")
+
+
+def test_zenodo_related_identifiers_are_unique() -> None:
+    identifiers = [r["identifier"] for r in _load_zenodo()["related_identifiers"]]
+    assert len(set(identifiers)) == len(identifiers)
+
+
+@pytest.mark.parametrize(
+    ("host", "relation"),
+    [
+        ("pypi.org", "isIdenticalTo"),
+        ("diogoribeiro7.github.io", "isDocumentedBy"),
+    ],
+)
+def test_zenodo_advertises_distribution_and_documentation(
+    host: str, relation: str
+) -> None:
+    """The archive should point at where the software is actually obtained."""
+
+    matches = [
+        r for r in _load_zenodo()["related_identifiers"] if host in r["identifier"]
+    ]
+    assert matches, f"no related identifier for {host}"
+    assert all(r["relation"] == relation for r in matches)
+
+
+# Extensions that indicate a token in the description is a repository path
+# rather than a package name or a command.
+_PATH_SUFFIXES = (".yml", ".yaml", ".json", ".toml", ".md", ".cff", ".cfg")
+
+
+def test_zenodo_description_references_paths_that_exist() -> None:
+    """Guard the usage instructions against repository layout changes.
+
+    The description told readers to run ``benchmarks/benchmark_config.yml``
+    for two releases after the namespace rename moved it under
+    ``anomalybench/``. Nothing caught it, because the description is prose to
+    every other check here.
+    """
+
+    description = _load_zenodo()["description"]
+    tokens = {
+        token
+        for span in re.findall(r"<code>([^<]+)</code>", description)
+        for token in span.split()
+        if token.endswith(_PATH_SUFFIXES)
+    }
+    assert tokens, "expected the description to reference at least one path"
+    missing = sorted(token for token in tokens if not (ROOT / token).exists())
+    assert not missing, f"description references missing paths: {missing}"
 
 
 def test_citation_and_zenodo_agree_on_shared_fields() -> None:
