@@ -2,10 +2,10 @@ cff-version: 1.2.0
 message: If you use this software, please cite it using the metadata from this file.
 type: software
 title: >-
-  AnomalyDetection: a reproducible benchmarking suite for anomaly detection
+  AnomalyBench: a reproducible benchmarking suite for anomaly detection
   algorithms
 abstract: >-
-  AnomalyDetection is a Python research package that bundles anomaly detection
+  AnomalyBench is a Python research package that bundles anomaly detection
   algorithms, benchmark dataset loaders, and a command line interface for
   comparing detectors on standard datasets under a single reproducible protocol.
   It covers classical, ensemble, deep, streaming, graph, forecasting, and modern
@@ -19,8 +19,8 @@ authors:
     email: dfr@esmad.ipp.pt
     orcid: https://orcid.org/0009-0001-2022-7072
     affiliation: Faculty of Media Arts and Design, Technical University of Porto
-repository-code: https://github.com/DiogoRibeiro7/AnomalyDetection
-url: https://github.com/DiogoRibeiro7/AnomalyDetection
+repository-code: https://github.com/DiogoRibeiro7/anomalybench
+url: https://github.com/DiogoRibeiro7/anomalybench
 doi: 10.5281/zenodo.21496904
 identifiers:
   - type: doi
