@@ -234,7 +234,7 @@ class SOSDetector(BaseDetector):
 
     Constructed without arguments; configure hyper-parameters via :meth:`fit`.
 
-    :meth:`fit` returns the fitted detector; :meth:`score` returns sOS anomaly
+    :meth:`fit` returns the fitted detector; :meth:`score` returns SOS anomaly
     probabilities as ``numpy.ndarray``.
 
     Attributes:

@@ -70,6 +70,8 @@ bump and the changelog from them, so the prefix is functional, not cosmetic:
 | `feat:` | minor bump, "Added" section |
 | `fix:` | patch bump, "Fixed" section |
 | `perf:` | patch bump, "Performance" section |
+| `revert:` | patch bump, "Reverts" section |
+| `deps:` | patch bump, "Dependencies" section |
 | `chore:`, `ci:`, `docs:`, `test:`, `refactor:`, `style:`, `build:` | no release |
 
 [Conventional Commits]: https://www.conventionalcommits.org/
@@ -80,7 +82,8 @@ cuts versions for commits that changed nothing a user can observe.
 ## Documentation
 
 ```bash
-poetry run pip install mkdocs==1.6.1 mkdocs-material==9.7.7 \n  mkdocstrings[python]==1.0.6
+poetry run pip install mkdocs==1.6.1 mkdocs-material==9.7.7 \
+  mkdocstrings[python]==1.0.6
 poetry run mkdocs serve          # live preview on localhost:8000
 poetry run mkdocs build --strict # what CI runs
 ```

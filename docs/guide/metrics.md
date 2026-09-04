@@ -34,8 +34,9 @@ inverted ROC AUC looks like a plausible bad result rather than a bug.
 ## Degenerate cases
 
 A metric that cannot be computed yields `null`, not a crash and not a fake
-number. This happens when a dataset split contains only one class, when `k`
-exceeds the sample count, or when a detector produces constant scores.
+number. This happens when a dataset split contains only one class, or when a
+detector produces constant scores. A `k` larger than the sample count is not
+one of these — it is clamped to the number of samples.
 
 !!! note "Non-finite results"
     scikit-learn returns `NaN` rather than raising for some degenerate inputs.
