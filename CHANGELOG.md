@@ -132,7 +132,7 @@ The format follows Keep a Changelog, and this project uses semantic versioning.
 - Ruff, Mypy, pytest-cov, and types-PyYAML are pinned in CI so linter results
   do not drift between a developer's machine and the pipeline.
 
-## v0.4.0 - 2026-07-22
+## v0.4.0 - 2026-07-23
 
 - Added configurable benchmark metrics, including ROC AUC, average precision,
   precision at k, recall at k, F1 at threshold, best F1, and runtime.
