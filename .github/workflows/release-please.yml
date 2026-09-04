@@ -102,3 +102,58 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.resolve.outputs.tag }}
         run: gh release upload "${TAG}" dist/*.whl --clobber
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: release-please
+    if: |
+      always() && (
+        needs.release-please.outputs.release_created == 'true'
+        || (github.event_name == 'workflow_dispatch' && inputs.tag != '')
+      )
+    runs-on: ubuntu-latest
+    # Named so it matches the environment on the PyPI trusted publisher; it also
+    # gives somewhere to hang a manual approval before anything reaches PyPI.
+    environment: pypi
+    permissions:
+      # Declaring permissions here replaces the workflow-level set for this job,
+      # so checkout's read access has to be restated alongside the OIDC token.
+      contents: read
+      # Only the upload needs to mint an OIDC token; nothing else should.
+      id-token: write
+    steps:
+      - name: Resolve the tag to publish
+        id: resolve
+        env:
+          DISPATCH_TAG: ${{ inputs.tag }}
+          RELEASE_TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          TAG="${DISPATCH_TAG:-${RELEASE_TAG}}"
+          if [[ -z "${TAG}" ]]; then
+            echo "No tag to publish."
+            exit 1
+          fi
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+
+      - name: Checkout the released tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.resolve.outputs.tag }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Build sdist and wheel
+        run: poetry build
+
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # Makes a re-run after a partial upload idempotent: PyPI rejects a
+          # repeated version, which would otherwise leave no way to recover.
+          skip-existing: true
