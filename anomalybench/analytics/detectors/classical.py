@@ -56,13 +56,11 @@ def _compute_variable_width_edges(feature: ArrayLike, k: int) -> ArrayLike:
 class IsolationForestDetector(BaseDetector):
     """Wrapper around scikit-learn's :class:`IsolationForest`.
 
-    Args:
-        None: Instances are created without constructor parameters. Provide
-            estimator options when calling :meth:`fit`.
+    Instances are created without constructor parameters. Provide estimator
+    options when calling :meth:`fit`.
 
-    Returns:
-        IsolationForestDetector: The fitted detector returned by :meth:`fit`.
-        numpy.ndarray: Decision function values returned by :meth:`score`.
+    :meth:`fit` returns the fitted detector; :meth:`score` returns decision
+    function values as ``numpy.ndarray``.
 
     Attributes:
         model: The fitted ``IsolationForest`` estimator once :meth:`fit` is
@@ -160,13 +158,11 @@ class _PyODAdapter(BaseDetector):
 class LOFDetector(BaseDetector):
     """Local Outlier Factor implementation allowing new data scoring.
 
-    Args:
-        None: Instances require no constructor parameters; pass LOF settings to
-            :meth:`fit`.
+    Instances require no constructor parameters; pass LOF settings to
+    :meth:`fit`.
 
-    Returns:
-        LOFDetector: The fitted detector returned by :meth:`fit`.
-        list[float]: Local outlier factor scores produced by :meth:`score`.
+    :meth:`fit` returns the fitted detector; :meth:`score` returns local
+    outlier factor scores as ``list[float]``.
 
     Attributes:
         lof: The :class:`anomalybench.analytics.lof.LOF` instance trained during
@@ -236,13 +232,10 @@ class LOFDetector(BaseDetector):
 class SOSDetector(BaseDetector):
     """Stochastic Outlier Selection using the ``sksos`` package.
 
-    Args:
-        None: Constructed without arguments; configure hyper-parameters via
-            :meth:`fit`.
+    Constructed without arguments; configure hyper-parameters via :meth:`fit`.
 
-    Returns:
-        SOSDetector: The fitted detector returned by :meth:`fit`.
-        numpy.ndarray: SOS anomaly probabilities returned by :meth:`score`.
+    :meth:`fit` returns the fitted detector; :meth:`score` returns sOS anomaly
+    probabilities as ``numpy.ndarray``.
 
     Attributes:
         model: The wrapped :class:`sksos.SOS` estimator.
@@ -314,13 +307,11 @@ class SOSDetector(BaseDetector):
 class EnsembleDetector(BaseDetector):
     """Simple ensemble averaging KNN, SOS and HBOS scores.
 
-    Args:
-        None: Instances are parameter-free; supply detector configurations when
-            calling :meth:`fit`.
+    Instances are parameter-free; supply detector configurations when calling
+    :meth:`fit`.
 
-    Returns:
-        EnsembleDetector: The fitted ensemble returned by :meth:`fit`.
-        numpy.ndarray: Aggregated anomaly scores returned by :meth:`score`.
+    :meth:`fit` returns the fitted detector; :meth:`score` returns aggregated
+    anomaly scores as ``numpy.ndarray``.
 
     Attributes:
         knn: Fitted :class:`KNNDetector` component.
@@ -387,12 +378,10 @@ class EnsembleDetector(BaseDetector):
 class HBOSDetector(BaseDetector):
     """Histogram-Based Outlier Score with vectorized scoring.
 
-    Args:
-        None: Instantiate without arguments and configure via :meth:`fit`.
+    Instantiate without arguments and configure via :meth:`fit`.
 
-    Returns:
-        HBOSDetector: The fitted detector returned by :meth:`fit`.
-        numpy.ndarray: Log-density scores produced by :meth:`score`.
+    :meth:`fit` returns the fitted detector; :meth:`score` returns log-density
+    scores as ``numpy.ndarray``.
 
     Attributes:
         edges_left: Left bin edges for each feature.
@@ -476,13 +465,11 @@ class HBOSDetector(BaseDetector):
 class KNNDetector(BaseDetector):
     """K-Nearest Neighbors distance-based detector.
 
-    Args:
-        None: The detector is created without constructor parameters; set
-            ``k`` and other options via :meth:`fit`.
+    The detector is created without constructor parameters; set ``k`` and other
+    options via :meth:`fit`.
 
-    Returns:
-        KNNDetector: The fitted detector returned by :meth:`fit`.
-        numpy.ndarray: Summed distance scores returned by :meth:`score`.
+    :meth:`fit` returns the fitted detector; :meth:`score` returns summed
+    distance scores as ``numpy.ndarray``.
 
     Attributes:
         k: Number of neighbors considered for scoring.
@@ -546,13 +533,11 @@ class KNNDetector(BaseDetector):
 class OneClassSVMDetector(BaseDetector):
     """Wrapper around :class:`sklearn.svm.OneClassSVM`.
 
-    Args:
-        None: Instances require no constructor parameters; configure the SVM via
-            :meth:`fit`.
+    Instances require no constructor parameters; configure the SVM via
+    :meth:`fit`.
 
-    Returns:
-        OneClassSVMDetector: The fitted detector returned by :meth:`fit`.
-        numpy.ndarray: Decision function scores produced by :meth:`score`.
+    :meth:`fit` returns the fitted detector; :meth:`score` returns decision
+    function scores as ``numpy.ndarray``.
 
     Attributes:
         model: The fitted one-class SVM estimator.
@@ -613,13 +598,10 @@ class OneClassSVMDetector(BaseDetector):
 class DBSCANDetector(BaseDetector):
     """Density-based spatial clustering anomaly detector.
 
-    Args:
-        None: Instantiate without arguments; configure clustering options in
-            :meth:`fit`.
+    Instantiate without arguments; configure clustering options in :meth:`fit`.
 
-    Returns:
-        DBSCANDetector: The fitted detector returned by :meth:`fit`.
-        numpy.ndarray: Binary anomaly indicators returned by :meth:`score`.
+    :meth:`fit` returns the fitted detector; :meth:`score` returns binary
+    anomaly indicators as ``numpy.ndarray``.
 
     Attributes:
         model: The :class:`sklearn.cluster.DBSCAN` estimator fitted to the
@@ -683,13 +665,11 @@ class DBSCANDetector(BaseDetector):
 class EllipticEnvelopeDetector(BaseDetector):
     """Robust covariance estimate assuming Gaussian distributed data.
 
-    Args:
-        None: Instances are created without arguments; pass covariance options
-            via :meth:`fit`.
+    Instances are created without arguments; pass covariance options via
+    :meth:`fit`.
 
-    Returns:
-        EllipticEnvelopeDetector: The fitted detector returned by :meth:`fit`.
-        numpy.ndarray: Decision scores produced by :meth:`score`.
+    :meth:`fit` returns the fitted detector; :meth:`score` returns decision
+    scores as ``numpy.ndarray``.
 
     Attributes:
         model: The fitted :class:`sklearn.covariance.EllipticEnvelope`
@@ -752,13 +732,10 @@ class EllipticEnvelopeDetector(BaseDetector):
 class GaussianMixtureDetector(BaseDetector):
     """Gaussian Mixture negative log-likelihood as anomaly score.
 
-    Args:
-        None: Instantiate without parameters; provide mixture settings via
-            :meth:`fit`.
+    Instantiate without parameters; provide mixture settings via :meth:`fit`.
 
-    Returns:
-        GaussianMixtureDetector: The fitted detector returned by :meth:`fit`.
-        numpy.ndarray: Negative log-likelihood scores returned by :meth:`score`.
+    :meth:`fit` returns the fitted detector; :meth:`score` returns negative
+    log-likelihood scores as ``numpy.ndarray``.
 
     Attributes:
         model: The fitted :class:`sklearn.mixture.GaussianMixture` estimator.
@@ -820,13 +797,11 @@ class GaussianMixtureDetector(BaseDetector):
 class SklearnLOFDetector(BaseDetector):
     """Scikit-learn's LOF with novelty mode for scoring new data.
 
-    Args:
-        None: Instances do not require constructor parameters; pass LOF options
-            to :meth:`fit`.
+    Instances do not require constructor parameters; pass LOF options to
+    :meth:`fit`.
 
-    Returns:
-        SklearnLOFDetector: The fitted detector returned by :meth:`fit`.
-        numpy.ndarray: Novelty detection scores produced by :meth:`score`.
+    :meth:`fit` returns the fitted detector; :meth:`score` returns novelty
+    detection scores as ``numpy.ndarray``.
 
     Attributes:
         model: The :class:`sklearn.neighbors.LocalOutlierFactor` estimator
@@ -889,13 +864,11 @@ class SklearnLOFDetector(BaseDetector):
 class KMeansDetector(BaseDetector):
     """Distance to nearest KMeans centroid as anomaly score.
 
-    Args:
-        None: Construct instances without parameters; choose ``n_clusters`` via
-            :meth:`fit`.
+    Construct instances without parameters; choose ``n_clusters`` via
+    :meth:`fit`.
 
-    Returns:
-        KMeansDetector: The fitted detector returned by :meth:`fit`.
-        numpy.ndarray: Negative centroid distances from :meth:`score`.
+    :meth:`fit` returns the fitted detector; :meth:`score` returns negative
+    centroid distances as ``numpy.ndarray``.
 
     Attributes:
         n_clusters: Number of centroids used during fitting.
@@ -961,12 +934,10 @@ class KMeansDetector(BaseDetector):
 class PCAReconstructionDetector(BaseDetector):
     """Use PCA reconstruction error as anomaly score.
 
-    Args:
-        None: Instantiate without arguments; configure PCA via :meth:`fit`.
+    Instantiate without arguments; configure PCA via :meth:`fit`.
 
-    Returns:
-        PCAReconstructionDetector: The fitted detector returned by :meth:`fit`.
-        numpy.ndarray: Negative reconstruction errors from :meth:`score`.
+    :meth:`fit` returns the fitted detector; :meth:`score` returns negative
+    reconstruction errors as ``numpy.ndarray``.
 
     Attributes:
         n_components: Number (or fraction) of principal components retained.
@@ -1031,13 +1002,11 @@ class PCAReconstructionDetector(BaseDetector):
 class MahalanobisDetector(BaseDetector):
     """Mahalanobis distance using empirical covariance.
 
-    Args:
-        None: Create detector without parameters; configure covariance options
-            via :meth:`fit`.
+    Create detector without parameters; configure covariance options via
+    :meth:`fit`.
 
-    Returns:
-        MahalanobisDetector: The fitted detector returned by :meth:`fit`.
-        numpy.ndarray: Negative distance scores from :meth:`score`.
+    :meth:`fit` returns the fitted detector; :meth:`score` returns negative
+    distance scores as ``numpy.ndarray``.
 
     Attributes:
         cov: The fitted :class:`sklearn.covariance.EmpiricalCovariance`
@@ -1101,12 +1070,10 @@ class MahalanobisDetector(BaseDetector):
 class KDEDetector(BaseDetector):
     """Kernel Density Estimator returning log-density scores.
 
-    Args:
-        None: Instantiate without parameters; set KDE options via :meth:`fit`.
+    Instantiate without parameters; set KDE options via :meth:`fit`.
 
-    Returns:
-        KDEDetector: The fitted detector returned by :meth:`fit`.
-        numpy.ndarray: Log-density scores returned by :meth:`score`.
+    :meth:`fit` returns the fitted detector; :meth:`score` returns log-density
+    scores as ``numpy.ndarray``.
 
     Attributes:
         kde: The fitted :class:`sklearn.neighbors.KernelDensity` estimator.

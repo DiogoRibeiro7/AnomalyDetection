@@ -1,10 +1,12 @@
-# Anomaly Detection
+# AnomalyBench
 
-[![CI](https://github.com/DiogoRibeiro7/anomalybench/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/DiogoRibeiro7/anomalybench/actions/workflows/ci.yml) [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/) [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21496904.svg)](https://doi.org/10.5281/zenodo.21496904)
+[![CI](https://github.com/DiogoRibeiro7/anomalybench/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/DiogoRibeiro7/anomalybench/actions/workflows/ci.yml) [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/) [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21496904.svg)](https://doi.org/10.5281/zenodo.21496904) [![Docs](https://img.shields.io/badge/docs-mkdocs--material-blue.svg)](https://diogoribeiro7.github.io/anomalybench/)
 
-Anomaly Detection provides anomaly detection algorithms, benchmark dataset
+AnomalyBench provides anomaly detection algorithms, benchmark dataset
 loaders, and a command line interface for comparing detectors on standard
-datasets.
+datasets under one reproducible evaluation protocol.
+
+**Documentation: <https://diogoribeiro7.github.io/anomalybench/>**
 
 ## Python Support
 
