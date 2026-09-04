@@ -71,6 +71,11 @@ jobs:
           RELEASE_TAG: ${{ needs.release-please.outputs.tag_name }}
         run: |
           TAG="${DISPATCH_TAG:-${RELEASE_TAG}}"
+          if [[ -n "${TAG}" && ! "${TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Refusing '${TAG}': only a release tag may be published."
+            echo "A branch or commit would publish an untagged tree."
+            exit 1
+          fi
           if [[ -z "${TAG}" ]]; then
             echo "No tag to attach to."
             exit 1
@@ -84,7 +89,7 @@ jobs:
       - name: Checkout the released tag
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.resolve.outputs.tag }}
+          ref: refs/tags/${{ steps.resolve.outputs.tag }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -129,6 +134,11 @@ jobs:
           RELEASE_TAG: ${{ needs.release-please.outputs.tag_name }}
         run: |
           TAG="${DISPATCH_TAG:-${RELEASE_TAG}}"
+          if [[ -n "${TAG}" && ! "${TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Refusing '${TAG}': only a release tag may be published."
+            echo "A branch or commit would publish an untagged tree."
+            exit 1
+          fi
           if [[ -z "${TAG}" ]]; then
             echo "No tag to publish."
             exit 1
@@ -138,7 +148,7 @@ jobs:
       - name: Checkout the released tag
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.resolve.outputs.tag }}
+          ref: refs/tags/${{ steps.resolve.outputs.tag }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
