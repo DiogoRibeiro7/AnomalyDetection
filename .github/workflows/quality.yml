@@ -26,6 +26,6 @@ jobs:
       - name: Ruff
         run: poetry run ruff check .
       - name: Mypy
-        run: poetry run mypy analytics benchmarks src cli.py tests
+        run: poetry run mypy anomalybench src tests
       - name: Coverage
-        run: poetry run pytest -q --cov=analytics --cov=benchmarks --cov-report=term-missing --cov-fail-under=71
+        run: poetry run pytest -q --cov=anomalybench --cov-report=term-missing --cov-fail-under=71

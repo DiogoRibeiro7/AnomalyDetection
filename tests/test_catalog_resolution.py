@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from benchmarks import catalog
+from anomalybench.benchmarks import catalog
 
 
 def test_missing_catalog_file_yields_an_empty_mapping(

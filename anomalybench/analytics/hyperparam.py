@@ -8,8 +8,8 @@ import numpy as np
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import ParameterGrid, StratifiedKFold
 
-from analytics.detectors import get_detector_class
-from benchmarks.metrics import canonicalize_anomaly_scores
+from anomalybench.analytics.detectors import get_detector_class
+from anomalybench.benchmarks.metrics import canonicalize_anomaly_scores
 
 
 def grid_search(

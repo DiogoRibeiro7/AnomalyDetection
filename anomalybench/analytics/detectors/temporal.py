@@ -10,9 +10,13 @@ import numpy as np
 from dataexcept import HyperparameterError
 from numpy.typing import NDArray
 
-from analytics.base import BaseDetector
-from analytics.detectors.deep import _EarlyStopping, _import_torch, _split_train_val
-from analytics.time_series import (
+from anomalybench.analytics.base import BaseDetector
+from anomalybench.analytics.detectors.deep import (
+    _EarlyStopping,
+    _import_torch,
+    _split_train_val,
+)
+from anomalybench.analytics.time_series import (
     WindowedScores,
     WindowSpec,
     coerce_sequence_batch,

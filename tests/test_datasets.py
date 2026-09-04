@@ -2,7 +2,7 @@ import pytest
 
 pytest.importorskip("networkx")
 
-from benchmarks.load_datasets import (
+from anomalybench.benchmarks.load_datasets import (
     load_cardio,
     load_digits,
     load_iris,

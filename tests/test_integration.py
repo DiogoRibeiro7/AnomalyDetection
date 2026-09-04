@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import cli
+import anomalybench.cli as cli
 
 
 def _mock_dataset() -> dict[str, object]:
@@ -244,9 +244,11 @@ def test_cli_registers_plugin(
 
     shared_registry: dict[str, str] = {}
     monkeypatch.setattr(cli, "DETECTOR_REGISTRY", shared_registry)
-    monkeypatch.setattr("analytics.detectors.DETECTOR_REGISTRY", shared_registry)
     monkeypatch.setattr(
-        "analytics.detectors.registry.DETECTOR_REGISTRY", shared_registry
+        "anomalybench.analytics.detectors.DETECTOR_REGISTRY", shared_registry
+    )
+    monkeypatch.setattr(
+        "anomalybench.analytics.detectors.registry.DETECTOR_REGISTRY", shared_registry
     )
 
     plugin_pkg = tmp_path / "plugins"
@@ -254,7 +256,7 @@ def test_cli_registers_plugin(
     (plugin_pkg / "__init__.py").write_text("", encoding="utf-8")
     plugin_module = plugin_pkg / "integration_plugin.py"
     plugin_module.write_text(
-        "from analytics.detectors import register_detector\n"
+        "from anomalybench.analytics.detectors import register_detector\n"
         "\n"
         "class PluginDetector:\n"
         "    def detect_anomalies(self, values):\n"

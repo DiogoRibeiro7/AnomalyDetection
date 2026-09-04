@@ -2,7 +2,7 @@
 
 These detectors rely on PyTorch or TensorFlow and are imported lazily to keep
 requirements optional.  All classes implement the
-:class:`~analytics.base.BaseDetector` interface.
+:class:`~anomalybench.analytics.base.BaseDetector` interface.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ import pandas as pd
 from dataexcept import DependencyError, HyperparameterError
 from numpy.typing import NDArray
 
-from analytics.base import BaseDetector
+from anomalybench.analytics.base import BaseDetector
 
 if TYPE_CHECKING:
     import torch

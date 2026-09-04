@@ -10,10 +10,10 @@ import pandas as pd
 from dataexcept import DataValidationError, PreprocessingError
 from numpy.typing import NDArray
 
-from analytics.exceptions import DetectorNotFittedError
+from anomalybench.analytics.exceptions import DetectorNotFittedError
 
 if TYPE_CHECKING:  # pragma: no cover - optional dependency for typing only
-    from analytics.preprocessing import PreprocessingPipeline
+    from anomalybench.analytics.preprocessing import PreprocessingPipeline
 
 ScoreOrientation = Literal[
     "higher_is_more_anomalous",

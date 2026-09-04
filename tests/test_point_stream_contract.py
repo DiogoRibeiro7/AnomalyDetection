@@ -5,10 +5,10 @@ from __future__ import annotations
 import numpy as np
 from dataexcept import DataValidationError
 
-from analytics.base import OrientedScores
-from analytics.time_series import WindowedScores, WindowSpec
-from benchmarks.metrics import MetricConfig, evaluate_metrics
-from benchmarks.reproducibility import build_manifest
+from anomalybench.analytics.base import OrientedScores
+from anomalybench.analytics.time_series import WindowedScores, WindowSpec
+from anomalybench.benchmarks.metrics import MetricConfig, evaluate_metrics
+from anomalybench.benchmarks.reproducibility import build_manifest
 
 
 def test_oriented_scores_preserve_window_alignment_metadata() -> None:

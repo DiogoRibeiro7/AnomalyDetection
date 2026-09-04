@@ -4,8 +4,8 @@ from importlib import import_module
 
 from dataexcept import ConfigurationError
 
-from analytics.base import BaseDetector
-from analytics.exceptions import UnknownDetectorError
+from anomalybench.analytics.base import BaseDetector
+from anomalybench.analytics.exceptions import UnknownDetectorError
 
 
 class DetectorRegistry(dict[str, str]):

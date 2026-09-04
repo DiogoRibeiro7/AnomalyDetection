@@ -10,7 +10,7 @@ import pandas as pd
 from dataexcept import DataValidationError
 from numpy.typing import NDArray
 
-from analytics.base import BaseDetector
+from anomalybench.analytics.base import BaseDetector
 
 type ArrayLike = (
     pd.DataFrame

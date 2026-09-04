@@ -18,8 +18,8 @@ from dataexcept import (
     HyperparameterError,
 )
 
-from analytics.exceptions import DetectorNotFittedError
-from cli import _classify_failure
+from anomalybench.analytics.exceptions import DetectorNotFittedError
+from anomalybench.cli import _classify_failure
 
 
 def test_no_exception_has_no_category() -> None:

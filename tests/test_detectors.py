@@ -1,6 +1,6 @@
 import numpy as np
 
-from analytics.detectors import get_detector_class
+from anomalybench.analytics.detectors import get_detector_class
 
 
 def test_isolation_forest_scores_new_data():

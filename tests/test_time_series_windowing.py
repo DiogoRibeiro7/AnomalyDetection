@@ -12,7 +12,7 @@ import pandas as pd
 import pytest
 from dataexcept import DataValidationError, HyperparameterError
 
-from analytics.time_series import (
+from anomalybench.analytics.time_series import (
     WindowedScores,
     WindowSpec,
     align_point_labels,

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from analytics.detectors import get_detector_class
-from benchmarks.catalog import get_dataset_functions
+from anomalybench.analytics.detectors import get_detector_class
+from anomalybench.benchmarks.catalog import get_dataset_functions
 
 
 def test_cardio_keeps_normal_and_pathological_cases_only() -> None:

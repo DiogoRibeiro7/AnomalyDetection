@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from numpy.typing import NDArray
 
-from analytics.base import BaseDetector
+from anomalybench.analytics.base import BaseDetector
 
 if TYPE_CHECKING:
     import networkx as nx

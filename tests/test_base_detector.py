@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 from dataexcept import DataValidationError
 
-from analytics.base import BaseDetector, coerce_tabular_2d
-from analytics.exceptions import DetectorNotFittedError
+from anomalybench.analytics.base import BaseDetector, coerce_tabular_2d
+from anomalybench.analytics.exceptions import DetectorNotFittedError
 
 
 class LifecycleDetector(BaseDetector):

@@ -11,8 +11,8 @@ import networkx as nx
 import numpy as np
 import pytest
 
-from analytics.detectors import get_detector_class
-from analytics.exceptions import DetectorNotFittedError
+from anomalybench.analytics.detectors import get_detector_class
+from anomalybench.analytics.exceptions import DetectorNotFittedError
 
 GRAPH_DETECTORS = ["degree_centrality", "graph_isolation_forest"]
 

@@ -7,7 +7,7 @@ names, the label column name and the dataset name.
 Written by Gilles Vandewiele in commission of IDLab - INTEC from University Ghent.
 """
 
-from analytics.runtime import ensure_supported_python
+from anomalybench.analytics.runtime import ensure_supported_python
 
 ensure_supported_python()
 

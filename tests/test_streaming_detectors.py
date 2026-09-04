@@ -7,7 +7,7 @@ from dataexcept import DependencyError
 
 pytest.importorskip("river")
 
-from analytics.detectors.streaming import (  # noqa: E402
+from anomalybench.analytics.detectors.streaming import (  # noqa: E402
     HalfSpaceTreesDetector,
     OnlineIsolationForestDetector,
     RandomCutForestDetector,

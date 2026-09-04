@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from benchmarks import config_benchmark
+from anomalybench.benchmarks import config_benchmark
 
 
 def _write_config(tmp_path: Path, content: str) -> Path:

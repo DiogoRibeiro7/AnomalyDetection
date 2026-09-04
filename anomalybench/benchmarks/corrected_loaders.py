@@ -1,7 +1,7 @@
 """Correctness-focused benchmark dataset loaders.
 
 This module contains loaders whose semantics intentionally differ from the
-legacy implementations in :mod:`benchmarks.load_datasets`. Keeping the
+legacy implementations in :mod:`anomalybench.benchmarks.load_datasets`. Keeping the
 correction isolated makes the behavioural change explicit and easy to test.
 """
 

@@ -10,8 +10,8 @@ import pandas as pd
 import pytest
 from dataexcept import DataValidationError
 
-from analytics.base import BaseDetector
-from analytics.detectors.classical import (
+from anomalybench.analytics.base import BaseDetector
+from anomalybench.analytics.detectors.classical import (
     ABODDetector,
     COPODDetector,
     FeatureBaggingDetector,

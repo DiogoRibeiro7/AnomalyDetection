@@ -12,7 +12,7 @@ import math
 import pytest
 from dataexcept import DataValidationError
 
-from analytics.lof import (
+from anomalybench.analytics.lof import (
     LOF,
     clear_distance_cache,
     distance_euclidean,

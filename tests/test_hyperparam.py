@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from analytics.hyperparam import grid_search
+from anomalybench.analytics.hyperparam import grid_search
 
 
 def test_grid_search_returns_valid_result():

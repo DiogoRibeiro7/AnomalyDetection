@@ -1,6 +1,6 @@
 from dataexcept import DependencyError
 
-from analytics.runtime import ensure_supported_python
+from anomalybench.analytics.runtime import ensure_supported_python
 
 
 def test_supported_python_passes() -> None:

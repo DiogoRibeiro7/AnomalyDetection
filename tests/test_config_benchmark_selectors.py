@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from benchmarks import config_benchmark
+from anomalybench.benchmarks import config_benchmark
 
 # (config body, fragment expected in the error message)
 INVALID_CONFIGS: list[tuple[str, str]] = [
