@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format follows Keep a Changelog, and this project uses semantic versioning.
 
+## [0.5.1](https://github.com/DiogoRibeiro7/AnomalyDetection/compare/v0.5.0...v0.5.1) (2026-09-04)
+
+
+### Fixed
+
+* stop pinning the version in the reproducibility test ([6b04e9c](https://github.com/DiogoRibeiro7/AnomalyDetection/commit/6b04e9c7910b5ef001084efb1fae1455caefc0e1))
+
+
+### Internal
+
+* automate releases with release-please ([204246a](https://github.com/DiogoRibeiro7/AnomalyDetection/commit/204246a5acd33c0dc67dc8164ee170b9c97cc6ff))
+* collapse to a single long-lived branch ([7a36ed6](https://github.com/DiogoRibeiro7/AnomalyDetection/commit/7a36ed657ad94d53fffac4ceda9de6a010ee1356))
+* drop the develop trigger entries left by the rename ([b44795b](https://github.com/DiogoRibeiro7/AnomalyDetection/commit/b44795bff8c790edc5c8f962493a2a8825e18c88))
+* give the wheel upload a retry path ([e798945](https://github.com/DiogoRibeiro7/AnomalyDetection/commit/e798945140baee9daad35f3e1c478172adf6f18b))
+* queue release-please runs and keep attaching the wheel ([9d3f61d](https://github.com/DiogoRibeiro7/AnomalyDetection/commit/9d3f61db540b78ba6c39dc0f35e9b66d62185107))
+
 ## v0.5.0 - 2026-09-03
 
 ### Breaking
