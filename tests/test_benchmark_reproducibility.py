@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import csv
 import json
+import tomllib
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import cli
+from benchmarks import reproducibility
 from benchmarks.reproducibility import (
     MANIFEST_SCHEMA_VERSION,
     REPORT_SCHEMA_VERSION,
@@ -37,8 +40,36 @@ def test_reproducibility_hash_is_stable() -> None:
     assert len(first) == 16
 
 
-def test_package_version_comes_from_source_metadata() -> None:
-    assert package_version() == "0.5.0"
+def test_package_version_matches_the_source_of_truth() -> None:
+    """Read from pyproject rather than pinned, so a version bump is not a failure.
+
+    This assertion used to hardcode the version, which meant every release broke
+    it. Releases are automated now, so that would have failed on every one.
+    """
+
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    with pyproject.open("rb") as fh:
+        expected = str(tomllib.load(fh)["project"]["version"])
+
+    assert package_version() == expected
+
+
+def test_package_version_prefers_source_over_installed_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The point of the function: report the tree's version, not the installed one.
+
+    A checkout whose version has moved ahead of the installed distribution must
+    report the checkout, or a benchmark manifest would record the wrong version.
+    """
+
+    monkeypatch.setattr(
+        reproducibility.metadata,
+        "version",
+        lambda _name: "9.9.9-installed",
+    )
+
+    assert package_version() != "9.9.9-installed"
 
 
 def test_seed_is_added_only_for_supported_detectors() -> None:
